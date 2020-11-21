@@ -7,7 +7,6 @@ import Test.Hspec
 import Test.QuickCheck
 
 import Data.Ratio
-import qualified Data.ExpList as EL
 import Data.Monzo
 import Data.Interval.Pythagorean
 import Data.Interval.FJS
@@ -27,11 +26,7 @@ arbitraryPositiveRational = do
   n <- scale (* fromIntegral d) $ arbitrarySizedNatural `suchThat` \n -> n > 0
   pure $ n % d
 
-instance (Eq a, Num a, Arbitrary a) => Arbitrary (EL.ExpList a) where
-  arbitrary = EL.fromList <$> arbitrary
-  shrink = fmap EL.fromList . shrink . EL.toList
-
-instance (Eq a, Num a, Arbitrary a) => Arbitrary (Monzo a) where
+instance (Eq a, Num a, Arbitrary a) => Arbitrary (MonzoFrom n a) where
   arbitrary = fromList <$> arbitrary
   shrink = fmap fromList . shrink . toList
 
@@ -45,7 +40,7 @@ instance Arbitrary GenFJSInterval where
   arbitrary = do
     pr <- arbitrary
     e2 <- arbitrary `suchThat` \e2 ->
-            isValidGenFJSInterval (GenFJSInterval pr e2 (EL.fromList []))
+            isValidGenFJSInterval (GenFJSInterval pr e2 (fromList []))
     GenFJSInterval pr e2 <$> arbitrary
   shrink (GenFJSInterval pr e2 es) =
        [ GenFJSInterval pr' e2 es | pr' <- shrink pr ]
@@ -56,15 +51,15 @@ arbitraryFJS = do
   pg <- arbitrary
   pv <- arbitrary
   es <- arbitrary
-  pure $ GenFJSInterval (pyFromGen (pg%1) pv) 0 (EL.mapExpList (%1) es)
+  pure $ GenFJSInterval (pyFromGen (pg%1) pv) 0 (mapMonzo (%1) es)
 
 arbitraryNFJS :: Gen GenFJSInterval
 arbitraryNFJS = do
   pr <- arbitrary
   e2 <- arbitrary `suchThat` \e2 ->
-          isValidGenFJSInterval (GenFJSInterval pr (e2%6) (EL.fromList []))
+          isValidGenFJSInterval (GenFJSInterval pr (e2%6) (fromList []))
   es <- arbitrary
-  pure $ GenFJSInterval pr (e2%6) (EL.mapExpList (%1) es)
+  pure $ GenFJSInterval pr (e2%6) (mapMonzo (%1) es)
 
 spec :: Spec
 spec = do

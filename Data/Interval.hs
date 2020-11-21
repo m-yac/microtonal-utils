@@ -6,7 +6,6 @@ import Prelude hiding (sqrt)
 
 import Data.Ratio
 import Data.Monzo
-import qualified Data.ExpList as EL
 import Data.Algebraic
 import Data.Maybe (fromJust, mapMaybe)
 import Data.List (foldl', elemIndex)

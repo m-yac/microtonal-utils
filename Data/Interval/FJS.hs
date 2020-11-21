@@ -1,5 +1,7 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE TypeApplications #-}
 module Data.Interval.FJS where
 
 import Prelude hiding (sqrt)
@@ -7,20 +9,16 @@ import Prelude hiding (sqrt)
 import Data.List (foldl', intercalate)
 import Data.Maybe (fromJust, mapMaybe)
 import Data.Either (partitionEithers)
-import Data.Numbers.Primes
 import Data.Ratio
 
-import Data.ExpList
-import Data.Monzo (fromExps, toExps, idxMonzo)
+import Data.Monzo
 import Data.Interval.Type
 import Data.Interval.Pythagorean
 import Data.Algebraic
 
-import Debug.Trace
-
 type CommaFunction = Interval -> PyInterval
 
-data GenFJSInterval = GenFJSInterval PyInterval Rational (ExpList Rational)
+data GenFJSInterval = GenFJSInterval PyInterval Rational (MonzoFrom 2 Rational)
                       deriving (Eq, Show)
 
 isValidGenFJSInterval :: GenFJSInterval -> Bool
@@ -29,7 +27,7 @@ isValidGenFJSInterval (GenFJSInterval pr e2 _) =
 
 genFJSSymb :: GenFJSInterval -> String
 genFJSSymb rfjs | not (isValidGenFJSInterval rfjs) = error "invalid interval"
-genFJSSymb (GenFJSInterval pr e2 (toList -> es)) =
+genFJSSymb (GenFJSInterval pr e2 (toPrimePowers -> prs)) =
   pySymb pr ++ showExps "^" otos ++ showExps "_" utos
   where showFracExp :: Integer -> Rational -> String
         showFracExp p e | e == 1/2 = "sqrt(" ++ show p ++ ")"
@@ -41,25 +39,22 @@ genFJSSymb (GenFJSInterval pr e2 (toList -> es)) =
                  | e > 0 = [Left (showFracExp p e)]
                  | e < 0 = [Right (showFracExp p (-e))]
                  | otherwise = []
-        prs = (2,e2) : zip (drop 2 primes) es
-        (otos, utos) = partitionEithers (concatMap go prs)
+        (otos, utos) = partitionEithers (concatMap go ((2,e2):prs))
         showExps sep ss | null ss = ""
                         | otherwise = sep ++ intercalate "," ss
 
 fromGenFJSInterval :: CommaFunction -> GenFJSInterval -> Interval
 fromGenFJSInterval _ rfjs | not (isValidGenFJSInterval rfjs) = error "invalid interval"
-fromGenFJSInterval cf (GenFJSInterval pr e2 (toList -> es)) =
-  pyToIntv pr * foldl' (*) (go (2,e2)) (go <$> prs)
-  where prs = zip (drop 2 (fmap fromInteger primes)) es
-        go (p,e) = (p `pow` e) * (pow (pyToIntv (cf p)) e)
+fromGenFJSInterval cf (GenFJSInterval pr e2 (toPrimePowers -> prs)) =
+  pyToIntv pr * product (go <$> (2,e2):prs)
+  where go (p,e) = (p `pow` e) * (pow (pyToIntv (cf p)) e)
 
 toGenFJSInterval :: CommaFunction -> Interval -> Maybe GenFJSInterval
-toGenFJSInterval cf (toExps -> es) = do
+toGenFJSInterval cf r = do
   -- handle all the primes > 3
-  let (es23, esGr3) = (takeExpList 2 es, dropExpList 2 es)
-      i = foldl' (\i' (e,p) -> i' / pow (pyToIntv (cf p)) e)
-                 (fromExps es23)
-                 (zip (toList esGr3) (drop 2 (fmap fromInteger primes)))
+  let (es23, esGr3) = (takeMonzo 2 r, dropMonzo @2 r)
+      i = foldl' (\i' (p,e) -> i' / pow (pyToIntv (cf p)) e)
+                 es23 (toPrimePowers esGr3)
   -- handle the specical case of 2
   let e2 = snd (properFraction (i `idxMonzo` 0 + i `idxMonzo` 1))
       i' = i / pow (2 * pyToIntv (cf 2)) e2

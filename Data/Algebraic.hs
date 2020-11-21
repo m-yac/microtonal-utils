@@ -7,7 +7,9 @@ import Data.Functor.Identity
 import Data.Functor.Contravariant
 import Data.Functor.Const
 
+-- | Algebraic numbers, supporting arbitrary rational powers.
 class Fractional a => Algebraic a where
+  -- | Raising a fractional value to a real power.
   pow :: (Real b, Fractional b) => a -> b -> a
 
 root :: (Algebraic a, Integral b) => b -> a -> a

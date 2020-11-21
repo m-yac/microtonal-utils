@@ -7,8 +7,9 @@ module Data.Interval.Pythagorean where
 import Prelude hiding (sqrt)
 import Control.Exception
 import Data.Maybe (fromJust)
-import Data.Algebraic
 
+import Data.Algebraic
+import Data.Ratio.BetterShow
 import Data.Interval.Type
 import Data.Ratio
 import Data.Monzo
