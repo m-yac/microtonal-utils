@@ -1,0 +1,108 @@
+zipWithDefaults :: (a -> b -> c) -> a -> b -> [a] -> [b] -> [c]
+zipWithDefaults _ _ _ [] [] = []
+zipWithDefaults f a _ [] ys = zipWith f (repeat a) ys
+zipWithDefaults f _ b xs [] = zipWith f xs (repeat b)
+zipWithDefaults f a b (x:xs) (y:ys) = f x y : zipWithDefaults f a b xs ys
+
+-- A 'RootRational' is a number which is the @n@th root of a rational number, or
+-- equivalently, a number which can be expressed as a fractional monzo. The
+-- latter representation is what's actually used behind the scenes.
+newtype RootRational = RRFactors [Rational]
+
+-- A 'RootRational' as a fractional monzo. A fractional monzo is a way of
+-- uniquely representing certain positive numbers as a list of rationals,
+-- where the monzo @[e1,...,en]@ corresponds to the number
+-- @2^e1 * 3^e2 * 5^e3 * 7^e4 * ... * pn^en@, where @pn@ is the @n@th prime.
+asMonzo :: RootRational -> [Rational]
+asMonzo (RRFactors es) = es
+
+-- A 'RootRational' from a fractional monzo (see 'asMonzo').
+fromMonzo :: [Rational] -> RootRational
+fromMonzo es = RRFactors (dropWhileEnd (== 0) es)
+
+
+-- Alternate constructors and destructors
+
+-- A 'RootRational' as the @n@th root of some rational.
+asNthRoot :: RootRational -> (Natural, Rational)
+asNthRoot (asMonzo -> es) = (fromInteger n, product fs)
+  where n = foldl' lcm 1 (denominator <$> es)
+        fs = (\(p,e) -> (p%1) ^^ numerator (e * (n%1))) <$> zip primes es
+
+-- A 'RootRational' as a floating point number.
+asFloat :: Floating a => RootRational -> a
+asFloat (asMonzo -> es) = product fs
+  where fs = (\(p,e) -> fromInteger p ** fromRational e) <$> zip primes es
+
+-- A 'RootRational' as the @n@th root of a rational number, see also 'fromRational'.
+fromNthRoot :: (Natural, Rational) -> RootRational
+fromNthRoot (n,r) = fromMonzo $ fmap (/ fromIntegral n) (asMonzo $ fromRational r)
+
+asRational :: RootRational -> Rational
+asRational (asNthRoot -> (0,r)) = r
+asRational _ = error "RootRational is not a rational"
+
+
+-- Numeric instances
+
+instance Num RootRational where
+  (asMonzo -> es1) * (asMonzo -> es2) = fromMonzo $ zipWithDefaults (+) 0 0 es1 es2
+  fromInteger m | m <= 0 = throw Underflow
+                | m == 1 = fromMonzo []
+                | otherwise = fromMonzo $ go (primeFactors m) primes
+    where go :: [Integer] -> [Integer] -> [Rational]
+          go [] _ = []
+          go (f:fs) (p:ps) | f >  p = 0 : go (f:fs) ps
+                           | f == p = let (eqs, fs') = span (== p) fs
+                                       in (1 + fromIntegral (length eqs)) : go fs' ps
+  -- the remaining operations are either undefined or trivial
+  (+) = error "addition is not defined for RootRationals"
+  (-) = error "subtraction is not defined for RootRationals"
+  negate = throw Underflow
+  abs = id
+  signum = const (fromInteger 1)
+
+instance Fractional RootRational where
+  (asMonzo -> es1) / (asMonzo -> es2) = fromMonzo $ zipWithDefaults (-) 0 0 es1 es2
+  fromRational r = fromInteger (numerator r) / fromInteger (denominator r)
+
+-- class Fractional a => Algebraic a where
+--   pow :: (Real b, Fractional b) => a -> b -> a
+--
+-- root :: (Algebraic a, Integral b) => b -> a -> a
+-- root n x = x `pow` (1 % n)
+--
+-- sqrt :: Algebraic a => a -> a
+-- sqrt = root 2
+--
+-- instance {-# OVERLAPPABLE #-} (Fractional a, Floating a) => Algebraic a where
+--   pow a k = a ** realToFrac k
+
+instance Algebraic RootRational where
+  pow (asMonzo -> es) k = fromMonzo $ fmap (* toRational k) es
+
+instance Eq RootRational where
+  (asMonzo -> es1) == (asMonzo -> es2) = es1 == es2
+
+instance Ord RootRational where
+  compare a b = let (_,r) = asNthRoot (a/b) in compare r 1
+
+
+-- Pretty printing / show instances
+
+instance Show RootRational where
+  -- show (asNthRoot -> (1,r)) = showRational r
+  -- show (asNthRoot -> (2,r)) = "sqrt (" ++ showRational r ++ ")"
+  -- show (asNthRoot -> (n,r)) = "root " ++ show n ++ " (" ++ showRational r ++ ")"
+  show (asMonzo -> !es) = "fromMonzo [" ++ intercalate "," (showRational <$> es) ++ "]"
+
+-- Show a 'RootRational' as a product of powers of primes
+showAsProd :: RootRational -> String
+showAsProd (asMonzo -> []) = "1"
+showAsProd (asMonzo -> es) = intercalate " * " (showFactor <$> zip primes es)
+  where showFactor (p,e) = show p ++ "^" ++ showRational e
+
+-- A better version of @'show' :: 'Rational' -> 'String'@.
+showRational :: Rational -> String
+showRational e = let (n,d) = (numerator e, denominator e)
+                  in if d == 1 then show n else show n ++ "/" ++ show d
