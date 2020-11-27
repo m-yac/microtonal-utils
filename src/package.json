@@ -1,0 +1,17 @@
+{
+  "name": "microtonal-calculator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fraction.js": "^4.0.12",
+    "nearley": "^2.19.8",
+    "primes-and-factors": "^1.3.3"
+  }
+}
