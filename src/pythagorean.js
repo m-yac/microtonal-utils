@@ -16,8 +16,8 @@ const Interval = require('./interval.js');
   * @param {Fraction} o
   * @returns {Interval}
   */
-function pyInterval(d,o) {
-  const ox4 = Fraction(o).mul(4 * Math.sign(d));
+function pyInterval(d,a,b) {
+  const ox4 = Fraction(a,b).mul(4 * Math.sign(d));
   if (ox4.d != 1) {
     throw "offset does not have denominator 1, 2, or 4"
   }
@@ -91,6 +91,8 @@ function offset(a,b) {
 
 module['exports'].pyInterval = pyInterval;
 module['exports'].isPythagorean = isPythagorean;
+module['exports'].generator = generator;
+module['exports'].octaves = octaves;
 module['exports'].degree = degree;
 module['exports'].offset = offset;
 
