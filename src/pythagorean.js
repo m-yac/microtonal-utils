@@ -23,7 +23,7 @@ function pyInterval(d,o) {
   }
   const zd = d - Math.sign(d);
   const ng = ((zd * 4 + 3) % 7) - 3;
-  const g = ng * 2 + ox4.d * ox4.n * 7;
+  const g = ng * 2 + ox4.s * ox4.n * 7;
   return Interval({ 2: Fraction(g,4).sub((zd - g) / 7).neg(),
                     3: Fraction(g,4) });
 }

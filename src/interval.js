@@ -50,7 +50,9 @@ const parse = function(a, b) {
       var ret = {};
       for (const i in keys(a)) {
         allPrimes &= pf.isPrime(Number(i));
-        ret[i] = Fraction(a[i]);
+        if (Fraction(a[i]) != 0) {
+          ret[i] = Fraction(a[i]);
+        }
       }
       if (allPrimes) {
         return ret;
@@ -169,9 +171,9 @@ Interval.prototype = {
   "toNthRoot": function() {
     var n_fr = Fraction(1);
     for (const i in keys(this)) {
-      n_fr = n_gcd(this[i]);
+      n_fr = n_fr.gcd(this[i]);
     }
-    return { k: this.pow(n_inverse()).toFrac(), n: n_d };
+    return { k: this.pow(n_fr.inverse()).toFrac(), n: n_fr.d };
   },
 
   /**

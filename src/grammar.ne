@@ -3,6 +3,7 @@
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 const py = require('./pythagorean.js');
+const {fjsFactor} = require('./fjs.js');
 
 function isPerfectDeg(d) {
   const redDeg = (d-1) % 7 + 1;
@@ -24,15 +25,21 @@ function augOrDimPyInterval(d,a,b,reject) {
   return isPerfectDeg(d) ? py.pyInterval(d,o) : py.pyInterval(d,o_np);
 }
 
+function ensureNo2Or3(i,reject) {
+  return (i['2'] && i['2'] != 0) || (i['3'] && i['3'] != 0) ? reject : i;
+}
+
 %}
 
 @builtin "whitespace.ne"
 
-top ->
-    _ itvExpr1 _ {% d => ["interval", d[1]] %}
-  | _ ctsExpr1 _ {% d => ["cents", d[1]] %}
+top1 -> _ top2 _ {% d => d[1] %}
+top2 ->
+    fjsItv    {% d => ["FJS", d[0]] %}
+  | itvExpr1  {% d => ["interval", d[0]] %}
+  | ctsExpr1  {% d => ["cents", d[0]] %}
 
-# Pythagorean intervals
+# Pythagorean and FJS intervals
 
 pyItv ->
   # perfect intervals
@@ -55,6 +62,21 @@ pyItv ->
   | posInt "/4-A" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
   | posInt "/4-d" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
 
+fjsItv ->
+    pyItv               {% id %}
+  | fjsItv "^" fjsAccs  {% d => d[0].mul(d[2]) %}
+  | fjsItv "_" fjsAccs  {% d => d[0].div(d[2]) %}
+
+fjsAccs ->
+    fjsAcc              {% d => fjsFactor(d[0]) %}
+  | fjsAccs "," fjsAcc  {% d => d[0].mul(fjsFactor(d[2])) %}
+
+fjsAcc ->
+    posInt                        {% (d,_,reject) => ensureNo2Or3(Interval(d[0]),reject) %}
+  | "sqrt(" fjsAcc ")"            {% d => d[3].sqrt() %}
+  | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
+  | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
+
 # Interval expressions
 
 itvExpr1 ->
@@ -70,7 +92,7 @@ itvExpr2 ->
   | "reb"  _ "(" _ itvExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
   | itvExpr3                                        {% id %}
 itvExpr3 ->
-    pyItv                                           {% id %}
+    fjsItv                                          {% id %}
   | itvExpr4                                        {% id %}
 itvExpr4 ->
     posInt                                          {% d => Interval(d[0]) %}
@@ -92,7 +114,7 @@ ctsExpr3 ->
   | "red"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].red(d[8]) %}
   | "reb"   _ "(" _ ctsExpr1 _ ")"                   {% d => d[4].reb() %}
   | "reb"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
-  | pyItv                                            {% id %}
+  | fjsItv                                           {% id %}
   | decimal "c"
     {% d => Interval(2).pow(Fraction(d[0]).div(1200)) %}
   | intExpr3 _ "\\" _ posInt

@@ -7,6 +7,7 @@ function id(x) { return x[0]; }
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 const py = require('./pythagorean.js');
+const {fjsFactor} = require('./fjs.js');
 
 function isPerfectDeg(d) {
   const redDeg = (d-1) % 7 + 1;
@@ -28,6 +29,10 @@ function augOrDimPyInterval(d,a,b,reject) {
   return isPerfectDeg(d) ? py.pyInterval(d,o) : py.pyInterval(d,o_np);
 }
 
+function ensureNo2Or3(i,reject) {
+  return (i['2'] && i['2'] != 0) || (i['3'] && i['3'] != 0) ? reject : i;
+}
+
 var grammar = {
     Lexer: undefined,
     ParserRules: [
@@ -38,8 +43,10 @@ var grammar = {
     {"name": "__$ebnf$1", "symbols": ["__$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "__", "symbols": ["__$ebnf$1"], "postprocess": function(d) {return null;}},
     {"name": "wschar", "symbols": [/[ \t\n\v\f]/], "postprocess": id},
-    {"name": "top", "symbols": ["_", "itvExpr1", "_"], "postprocess": d => ["interval", d[1]]},
-    {"name": "top", "symbols": ["_", "ctsExpr1", "_"], "postprocess": d => ["cents", d[1]]},
+    {"name": "top1", "symbols": ["_", "top2", "_"], "postprocess": d => d[1]},
+    {"name": "top2", "symbols": ["fjsItv"], "postprocess": d => ["FJS", d[0]]},
+    {"name": "top2", "symbols": ["itvExpr1"], "postprocess": d => ["interval", d[0]]},
+    {"name": "top2", "symbols": ["ctsExpr1"], "postprocess": d => ["cents", d[0]]},
     {"name": "pyItv", "symbols": [{"literal":"P"}, "posInt"], "postprocess": (d,_,reject) => perfPyInterval(d[1],0,reject)},
     {"name": "pyItv$subexpression$1", "symbols": [/[nN]/], "postprocess": function(d) {return d.join(""); }},
     {"name": "pyItv", "symbols": ["pyItv$subexpression$1", "posInt"], "postprocess": (d,_,reject) => nonPerfPyInterval(d[1],0,reject)},
@@ -69,6 +76,17 @@ var grammar = {
     {"name": "pyItv", "symbols": ["posInt", "pyItv$string$7", "posInt"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject)},
     {"name": "pyItv$string$8", "symbols": [{"literal":"/"}, {"literal":"4"}, {"literal":"-"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "pyItv", "symbols": ["posInt", "pyItv$string$8", "posInt"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject)},
+    {"name": "fjsItv", "symbols": ["pyItv"], "postprocess": id},
+    {"name": "fjsItv", "symbols": ["fjsItv", {"literal":"^"}, "fjsAccs"], "postprocess": d => d[0].mul(d[2])},
+    {"name": "fjsItv", "symbols": ["fjsItv", {"literal":"_"}, "fjsAccs"], "postprocess": d => d[0].div(d[2])},
+    {"name": "fjsAccs", "symbols": ["fjsAcc"], "postprocess": d => fjsFactor(d[0])},
+    {"name": "fjsAccs", "symbols": ["fjsAccs", {"literal":","}, "fjsAcc"], "postprocess": d => d[0].mul(fjsFactor(d[2]))},
+    {"name": "fjsAcc", "symbols": ["posInt"], "postprocess": (d,_,reject) => ensureNo2Or3(Interval(d[0]),reject)},
+    {"name": "fjsAcc$string$1", "symbols": [{"literal":"s"}, {"literal":"q"}, {"literal":"r"}, {"literal":"t"}, {"literal":"("}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "fjsAcc", "symbols": ["fjsAcc$string$1", "fjsAcc", {"literal":")"}], "postprocess": d => d[3].sqrt()},
+    {"name": "fjsAcc$string$2", "symbols": [{"literal":"r"}, {"literal":"o"}, {"literal":"o"}, {"literal":"t"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "fjsAcc", "symbols": ["fjsAcc$string$2", "posInt", {"literal":"("}, "fjsAcc", {"literal":")"}], "postprocess": d => d[3].root(d[1])},
+    {"name": "fjsAcc", "symbols": [{"literal":"("}, "fjsAcc", {"literal":"^"}, "frcExpr3", {"literal":")"}], "postprocess": d => d[1].pow(d[3])},
     {"name": "itvExpr1", "symbols": ["itvExpr1", "_", {"literal":"*"}, "_", "itvExpr2"], "postprocess": d => d[0].mul(d[4])},
     {"name": "itvExpr1", "symbols": ["itvExpr1", "_", {"literal":"/"}, "_", "itvExpr2"], "postprocess": d => d[0].div(d[4])},
     {"name": "itvExpr1", "symbols": ["itvExpr2"], "postprocess": id},
@@ -84,7 +102,7 @@ var grammar = {
     {"name": "itvExpr2$string$5", "symbols": [{"literal":"r"}, {"literal":"e"}, {"literal":"b"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "itvExpr2", "symbols": ["itvExpr2$string$5", "_", {"literal":"("}, "_", "itvExpr1", "_", {"literal":","}, "_", "itvExpr1", "_", {"literal":")"}], "postprocess": d => d[4].reb(d[8])},
     {"name": "itvExpr2", "symbols": ["itvExpr3"], "postprocess": id},
-    {"name": "itvExpr3", "symbols": ["pyItv"], "postprocess": id},
+    {"name": "itvExpr3", "symbols": ["fjsItv"], "postprocess": id},
     {"name": "itvExpr3", "symbols": ["itvExpr4"], "postprocess": id},
     {"name": "itvExpr4", "symbols": ["posInt"], "postprocess": d => Interval(d[0])},
     {"name": "itvExpr4", "symbols": [{"literal":"("}, "_", "itvExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
@@ -104,7 +122,7 @@ var grammar = {
     {"name": "ctsExpr3", "symbols": ["ctsExpr3$string$4", "_", {"literal":"("}, "_", "ctsExpr1", "_", {"literal":")"}], "postprocess": d => d[4].reb()},
     {"name": "ctsExpr3$string$5", "symbols": [{"literal":"r"}, {"literal":"e"}, {"literal":"b"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "ctsExpr3", "symbols": ["ctsExpr3$string$5", "_", {"literal":"("}, "_", "ctsExpr1", "_", {"literal":","}, "_", "itvExpr1", "_", {"literal":")"}], "postprocess": d => d[4].reb(d[8])},
-    {"name": "ctsExpr3", "symbols": ["pyItv"], "postprocess": id},
+    {"name": "ctsExpr3", "symbols": ["fjsItv"], "postprocess": id},
     {"name": "ctsExpr3", "symbols": ["decimal", {"literal":"c"}], "postprocess": d => Interval(2).pow(Fraction(d[0]).div(1200))},
     {"name": "ctsExpr3", "symbols": ["intExpr3", "_", {"literal":"\\"}, "_", "posInt"], "postprocess": d => Interval(2).pow(Fraction(d[0]).div(Fraction(d[4])))},
     {"name": "ctsExpr3", "symbols": [{"literal":"("}, "_", "ctsExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
@@ -154,7 +172,7 @@ var grammar = {
                                  : "")
                 : "") }
 ]
-  , ParserStart: "top"
+  , ParserStart: "top1"
 }
 if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
    module.exports = grammar;
