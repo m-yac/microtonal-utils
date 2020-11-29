@@ -4,7 +4,7 @@ var ne = require('nearley');
 var Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 var grammar = require('./grammar.js');
-var {isPythagorean, pySymb} = require('./pythagorean.js');
+var {isPythagorean, generator, pySymb} = require('./pythagorean.js');
 var {fjsSymb} = require('./fjs.js');
 var {updnsSymb} = require('./edo.js');
 
@@ -31,7 +31,10 @@ function parse(str) {
     }
     itv = Object.entries(results)[0][1];
   }
-  // update the preferred EDO if it doesn't already exist
+  // update or set the preferred EDO based on the interval
+  if (edo && itv['2'].mul(edo).d != 1) {
+    edo = null;
+  }
   if (!edo && Object.entries(itv).length == 1 && itv['2']) {
     if (itv['2'].d == 3 || itv['2'].d == 4) {
       edo = 12;
@@ -40,16 +43,22 @@ function parse(str) {
       edo = itv['2'].d;
     }
   }
-  // generate some chord symbols
+  // generate some symbols
+  let symb = {};
   let fjs = fjsSymb(itv);
-  let symb;
-  if (!fjs && isPythagorean(itv)) { symb = pySymb(itv); }
-  if (itv.equals(Interval(2).sqrt())) { symb = "TT"; }
-  if (edo) { symb = updnsSymb(edo,itv['2'].mul(edo).n) + "\\" + edo; }
+  if (fjs) {
+    symb['FJS'] = fjs;
+  }
+  if (edo) {
+    symb['EDO-steps'] = [itv['2'].mul(edo).n, edo];
+    symb['ups-and-downs'] = [updnsSymb(edo,itv['2'].mul(edo).n), edo];
+  }
+  if (!fjs && isPythagorean(itv)) {
+    symb['other'] = pySymb(itv);
+  }
+  if (itv.equals(Interval(2).sqrt())) {
+    symb['other'] = "TT";
+  }
   // package everything up nicely
-  let ret = {cents: itv.toCents(), itv: itv};
-  if (fjs) { ret.fjs = fjs; }
-  if (symb) { ret.symb = symb; }
-  if (edo) { ret.edoSteps = (itv['2'].mul(edo).n) + "\\" + edo; }
-  return ret;
+  return {cents: itv.toCents(), itv: itv, symb: symb};
 }
