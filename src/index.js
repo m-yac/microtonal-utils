@@ -6,6 +6,7 @@ const Interval = require('./interval.js');
 var grammar = require('./grammar.js');
 var {isPythagorean, pySymb} = require('./pythagorean.js');
 var {fjsSymb} = require('./fjs.js');
+var {updnsSymb} = require('./edo.js');
 
 function parse(str) {
   const parser = new ne.Parser(ne.Grammar.fromCompiled(grammar));
@@ -15,7 +16,7 @@ function parse(str) {
   // extract the preferred EDO
   let edo = null;
   if (results["cents"]) {
-    edo = results["cents"][0];
+    edo = parseInt(results["cents"][0]);
     results["cents"] = results["cents"][1];
   }
   // extract the interval
@@ -44,6 +45,7 @@ function parse(str) {
   let symb;
   if (!fjs && isPythagorean(itv)) { symb = pySymb(itv); }
   if (itv.equals(Interval(2).sqrt())) { symb = "TT"; }
+  if (edo) { symb = updnsSymb(edo,itv['2'].mul(edo).n) + "\\" + edo; }
   // package everything up nicely
   let ret = {cents: itv.toCents(), itv: itv};
   if (fjs) { ret.fjs = fjs; }

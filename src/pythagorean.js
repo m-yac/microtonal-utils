@@ -148,7 +148,7 @@ function pyQuality(a,b) {
   }
   if (o == 0.5 ) { return "sA" }
   if (o == 1   ) { return "A" }
-  if (o == -0.5) { return "sA" }
+  if (o == -0.5) { return "sd" }
   if (o == -1  ) { return "d" }
   if (o > 1  && o.d == 1) { return o.n + "A" }
   if (o > 1  && o.d != 1) { return o.toFraction() + "-A" }

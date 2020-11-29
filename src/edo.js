@@ -9,6 +9,10 @@ const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 const py = require('./pythagorean.js');
 
+function mod(a,n) {
+  return ((a % n) + n) % n;
+}
+
 /**
   * Returns the EDO step closest to the given interval
   *
@@ -60,9 +64,63 @@ function edoHasSemiNeutrals(edo) {
   return edoApprox(edo,3,2) % 4 == 0;
 }
 
+function fifthGens(edo) {
+  var steps = [];
+  for (i = 0; i < edo; i++) { steps.push(Array(0)); }
+  const fifth = edoApprox(edo,3,2);
+  // non-neutral intervals
+  var g = 0;
+  while (g != -6) {
+    steps[mod(fifth*g,edo)].push(g*4);
+    g = g > 0 ? -g : -g+1;
+  }
+  // neutral intervals
+  if (fifth % 2 == 0) {
+    g = 1;
+    while (g != 7) {
+      steps[mod(fifth*g/2,edo)].push(g*2);
+      g = g > 0 ? -g : -g+2;
+    }
+  }
+  return steps
+}
+
+/**
+  * Returns the ups-and-downs notation for the given steps in the given EDO
+  *
+  * @param {Integer} edo
+  * @param {Integer} n
+  * @returns {String}
+  */
+function updnsSymb(edo,n) {
+  const vs = Interval(2).pow(Math.floor(n / edo));
+  const nr = mod(n,edo);
+  const gs = fifthGens(edo);
+  var ret;
+  for (i = 0; !ret; i++) {
+    const gup = gs[mod(nr-i,edo)];
+    var gupSymb;
+    if (gup.length > 0) {
+      gupSymb = "^".repeat(i) + py.pySymb(Interval(3,2).pow(gup[0],4).red().mul(vs));
+    }
+    const gdn = gs[mod(nr+i,edo)];
+    var gdnSymb;
+    if (gdn.length > 0) {
+      gdnSymb = "v".repeat(i) + py.pySymb(Interval(3,2).pow(gdn[0],4).red().mul(vs));
+    }
+    // prefer non-neutral symbols over neutral ones
+    if (gupSymb && mod(gup[0],4) == 0) { ret = gupSymb; }
+    else if (gdnSymb && mod(gdn[0],4) == 0) { ret = gdnSymb; }
+    else if (gupSymb) { ret = gupSymb; }
+    else if (gdnSymb) { ret = gdnSymb; }
+  }
+  return ret.replace("n","~").replace("sA","~").replace("sd","~");
+}
+
 module['exports'].edoApprox = edoApprox;
 module['exports'].edoPy = edoPy;
 module['exports'].edoHasNeutrals = edoHasNeutrals;
 module['exports'].edoHasSemiNeutrals = edoHasSemiNeutrals;
+module['exports'].updnsSymb = updnsSymb;
 
 })(this);

@@ -1,1 +1,3 @@
 parse("12\\41 - cents(sqrt(3/2))")
+parse("M3\\12 - 1\\24")
+parse("(M2 + m2)\\12")
