@@ -57,7 +57,7 @@ fjsAccs ->
 
 fjsAcc ->
     posInt                        {% (d,_,reject) => ensureNo2Or3(Interval(d[0]),reject) %}
-  | "sqrt(" fjsAcc ")"            {% d => d[3].sqrt() %}
+  | "sqrt(" fjsAcc ")"            {% d => d[1].sqrt() %}
   | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
   | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
 

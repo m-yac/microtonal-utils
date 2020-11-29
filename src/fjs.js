@@ -54,8 +54,57 @@ function fjsFactor(a,b) {
   return ret;
 }
 
+/**
+  * Returns the FJS symbol of the given interval, or undefined if no such symbol
+  * exists
+  *
+  * @param {Interval} i
+  * @returns {String}
+  */
+function fjsSymb(a,b) {
+  const i = Interval(a,b);
+  var pyi = i;
+  var otos = [];
+  var utos = [];
+  for (let [p,e] of Object.entries(i)) {
+    if (p != 2 && p != 3) {
+      pyi = pyi.div(fjsComma(p).pow(e));
+      // add otonal accidentals
+      while (e >= 1) {
+        otos.push(p);
+        e = e.sub(1);
+      }
+      if (e > 0 && e.d == 2) {
+        otos.push("sqrt(" + p + ")");
+      }
+      if (e > 0 && e.d > 2) {
+        otos.push("root" + e.d + "(" + p + ")");
+      }
+      // add utonal accidentals
+      while (e <= -1) {
+        utos.push(p);
+        e = e.add(1);
+      }
+      if (e < 0 && e.d == 2) {
+        utos.push("sqrt(" + p + ")");
+      }
+      if (e < 0 && e.d > 2) {
+        utos.push("root" + e.d + "(" + p + ")");
+      }
+    }
+  }
+  // If, after applying all the accidentals, the result is a non-neutral
+  // pythagorean interval then an FJS symbol exists for this interval
+  if (py.isPythagorean(pyi) && py.generator(pyi) % 4 == 0) {
+    const otoStr = otos.length == 0 ? "" : "^" + otos.join("");
+    const utoStr = utos.length == 0 ? "" : "_" + utos.join("");
+    return py.pySymb(pyi) + otoStr + utoStr;
+  }
+}
+
 module['exports'].fjsRoT = fjsRoT;
 module['exports'].fjsComma = fjsComma;
 module['exports'].fjsFactor = fjsFactor;
+module['exports'].fjsSymb = fjsSymb;
 
 })(this);
