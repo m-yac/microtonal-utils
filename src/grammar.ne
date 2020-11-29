@@ -25,20 +25,35 @@ function ensureNo2Or3(i,reject) {
   return (i['2'] && i['2'] != 0) || (i['3'] && i['3'] != 0) ? reject : i;
 }
 
+function cbnEDOs(a,b) {
+  if (a && b) { return Fraction(1,a).gcd(1,b).d; }
+  else { return null; }
+}
+
 %}
 
 @builtin "whitespace.ne"
 
 top1 -> _ top2 _ {% d => d[1] %}
 top2 ->
-    itvSymb   {% d => ["symb", d[0]] %}
-  | itvExpr1  {% d => ["interval", d[0]] %}
-  | ctsExpr1  {% d => ["cents", d[0]] %}
+    symbExpr1  {% d => ["symb", d[0]] %}
+  | itvExpr1   {% d => ["interval", d[0]] %}
+  | ctsExpr1   {% d => ["cents", d[0]] %}
 
 # ------------------
 # Interval symbols
 
-itvSymb ->
+symbExpr1 ->
+    "red"  _ "(" _ symbExpr1 _ ")"                   {% d => d[4].red() %}
+  | "reb"  _ "(" _ symbExpr1 _ ")"                   {% d => d[4].reb() %}
+  | "red"  _ "(" _ symbExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].red(d[8]) %}
+  | "reb"  _ "(" _ symbExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
+  | symbExpr2                                        {% id %}
+symbExpr2 ->
+    symb                                             {% id %}
+  | "(" _ symbExpr1 _ ")"                            {% d => d[2] %}
+
+symb ->
     fjsItv   {% id %}
   | npyItv   {% id %}
   | snpyItv  {% id %}
@@ -107,12 +122,12 @@ itvExpr2 ->
     itvExpr4 _ "^" _ frcExpr3                       {% d => d[0].pow(d[4]) %}
   | "sqrt" _ "(" _ itvExpr1 _ ")"                   {% d => d[4].sqrt() %}
   | "red"  _ "(" _ itvExpr1 _ ")"                   {% d => d[4].red() %}
-  | "red"  _ "(" _ itvExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].red(d[8]) %}
   | "reb"  _ "(" _ itvExpr1 _ ")"                   {% d => d[4].reb() %}
+  | "red"  _ "(" _ itvExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].red(d[8]) %}
   | "reb"  _ "(" _ itvExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
   | itvExpr3                                        {% id %}
 itvExpr3 ->
-    itvSymb                                         {% id %}
+    symb                                            {% id %}
   | itvExpr4                                        {% id %}
 itvExpr4 ->
     posInt                                          {% d => Interval(d[0]) %}
@@ -122,25 +137,25 @@ itvExpr4 ->
 # Cents expressions
 
 ctsExpr1 ->
-    ctsExpr1 _ "+" _ ctsExpr2                        {% d => d[0].mul(d[4]) %}
-  | ctsExpr1 _ "-" _ ctsExpr2                        {% d => d[0].div(d[4]) %}
+    ctsExpr1 _ "+" _ ctsExpr2                        {% d => [cbnEDOs(d[0][0],d[4][0]), d[0][1].mul(d[4][1])] %}
+  | ctsExpr1 _ "-" _ ctsExpr2                        {% d => [cbnEDOs(d[0][0],d[4][0]), d[0][1].div(d[4][1])] %}
   | ctsExpr2                                         {% id %}
 ctsExpr2 ->
-    ctsExpr3 _ "x" _ frcExpr3                        {% d => d[0].pow(d[4]) %}
-  | frcExpr3 _ "x" _ ctsExpr3                        {% d => d[4].pow(d[0]) %}
+    ctsExpr3 _ "x" _ frcExpr3                        {% d => [d[0][0], d[0][1].pow(d[4])] %}
+  | frcExpr3 _ "x" _ ctsExpr3                        {% d => [d[4][0], d[4][1].pow(d[0])] %}
   | ctsExpr3                                         {% id %}
 ctsExpr3 ->
-    "cents" _ "(" _ itvExpr1 _ ")"                   {% d => d[4] %}
-  | "red"   _ "(" _ ctsExpr1 _ ")"                   {% d => d[4].red() %}
-  | "red"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].red(d[8]) %}
-  | "reb"   _ "(" _ ctsExpr1 _ ")"                   {% d => d[4].reb() %}
-  | "reb"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
-  | itvSymb                                          {% id %}
+    "cents" _ "(" _ itvExpr1 _ ")"                   {% d => [null, d[4]] %}
+  | "red"   _ "(" _ ctsExpr1 _ ")"                   {% d => [d[4][0], d[4][1].red()] %}
+  | "reb"   _ "(" _ ctsExpr1 _ ")"                   {% d => [d[4][0], d[4][1].reb()] %}
+  | "red"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => [d[8].equals(2) ? d[4][0] : null, d[4][1].red(d[8])] %}
+  | "reb"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => [d[8].equals(2) ? d[4][0] : null, d[4][1].reb(d[8])] %}
+  | symb                                             {% d => [null, d[0]] %}
   | decimal "c"
-    {% d => Interval(2).pow(Fraction(d[0]).div(1200)) %}
+    {% d => [null, Interval(2).pow(Fraction(d[0]).div(1200))] %}
   | edoExpr3 _ "\\" _ posInt
     {% (d,_,reject) => d[0](d[4]) == reject ? reject :
-         Interval(2).pow(Fraction(d[0](d[4])).div(Fraction(d[4]))) %}
+         [d[4], Interval(2).pow(Fraction(d[0](d[4])).div(Fraction(d[4])))] %}
   | "(" _ ctsExpr1 _ ")"                             {% d => d[2] %}
 
 # ----------------------

@@ -42,7 +42,8 @@ function isPythagorean(a,b) {
   const i = new Interval(a,b);
   const e2 = (i['2'] || Fraction(0));
   const e3 = (i['3'] || Fraction(0));
-  return e3.mul(4).d == 1 && e2.add(e3).d == 1;
+  return Object.entries(i).length == (!!i['2'] + !!i['3'])
+         && e3.mul(4).d == 1 && e2.add(e3).d == 1;
 }
 
 /**

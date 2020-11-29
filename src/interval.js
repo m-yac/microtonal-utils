@@ -209,9 +209,9 @@ Interval.prototype = {
    * given or is undefined, it is taken to be 2 (an octave).
    */
   "red": function(a,b) {
-    const rhs = Interval(2);
+    var rhs = new Interval(2);
     if (a || b) {
-      rhs = parse(a,b);
+      rhs = new Interval(a,b);
     }
     // the exponent of the closest power of `rhs` to `this`
     const logval = Math.log(this.valueOf()) / Math.log(rhs.valueOf());
@@ -231,9 +231,9 @@ Interval.prototype = {
    * argument is not given or is undefined, it is taken to be 2 (an octave).
    */
   "reb": function(a,b) {
-    const rhs = Interval(2);
+    var rhs = new Interval(2);
     if (a || b) {
-      rhs = parse(a,b);
+      rhs = new Interval (a,b);
     }
     // the exponent of the closest half-power of `rhs` to `this`
     const logval = Math.log(this.valueOf()) / Math.log(rhs.valueOf());
