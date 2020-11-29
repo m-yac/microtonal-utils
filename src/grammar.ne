@@ -2,14 +2,9 @@
 
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
-const {pyInterval} = require('./pythagorean.js');
+const {pyInterval, redDeg, isPerfectDeg} = require('./pythagorean.js');
 const {fjsFactor} = require('./fjs.js');
-const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('./upsdowns.js');
-
-function isPerfectDeg(d) {
-  const redDeg = (d-1) % 7 + 1;
-  return redDeg == 1 || redDeg == 4 || redDeg == 5;
-}
+const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('./edo.js');
 
 function perfPyInterval(d,o,reject) {
   return isPerfectDeg(d) ? pyInterval(d,o) : reject;
@@ -36,9 +31,17 @@ function ensureNo2Or3(i,reject) {
 
 top1 -> _ top2 _ {% d => d[1] %}
 top2 ->
-    fjsItv    {% d => ["FJS", d[0]] %}
+    itvSymb   {% d => ["symb", d[0]] %}
   | itvExpr1  {% d => ["interval", d[0]] %}
   | ctsExpr1  {% d => ["cents", d[0]] %}
+
+# ------------------
+# Interval symbols
+
+itvSymb ->
+    fjsItv   {% id %}
+  | npyItv   {% id %}
+  | snpyItv  {% id %}
 
 # ---------------
 # FJS intervals
@@ -63,31 +66,35 @@ fjsAcc ->
 
 pyItv ->
   # perfect intervals
-    "P"  posInt {% (d,_,reject) => perfPyInterval(d[1],0,reject) %}
+    "P"  pyDeg {% (d,_,reject) => perfPyInterval(d[1],0,reject) %}
   # major and minor intervals
-  | "M"  posInt {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,2),reject) %}
-  | "m"  posInt {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,2),reject) %}
+  | "M"  pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,2),reject) %}
+  | "m"  pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,2),reject) %}
   # augmented and diminished intervals
-  | "A":+ posInt {% (d,_,reject) => augOrDimPyInterval(d[1],d[0].length,1,reject) %}
-  | "d":+ posInt {% (d,_,reject) => augOrDimPyInterval(d[1],-d[0].length,1,reject) %}
-  | posInt "A" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject) %}
-  | posInt "d" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject) %}
+  | "A":+ pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],d[0].length,1,reject) %}
+  | "d":+ pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],-d[0].length,1,reject) %}
+  | posInt "A" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject) %}
+  | posInt "d" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject) %}
 
 npyItv ->
   # neutral intervals
-    "n"i posInt {% (d,_,reject) => nonPerfPyInterval(d[1],0,reject) %}
+    "n"i pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],0,reject) %}
   # semi-augmented and semi-diminished intervals
-  | "sA" posInt {% (d,_,reject) => augOrDimPyInterval(d[1],1,2,reject) %}
-  | "sd" posInt {% (d,_,reject) => augOrDimPyInterval(d[1],-1,2,reject) %}
-  | posInt "/2-A" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject) %}
-  | posInt "/2-d" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject) %}
+  | "sA" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],1,2,reject) %}
+  | "sd" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],-1,2,reject) %}
+  | posInt "/2-A" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject) %}
+  | posInt "/2-d" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject) %}
 
 snpyItv ->
   # semi-neutral intervals
-    "sM" posInt {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,4),reject) %}
-  | "sm" posInt {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,4),reject) %}
-  | posInt "/4-A" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
-  | posInt "/4-d" posInt {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
+    "sM" pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,4),reject) %}
+  | "sm" pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,4),reject) %}
+  | posInt "/4-A" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
+  | posInt "/4-d" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
+
+pyDeg ->
+    posInt      {% d => parseInt(d[0]) %}
+  | "-" posInt  {% d => -parseInt(d[1]) %}
 
 # ----------------------
 # Interval expressions
@@ -105,7 +112,7 @@ itvExpr2 ->
   | "reb"  _ "(" _ itvExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
   | itvExpr3                                        {% id %}
 itvExpr3 ->
-    fjsItv                                          {% id %}
+    itvSymb                                         {% id %}
   | itvExpr4                                        {% id %}
 itvExpr4 ->
     posInt                                          {% d => Interval(d[0]) %}
@@ -128,7 +135,7 @@ ctsExpr3 ->
   | "red"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].red(d[8]) %}
   | "reb"   _ "(" _ ctsExpr1 _ ")"                   {% d => d[4].reb() %}
   | "reb"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
-  | fjsItv                                           {% id %}
+  | itvSymb                                          {% id %}
   | decimal "c"
     {% d => Interval(2).pow(Fraction(d[0]).div(1200)) %}
   | edoExpr3 _ "\\" _ posInt
@@ -160,9 +167,9 @@ edoExpr3 ->
   # semi-diminished fifths
   | upsDns "~" posInt
     {% (d,_,reject) => edo =>
-         !edoHasNeutrals(edo) || (d[2]-1)%7 == 0 ? reject :
-           (d[2]-1)%7+1 == 4 ? d[0] + edoPy(edo,pyInterval(d[2],1,2)) :
-           (d[2]-1)%7+1 == 5 ? d[0] + edoPy(edo,pyInterval(d[2],-1,2)) :
+         !edoHasNeutrals(edo) || redDeg(d[2]) == 1 ? reject :
+           redDeg(d[2]) == 4 ? d[0] + edoPy(edo,pyInterval(d[2],1,2)) :
+           redDeg(d[2]) == 5 ? d[0] + edoPy(edo,pyInterval(d[2],-1,2)) :
                                d[0] + edoPy(edo,pyInterval(d[2],0)) %}
   | "(" _ edoExpr1 _ ")"       {% d => d[2] %}
 
