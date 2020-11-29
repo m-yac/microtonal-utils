@@ -252,7 +252,9 @@ Interval.prototype = {
    * Converts an interval to its value in cents
    */
   "toCents": function() {
-    return Math.log(this.valueOf()) / Math.log(2) * 1200
+    const e2 = this['2'] || Fraction(0);
+    var this_no2 = this.div(Interval(2).pow(e2));
+    return (e2.valueOf() + Math.log(this_no2.valueOf()) / Math.log(2)) * 1200;
   }
 
 }

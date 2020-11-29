@@ -94,7 +94,7 @@ snpyItv ->
 
 pyDeg ->
     posInt      {% d => parseInt(d[0]) %}
-  | "-" posInt  {% d => -parseInt(d[1]) %}
+  | "-" posInt  {% d => - parseInt(d[1]) %}
 
 # ----------------------
 # Interval expressions
@@ -151,10 +151,13 @@ edoExpr1 ->
   | edoExpr1 _ "-" _ edoExpr2  {% d => edo => d[0](edo) - d[4](edo) %}
   | edoExpr2                   {% id %}
 edoExpr2 ->
-    edoExpr3 _ "x" _ intExpr1  {% d => edo => d[0](edo) * d[4](edo) %}
-  | intExpr1 _ "x" _ edoExpr3  {% d => edo => d[4](edo) * d[0](edo) %}
+    edoExpr3 _ "x" _ intExpr1  {% d => edo => d[0](edo) * d[4] %}
+  | intExpr1 _ "x" _ edoExpr3  {% d => edo => d[0] * d[4](edo) %}
   | edoExpr3                   {% id %}
 edoExpr3 ->
+    "-" _ edoExpr4             {% d => edo => - d[2](edo) %}
+  | edoExpr4                   {% id %}
+edoExpr4 ->
     posInt                     {% d => _ => parseInt(d[0]) %}
   | upsDns pyItv               {% d => edo => d[0] + edoPy(edo,d[1]) %}
   | upsDns npyItv

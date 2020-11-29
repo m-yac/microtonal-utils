@@ -87,7 +87,7 @@ var grammar = {
     {"name": "snpyItv$string$4", "symbols": [{"literal":"/"}, {"literal":"4"}, {"literal":"-"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "snpyItv", "symbols": ["posInt", "snpyItv$string$4", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject)},
     {"name": "pyDeg", "symbols": ["posInt"], "postprocess": d => parseInt(d[0])},
-    {"name": "pyDeg", "symbols": [{"literal":"-"}, "posInt"], "postprocess": d => -parseInt(d[1])},
+    {"name": "pyDeg", "symbols": [{"literal":"-"}, "posInt"], "postprocess": d => - parseInt(d[1])},
     {"name": "itvExpr1", "symbols": ["itvExpr1", "_", {"literal":"*"}, "_", "itvExpr2"], "postprocess": d => d[0].mul(d[4])},
     {"name": "itvExpr1", "symbols": ["itvExpr1", "_", {"literal":"/"}, "_", "itvExpr2"], "postprocess": d => d[0].div(d[4])},
     {"name": "itvExpr1", "symbols": ["itvExpr2"], "postprocess": id},
@@ -131,21 +131,23 @@ var grammar = {
     {"name": "edoExpr1", "symbols": ["edoExpr1", "_", {"literal":"+"}, "_", "edoExpr2"], "postprocess": d => edo => d[0](edo) + d[4](edo)},
     {"name": "edoExpr1", "symbols": ["edoExpr1", "_", {"literal":"-"}, "_", "edoExpr2"], "postprocess": d => edo => d[0](edo) - d[4](edo)},
     {"name": "edoExpr1", "symbols": ["edoExpr2"], "postprocess": id},
-    {"name": "edoExpr2", "symbols": ["edoExpr3", "_", {"literal":"x"}, "_", "intExpr1"], "postprocess": d => edo => d[0](edo) * d[4](edo)},
-    {"name": "edoExpr2", "symbols": ["intExpr1", "_", {"literal":"x"}, "_", "edoExpr3"], "postprocess": d => edo => d[4](edo) * d[0](edo)},
+    {"name": "edoExpr2", "symbols": ["edoExpr3", "_", {"literal":"x"}, "_", "intExpr1"], "postprocess": d => edo => d[0](edo) * d[4]},
+    {"name": "edoExpr2", "symbols": ["intExpr1", "_", {"literal":"x"}, "_", "edoExpr3"], "postprocess": d => edo => d[0] * d[4](edo)},
     {"name": "edoExpr2", "symbols": ["edoExpr3"], "postprocess": id},
-    {"name": "edoExpr3", "symbols": ["posInt"], "postprocess": d => _ => parseInt(d[0])},
-    {"name": "edoExpr3", "symbols": ["upsDns", "pyItv"], "postprocess": d => edo => d[0] + edoPy(edo,d[1])},
-    {"name": "edoExpr3", "symbols": ["upsDns", "npyItv"], "postprocess":  (d,_,reject) => edo =>
+    {"name": "edoExpr3", "symbols": [{"literal":"-"}, "_", "edoExpr4"], "postprocess": d => edo => - d[2](edo)},
+    {"name": "edoExpr3", "symbols": ["edoExpr4"], "postprocess": id},
+    {"name": "edoExpr4", "symbols": ["posInt"], "postprocess": d => _ => parseInt(d[0])},
+    {"name": "edoExpr4", "symbols": ["upsDns", "pyItv"], "postprocess": d => edo => d[0] + edoPy(edo,d[1])},
+    {"name": "edoExpr4", "symbols": ["upsDns", "npyItv"], "postprocess":  (d,_,reject) => edo =>
         !edoHasNeutrals(edo) ? reject : d[0] + edoPy(edo,d[1]) },
-    {"name": "edoExpr3", "symbols": ["upsDns", "snpyItv"], "postprocess":  (d,_,reject) => edo =>
+    {"name": "edoExpr4", "symbols": ["upsDns", "snpyItv"], "postprocess":  (d,_,reject) => edo =>
         !edoHasSemiNeutrals(edo) ? reject : d[0] + edoPy(edo,d[1]) },
-    {"name": "edoExpr3", "symbols": ["upsDns", {"literal":"~"}, "posInt"], "postprocess":  (d,_,reject) => edo =>
+    {"name": "edoExpr4", "symbols": ["upsDns", {"literal":"~"}, "posInt"], "postprocess":  (d,_,reject) => edo =>
         !edoHasNeutrals(edo) || redDeg(d[2]) == 1 ? reject :
           redDeg(d[2]) == 4 ? d[0] + edoPy(edo,pyInterval(d[2],1,2)) :
           redDeg(d[2]) == 5 ? d[0] + edoPy(edo,pyInterval(d[2],-1,2)) :
                               d[0] + edoPy(edo,pyInterval(d[2],0)) },
-    {"name": "edoExpr3", "symbols": [{"literal":"("}, "_", "edoExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
+    {"name": "edoExpr4", "symbols": [{"literal":"("}, "_", "edoExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
     {"name": "upsDns", "symbols": [], "postprocess": d => 0},
     {"name": "upsDns$ebnf$1", "symbols": [{"literal":"^"}]},
     {"name": "upsDns$ebnf$1", "symbols": ["upsDns$ebnf$1", {"literal":"^"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
