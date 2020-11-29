@@ -6,33 +6,10 @@ function id(x) { return x[0]; }
 
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
-const {pyInterval, redDeg, isPerfectDeg} = require('./pythagorean.js');
+const {pyInterval, redDeg} = require('./pythagorean.js');
 const {fjsFactor} = require('./fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('./edo.js');
-
-function perfPyInterval(d,o,reject) {
-  return isPerfectDeg(d) ? pyInterval(d,o) : reject;
-}
-function nonPerfPyInterval(d,o,reject) {
-  return isPerfectDeg(d) ? reject : pyInterval(d,o);
-}
-function augOrDimPyInterval(d,a,b,reject) {
-  const o = Fraction(a,b);
-  if (o.d != b) {
-    return reject;
-  }
-  const o_np = o.add(o.s,2);
-  return isPerfectDeg(d) ? pyInterval(d,o) : pyInterval(d,o_np);
-}
-
-function ensureNo2Or3(i,reject) {
-  return (i['2'] && i['2'] != 0) || (i['3'] && i['3'] != 0) ? reject : i;
-}
-
-function cbnEDOs(a,b) {
-  if (a && b) { return Fraction(1,a).gcd(1,b).d; }
-  else { return null; }
-}
+const helpers = require('./grammar-helpers.js');
 
 var grammar = {
     Lexer: undefined,
@@ -62,46 +39,48 @@ var grammar = {
     {"name": "symb", "symbols": ["fjsItv"], "postprocess": id},
     {"name": "symb", "symbols": ["npyItv"], "postprocess": id},
     {"name": "symb", "symbols": ["snpyItv"], "postprocess": id},
+    {"name": "symb$string$1", "symbols": [{"literal":"T"}, {"literal":"T"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "symb", "symbols": ["symb$string$1"], "postprocess": _ => Interval(2).sqrt()},
     {"name": "fjsItv", "symbols": ["pyItv"], "postprocess": id},
     {"name": "fjsItv", "symbols": ["fjsItv", {"literal":"^"}, "fjsAccs"], "postprocess": d => d[0].mul(d[2])},
     {"name": "fjsItv", "symbols": ["fjsItv", {"literal":"_"}, "fjsAccs"], "postprocess": d => d[0].div(d[2])},
     {"name": "fjsAccs", "symbols": ["fjsAcc"], "postprocess": d => fjsFactor(d[0])},
     {"name": "fjsAccs", "symbols": ["fjsAccs", {"literal":","}, "fjsAcc"], "postprocess": d => d[0].mul(fjsFactor(d[2]))},
-    {"name": "fjsAcc", "symbols": ["posInt"], "postprocess": (d,_,reject) => ensureNo2Or3(Interval(d[0]),reject)},
+    {"name": "fjsAcc", "symbols": ["posInt"], "postprocess": (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject)},
     {"name": "fjsAcc$string$1", "symbols": [{"literal":"s"}, {"literal":"q"}, {"literal":"r"}, {"literal":"t"}, {"literal":"("}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "fjsAcc", "symbols": ["fjsAcc$string$1", "fjsAcc", {"literal":")"}], "postprocess": d => d[1].sqrt()},
     {"name": "fjsAcc$string$2", "symbols": [{"literal":"r"}, {"literal":"o"}, {"literal":"o"}, {"literal":"t"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "fjsAcc", "symbols": ["fjsAcc$string$2", "posInt", {"literal":"("}, "fjsAcc", {"literal":")"}], "postprocess": d => d[3].root(d[1])},
     {"name": "fjsAcc", "symbols": [{"literal":"("}, "fjsAcc", {"literal":"^"}, "frcExpr3", {"literal":")"}], "postprocess": d => d[1].pow(d[3])},
-    {"name": "pyItv", "symbols": [{"literal":"P"}, "pyDeg"], "postprocess": (d,_,reject) => perfPyInterval(d[1],0,reject)},
-    {"name": "pyItv", "symbols": [{"literal":"M"}, "pyDeg"], "postprocess": (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,2),reject)},
-    {"name": "pyItv", "symbols": [{"literal":"m"}, "pyDeg"], "postprocess": (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,2),reject)},
+    {"name": "pyItv", "symbols": [{"literal":"P"}, "pyDeg"], "postprocess": (d,_,reject) => helpers.perfPyInterval(d[1],0,reject)},
+    {"name": "pyItv", "symbols": [{"literal":"M"}, "pyDeg"], "postprocess": (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(1,2),reject)},
+    {"name": "pyItv", "symbols": [{"literal":"m"}, "pyDeg"], "postprocess": (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(-1,2),reject)},
     {"name": "pyItv$ebnf$1", "symbols": [{"literal":"A"}]},
     {"name": "pyItv$ebnf$1", "symbols": ["pyItv$ebnf$1", {"literal":"A"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "pyItv", "symbols": ["pyItv$ebnf$1", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[1],d[0].length,1,reject)},
+    {"name": "pyItv", "symbols": ["pyItv$ebnf$1", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[1],d[0].length,1,reject)},
     {"name": "pyItv$ebnf$2", "symbols": [{"literal":"d"}]},
     {"name": "pyItv$ebnf$2", "symbols": ["pyItv$ebnf$2", {"literal":"d"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "pyItv", "symbols": ["pyItv$ebnf$2", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[1],-d[0].length,1,reject)},
-    {"name": "pyItv", "symbols": ["posInt", {"literal":"A"}, "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject)},
-    {"name": "pyItv", "symbols": ["posInt", {"literal":"d"}, "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject)},
+    {"name": "pyItv", "symbols": ["pyItv$ebnf$2", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[1],-d[0].length,1,reject)},
+    {"name": "pyItv", "symbols": ["posInt", {"literal":"A"}, "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],1,reject)},
+    {"name": "pyItv", "symbols": ["posInt", {"literal":"d"}, "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],1,reject)},
     {"name": "npyItv$subexpression$1", "symbols": [/[nN]/], "postprocess": function(d) {return d.join(""); }},
-    {"name": "npyItv", "symbols": ["npyItv$subexpression$1", "pyDeg"], "postprocess": (d,_,reject) => nonPerfPyInterval(d[1],0,reject)},
+    {"name": "npyItv", "symbols": ["npyItv$subexpression$1", "pyDeg"], "postprocess": (d,_,reject) => helpers.nonPerfPyInterval(d[1],0,reject)},
     {"name": "npyItv$string$1", "symbols": [{"literal":"s"}, {"literal":"A"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "npyItv", "symbols": ["npyItv$string$1", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[1],1,2,reject)},
+    {"name": "npyItv", "symbols": ["npyItv$string$1", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[1],1,2,reject)},
     {"name": "npyItv$string$2", "symbols": [{"literal":"s"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "npyItv", "symbols": ["npyItv$string$2", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[1],-1,2,reject)},
+    {"name": "npyItv", "symbols": ["npyItv$string$2", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[1],-1,2,reject)},
     {"name": "npyItv$string$3", "symbols": [{"literal":"/"}, {"literal":"2"}, {"literal":"-"}, {"literal":"A"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "npyItv", "symbols": ["posInt", "npyItv$string$3", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject)},
+    {"name": "npyItv", "symbols": ["posInt", "npyItv$string$3", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],2,reject)},
     {"name": "npyItv$string$4", "symbols": [{"literal":"/"}, {"literal":"2"}, {"literal":"-"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "npyItv", "symbols": ["posInt", "npyItv$string$4", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject)},
+    {"name": "npyItv", "symbols": ["posInt", "npyItv$string$4", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],2,reject)},
     {"name": "snpyItv$string$1", "symbols": [{"literal":"s"}, {"literal":"M"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "snpyItv", "symbols": ["snpyItv$string$1", "pyDeg"], "postprocess": (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,4),reject)},
+    {"name": "snpyItv", "symbols": ["snpyItv$string$1", "pyDeg"], "postprocess": (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(1,4),reject)},
     {"name": "snpyItv$string$2", "symbols": [{"literal":"s"}, {"literal":"m"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "snpyItv", "symbols": ["snpyItv$string$2", "pyDeg"], "postprocess": (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,4),reject)},
+    {"name": "snpyItv", "symbols": ["snpyItv$string$2", "pyDeg"], "postprocess": (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(-1,4),reject)},
     {"name": "snpyItv$string$3", "symbols": [{"literal":"/"}, {"literal":"4"}, {"literal":"-"}, {"literal":"A"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "snpyItv", "symbols": ["posInt", "snpyItv$string$3", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject)},
+    {"name": "snpyItv", "symbols": ["posInt", "snpyItv$string$3", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject)},
     {"name": "snpyItv$string$4", "symbols": [{"literal":"/"}, {"literal":"4"}, {"literal":"-"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "snpyItv", "symbols": ["posInt", "snpyItv$string$4", "pyDeg"], "postprocess": (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject)},
+    {"name": "snpyItv", "symbols": ["posInt", "snpyItv$string$4", "pyDeg"], "postprocess": (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject)},
     {"name": "pyDeg", "symbols": ["posInt"], "postprocess": d => parseInt(d[0])},
     {"name": "pyDeg", "symbols": [{"literal":"-"}, "posInt"], "postprocess": d => - parseInt(d[1])},
     {"name": "itvExpr1", "symbols": ["itvExpr1", "_", {"literal":"*"}, "_", "itvExpr2"], "postprocess": d => d[0].mul(d[4])},
@@ -123,8 +102,8 @@ var grammar = {
     {"name": "itvExpr3", "symbols": ["itvExpr4"], "postprocess": id},
     {"name": "itvExpr4", "symbols": ["posInt"], "postprocess": d => Interval(d[0])},
     {"name": "itvExpr4", "symbols": [{"literal":"("}, "_", "itvExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
-    {"name": "ctsExpr1", "symbols": ["ctsExpr1", "_", {"literal":"+"}, "_", "ctsExpr2"], "postprocess": d => [cbnEDOs(d[0][0],d[4][0]), d[0][1].mul(d[4][1])]},
-    {"name": "ctsExpr1", "symbols": ["ctsExpr1", "_", {"literal":"-"}, "_", "ctsExpr2"], "postprocess": d => [cbnEDOs(d[0][0],d[4][0]), d[0][1].div(d[4][1])]},
+    {"name": "ctsExpr1", "symbols": ["ctsExpr1", "_", {"literal":"+"}, "_", "ctsExpr2"], "postprocess": d => [helpers.cbnEDOs(d[0][0],d[4][0]), d[0][1].mul(d[4][1])]},
+    {"name": "ctsExpr1", "symbols": ["ctsExpr1", "_", {"literal":"-"}, "_", "ctsExpr2"], "postprocess": d => [helpers.cbnEDOs(d[0][0],d[4][0]), d[0][1].div(d[4][1])]},
     {"name": "ctsExpr1", "symbols": ["ctsExpr2"], "postprocess": id},
     {"name": "ctsExpr2", "symbols": ["ctsExpr3", "_", {"literal":"x"}, "_", "frcExpr3"], "postprocess": d => [d[0][0], d[0][1].pow(d[4])]},
     {"name": "ctsExpr2", "symbols": ["frcExpr3", "_", {"literal":"x"}, "_", "ctsExpr3"], "postprocess": d => [d[4][0], d[4][1].pow(d[0])]},
@@ -163,6 +142,8 @@ var grammar = {
           redDeg(d[2]) == 4 ? d[0] + edoPy(edo,pyInterval(d[2],1,2)) :
           redDeg(d[2]) == 5 ? d[0] + edoPy(edo,pyInterval(d[2],-1,2)) :
                               d[0] + edoPy(edo,pyInterval(d[2],0)) },
+    {"name": "edoExpr4$string$1", "symbols": [{"literal":"T"}, {"literal":"T"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "edoExpr4", "symbols": ["edoExpr4$string$1"], "postprocess": (d,_,reject) => edo => edo % 2 == 0 ? edo/2 : reject},
     {"name": "edoExpr4", "symbols": [{"literal":"("}, "_", "edoExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
     {"name": "upsDns", "symbols": [], "postprocess": d => 0},
     {"name": "upsDns$ebnf$1", "symbols": [{"literal":"^"}]},

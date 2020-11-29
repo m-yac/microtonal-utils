@@ -2,33 +2,10 @@
 
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
-const {pyInterval, redDeg, isPerfectDeg} = require('./pythagorean.js');
+const {pyInterval, redDeg} = require('./pythagorean.js');
 const {fjsFactor} = require('./fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('./edo.js');
-
-function perfPyInterval(d,o,reject) {
-  return isPerfectDeg(d) ? pyInterval(d,o) : reject;
-}
-function nonPerfPyInterval(d,o,reject) {
-  return isPerfectDeg(d) ? reject : pyInterval(d,o);
-}
-function augOrDimPyInterval(d,a,b,reject) {
-  const o = Fraction(a,b);
-  if (o.d != b) {
-    return reject;
-  }
-  const o_np = o.add(o.s,2);
-  return isPerfectDeg(d) ? pyInterval(d,o) : pyInterval(d,o_np);
-}
-
-function ensureNo2Or3(i,reject) {
-  return (i['2'] && i['2'] != 0) || (i['3'] && i['3'] != 0) ? reject : i;
-}
-
-function cbnEDOs(a,b) {
-  if (a && b) { return Fraction(1,a).gcd(1,b).d; }
-  else { return null; }
-}
+const helpers = require('./grammar-helpers.js');
 
 %}
 
@@ -57,6 +34,7 @@ symb ->
     fjsItv   {% id %}
   | npyItv   {% id %}
   | snpyItv  {% id %}
+  | "TT"     {% _ => Interval(2).sqrt() %}
 
 # ---------------
 # FJS intervals
@@ -71,7 +49,7 @@ fjsAccs ->
   | fjsAccs "," fjsAcc  {% d => d[0].mul(fjsFactor(d[2])) %}
 
 fjsAcc ->
-    posInt                        {% (d,_,reject) => ensureNo2Or3(Interval(d[0]),reject) %}
+    posInt                        {% (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject) %}
   | "sqrt(" fjsAcc ")"            {% d => d[1].sqrt() %}
   | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
   | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
@@ -81,31 +59,31 @@ fjsAcc ->
 
 pyItv ->
   # perfect intervals
-    "P"  pyDeg {% (d,_,reject) => perfPyInterval(d[1],0,reject) %}
+    "P"  pyDeg {% (d,_,reject) => helpers.perfPyInterval(d[1],0,reject) %}
   # major and minor intervals
-  | "M"  pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,2),reject) %}
-  | "m"  pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,2),reject) %}
+  | "M"  pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(1,2),reject) %}
+  | "m"  pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(-1,2),reject) %}
   # augmented and diminished intervals
-  | "A":+ pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],d[0].length,1,reject) %}
-  | "d":+ pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],-d[0].length,1,reject) %}
-  | posInt "A" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject) %}
-  | posInt "d" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],1,reject) %}
+  | "A":+ pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],d[0].length,1,reject) %}
+  | "d":+ pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],-d[0].length,1,reject) %}
+  | posInt "A" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],1,reject) %}
+  | posInt "d" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],1,reject) %}
 
 npyItv ->
   # neutral intervals
-    "n"i pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],0,reject) %}
+    "n"i pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],0,reject) %}
   # semi-augmented and semi-diminished intervals
-  | "sA" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],1,2,reject) %}
-  | "sd" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[1],-1,2,reject) %}
-  | posInt "/2-A" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject) %}
-  | posInt "/2-d" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],2,reject) %}
+  | "sA" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],1,2,reject) %}
+  | "sd" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],-1,2,reject) %}
+  | posInt "/2-A" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],2,reject) %}
+  | posInt "/2-d" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],2,reject) %}
 
 snpyItv ->
   # semi-neutral intervals
-    "sM" pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(1,4),reject) %}
-  | "sm" pyDeg {% (d,_,reject) => nonPerfPyInterval(d[1],Fraction(-1,4),reject) %}
-  | posInt "/4-A" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
-  | posInt "/4-d" pyDeg {% (d,_,reject) => augOrDimPyInterval(d[2],d[0],4,reject) %}
+    "sM" pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(1,4),reject) %}
+  | "sm" pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(-1,4),reject) %}
+  | posInt "/4-A" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject) %}
+  | posInt "/4-d" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject) %}
 
 pyDeg ->
     posInt      {% d => parseInt(d[0]) %}
@@ -137,8 +115,8 @@ itvExpr4 ->
 # Cents expressions
 
 ctsExpr1 ->
-    ctsExpr1 _ "+" _ ctsExpr2                        {% d => [cbnEDOs(d[0][0],d[4][0]), d[0][1].mul(d[4][1])] %}
-  | ctsExpr1 _ "-" _ ctsExpr2                        {% d => [cbnEDOs(d[0][0],d[4][0]), d[0][1].div(d[4][1])] %}
+    ctsExpr1 _ "+" _ ctsExpr2                        {% d => [helpers.cbnEDOs(d[0][0],d[4][0]), d[0][1].mul(d[4][1])] %}
+  | ctsExpr1 _ "-" _ ctsExpr2                        {% d => [helpers.cbnEDOs(d[0][0],d[4][0]), d[0][1].div(d[4][1])] %}
   | ctsExpr2                                         {% id %}
 ctsExpr2 ->
     ctsExpr3 _ "x" _ frcExpr3                        {% d => [d[0][0], d[0][1].pow(d[4])] %}
@@ -151,11 +129,10 @@ ctsExpr3 ->
   | "red"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => [d[8].equals(2) ? d[4][0] : null, d[4][1].red(d[8])] %}
   | "reb"   _ "(" _ ctsExpr1 _ "," _ itvExpr1 _ ")"  {% d => [d[8].equals(2) ? d[4][0] : null, d[4][1].reb(d[8])] %}
   | symb                                             {% d => [null, d[0]] %}
-  | decimal "c"
-    {% d => [null, Interval(2).pow(Fraction(d[0]).div(1200))] %}
+  | decimal "c"                                      {% d => [null, Interval(2).pow(Fraction(d[0]).div(1200))] %}
   | edoExpr3 _ "\\" _ posInt
-    {% (d,_,reject) => d[0](d[4]) == reject ? reject :
-         [d[4], Interval(2).pow(Fraction(d[0](d[4])).div(Fraction(d[4])))] %}
+      {% (d,_,reject) => d[0](d[4]) == reject ? reject :
+           [d[4], Interval(2).pow(Fraction(d[0](d[4])).div(Fraction(d[4])))] %}
   | "(" _ ctsExpr1 _ ")"                             {% d => d[2] %}
 
 # ----------------------
@@ -189,6 +166,9 @@ edoExpr4 ->
            redDeg(d[2]) == 4 ? d[0] + edoPy(edo,pyInterval(d[2],1,2)) :
            redDeg(d[2]) == 5 ? d[0] + edoPy(edo,pyInterval(d[2],-1,2)) :
                                d[0] + edoPy(edo,pyInterval(d[2],0)) %}
+  # special notation for the tritone, if it exists
+  | "TT"
+      {% (d,_,reject) => edo => edo % 2 == 0 ? edo/2 : reject %}
   | "(" _ edoExpr1 _ ")"       {% d => d[2] %}
 
 upsDns ->
