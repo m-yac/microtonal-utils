@@ -1,5 +1,5 @@
 /**
- * @module upsdowns.js
+ * @module edo.js
  * Copyright (c) 2020, Matthew Yacavone (matthew [at] yacavone [dot] net)
  **/
 
