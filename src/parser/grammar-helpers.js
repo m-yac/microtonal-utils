@@ -2,10 +2,10 @@
 (function(root) {
 
 const Fraction = require('fraction.js');
-const Interval = require('./interval.js');
-const {pyInterval, redDeg, isPerfectDeg} = require('./pythagorean.js');
-const {fjsFactor} = require('./fjs.js');
-const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('./edo.js');
+const Interval = require('../interval.js');
+const {pyInterval, redDeg, isPerfectDeg} = require('../pythagorean.js');
+const {fjsFactor} = require('../fjs.js');
+const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 
 function perfPyInterval(d,o,reject) {
   return isPerfectDeg(d) ? pyInterval(d,o) : reject;

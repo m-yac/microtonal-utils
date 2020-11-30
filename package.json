@@ -1,13 +1,13 @@
 {
   "name": "microtonal-calculator",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "general-purpose calculator for microtonal music theory",
+  "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Matthew Yacavone",
   "license": "ISC",
   "dependencies": {
     "fraction.js": "^4.0.12",

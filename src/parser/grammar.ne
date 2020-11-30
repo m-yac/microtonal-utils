@@ -1,10 +1,10 @@
 @{%
 
 const Fraction = require('fraction.js');
-const Interval = require('./interval.js');
-const {pyInterval, redDeg} = require('./pythagorean.js');
-const {fjsFactor} = require('./fjs.js');
-const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('./edo.js');
+const Interval = require('../interval.js');
+const {pyInterval, redDeg} = require('../pythagorean.js');
+const {fjsFactor} = require('../fjs.js');
+const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
 
 %}
