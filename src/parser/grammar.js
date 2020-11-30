@@ -151,7 +151,7 @@ var grammar = {
     {"name": "upsDns", "symbols": ["upsDns$ebnf$1"], "postprocess": d => d[0].length},
     {"name": "upsDns$ebnf$2", "symbols": [{"literal":"v"}]},
     {"name": "upsDns$ebnf$2", "symbols": ["upsDns$ebnf$2", {"literal":"v"}], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "upsDns", "symbols": ["upsDns$ebnf$2"], "postprocess": d => d[0].length},
+    {"name": "upsDns", "symbols": ["upsDns$ebnf$2"], "postprocess": d => - d[0].length},
     {"name": "frcExpr1", "symbols": ["frcExpr1", "_", {"literal":"+"}, "_", "frcExpr2"], "postprocess": d => d[0].add(d[4])},
     {"name": "frcExpr1", "symbols": ["frcExpr1", "_", {"literal":"-"}, "_", "frcExpr2"], "postprocess": d => d[0].sub(d[4])},
     {"name": "frcExpr1", "symbols": ["frcExpr2"], "postprocess": id},

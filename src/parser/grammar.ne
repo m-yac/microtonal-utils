@@ -174,7 +174,7 @@ edoExpr4 ->
 upsDns ->
     null   {% d => 0 %}
   | "^":+  {% d => d[0].length %}
-  | "v":+  {% d => d[0].length %}
+  | "v":+  {% d => - d[0].length %}
 
 # -------------------------------------------------------
 # Fractional expressions (positive, negative, or zero!)
