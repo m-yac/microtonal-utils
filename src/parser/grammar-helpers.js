@@ -31,10 +31,31 @@ function cbnEDOs(a,b) {
   else { return null; }
 }
 
+function baseNoteIntvToA4(x) {
+  if (x == "C") { return pyInterval(-6, 0.5) /* M6 down */ }
+  if (x == "D") { return pyInterval(-5, 0)   /* P5 down */ }
+  if (x == "E") { return pyInterval(-4, 0)   /* P4 down */ }
+  if (x == "F") { return pyInterval(-3, 0.5) /* M3 down */ }
+  if (x == "G") { return pyInterval(-2, 0.5) /* M2 down */ }
+  if (x == "A") { return Interval(1)         /* P1 */      }
+  if (x == "B") { return pyInterval(2, 0.5)  /* M2 */      }
+}
+
+function baseNoteIntvToReference(x,referenceNoteIntvToA4) {
+  return baseNoteIntvToA4(x).div(referenceNoteIntvToA4);
+}
+
+function octaveOfIntvToA4(x) {
+  const intvToC4 = x.div(baseNoteIntvToA4("C"));
+  return 4 + Math.floor(Math.log(intvToC4.valueOf()) / Math.log(2));
+}
+
 module['exports'].perfPyInterval = perfPyInterval;
 module['exports'].nonPerfPyInterval = nonPerfPyInterval;
 module['exports'].augOrDimPyInterval = augOrDimPyInterval;
 module['exports'].ensureNo2Or3 = ensureNo2Or3;
 module['exports'].cbnEDOs = cbnEDOs;
+module['exports'].baseNoteIntvToReference = baseNoteIntvToReference;
+module['exports'].octaveOfIntvToA4 = octaveOfIntvToA4;
 
 })(this);

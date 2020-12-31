@@ -66,7 +66,7 @@ function edoHasSemiNeutrals(edo) {
 
 function fifthGens(edo) {
   var steps = [];
-  for (i = 0; i < edo; i++) { steps.push(Array(0)); }
+  for (let i = 0; i < edo; i++) { steps.push(Array(0)); }
   const fifth = edoApprox(edo,3,2);
   // non-neutral intervals
   var g = 0;
@@ -97,7 +97,7 @@ function updnsSymb(edo,n) {
   const nr = mod(n,edo);
   const gs = fifthGens(edo);
   var ret;
-  for (i = 0; !ret; i++) {
+  for (let i = 0; !ret; i++) {
     const gup = gs[mod(nr-i,edo)];
     var gupSymb;
     if (gup.length > 0) {
