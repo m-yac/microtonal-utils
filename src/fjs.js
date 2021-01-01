@@ -55,13 +55,14 @@ function fjsFactor(a,b) {
 }
 
 /**
-  * Returns the FJS symbol of the given interval, or undefined if no such symbol
-  * exists
+  * Returns the string of FJS accidentals for the given interval, as well as
+  * the pythagorean interval which when applied to these accidentals
+  * results in the given interval.
   *
   * @param {Interval} i
-  * @returns {String}
+  * @returns {{ accStr: String, pyi: Interval }}
   */
-function fjsSymb(a,b) {
+function fjsAccidentals(a,b) {
   const i = Interval(a,b);
   var pyi = i;
   var otos = [];
@@ -93,12 +94,40 @@ function fjsSymb(a,b) {
       }
     }
   }
+  const otoStr = otos.length == 0 ? "" : "^" + otos.join("");
+  const utoStr = utos.length == 0 ? "" : "_" + utos.join("");
+  return { accStr: otoStr + utoStr, pyi: pyi };
+}
+
+/**
+  * Returns the FJS symbol of the given interval, or undefined if no such symbol
+  * exists
+  *
+  * @param {Interval} i
+  * @returns {String}
+  */
+function fjsSymb(a,b) {
+  const {accStr, pyi} = fjsAccidentals(a,b);
   // If, after applying all the accidentals, the result is a non-neutral
   // pythagorean interval then an FJS symbol exists for this interval
   if (py.isPythagorean(pyi) && py.generator(pyi) % 4 == 0) {
-    const otoStr = otos.length == 0 ? "" : "^" + otos.join("");
-    const utoStr = utos.length == 0 ? "" : "_" + utos.join("");
-    return py.pySymb(pyi) + otoStr + utoStr;
+    return py.pySymb(pyi) + accStr;
+  }
+}
+
+/**
+  * Returns the FJS note name of the given interval to A4, or undefined if no
+  * such name exists
+  *
+  * @param {Interval} i
+  * @returns {String}
+  */
+function fjsNote(a,b) {
+  const {accStr, pyi} = fjsAccidentals(a,b);
+  // If, after applying all the accidentals, the result is a non-neutral
+  // pythagorean interval then an FJS symbol exists for this interval
+  if (py.isPythagorean(pyi) && py.generator(pyi) % 4 == 0) {
+    return py.pyNote(pyi) + accStr;
   }
 }
 
@@ -106,5 +135,6 @@ module['exports'].fjsRoT = fjsRoT;
 module['exports'].fjsComma = fjsComma;
 module['exports'].fjsFactor = fjsFactor;
 module['exports'].fjsSymb = fjsSymb;
+module['exports'].fjsNote = fjsNote;
 
 })(this);

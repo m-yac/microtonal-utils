@@ -2,7 +2,7 @@
 
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
-const {pyInterval, redDeg} = require('../pythagorean.js');
+const {pyInterval, redDeg, octaveOfIntvToA4} = require('../pythagorean.js');
 const {fjsFactor} = require('../fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
@@ -286,7 +286,7 @@ genPyNote[NOTE,ACCS] ->
     $NOTE $ACCS posInt:?
     {% d => function(refIntvToA4) {
          const d2 = d[2] ? d[2] : 4;
-         const refOctave = helpers.octaveOfIntvToA4(refIntvToA4);
+         const refOctave = octaveOfIntvToA4(refIntvToA4);
          return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
                          .mul(d[1][0])
                          .mul(Interval(2).pow(d2 - refOctave)) } %}

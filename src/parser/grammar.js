@@ -6,7 +6,7 @@ function id(x) { return x[0]; }
 
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
-const {pyInterval, redDeg} = require('../pythagorean.js');
+const {pyInterval, redDeg, octaveOfIntvToA4} = require('../pythagorean.js');
 const {fjsFactor} = require('../fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
@@ -217,7 +217,7 @@ var grammar = {
     {"name": "pyNote$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pyNote$macrocall$1", "symbols": ["pyNote$macrocall$2", "pyNote$macrocall$3", "pyNote$macrocall$1$ebnf$1"], "postprocess":  d => function(refIntvToA4) {
         const d2 = d[2] ? d[2] : 4;
-        const refOctave = helpers.octaveOfIntvToA4(refIntvToA4);
+        const refOctave = octaveOfIntvToA4(refIntvToA4);
         return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
                         .mul(d[1][0])
                         .mul(Interval(2).pow(d2 - refOctave)) } },
@@ -228,7 +228,7 @@ var grammar = {
     {"name": "pyNote$macrocall$4$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pyNote$macrocall$4", "symbols": ["pyNote$macrocall$5", "pyNote$macrocall$6", "pyNote$macrocall$4$ebnf$1"], "postprocess":  d => function(refIntvToA4) {
         const d2 = d[2] ? d[2] : 4;
-        const refOctave = helpers.octaveOfIntvToA4(refIntvToA4);
+        const refOctave = octaveOfIntvToA4(refIntvToA4);
         return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
                         .mul(d[1][0])
                         .mul(Interval(2).pow(d2 - refOctave)) } },
@@ -277,7 +277,7 @@ var grammar = {
     {"name": "npyNote$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "npyNote$macrocall$1", "symbols": ["npyNote$macrocall$2", "npyNote$macrocall$3", "npyNote$macrocall$1$ebnf$1"], "postprocess":  d => function(refIntvToA4) {
         const d2 = d[2] ? d[2] : 4;
-        const refOctave = helpers.octaveOfIntvToA4(refIntvToA4);
+        const refOctave = octaveOfIntvToA4(refIntvToA4);
         return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
                         .mul(d[1][0])
                         .mul(Interval(2).pow(d2 - refOctave)) } },

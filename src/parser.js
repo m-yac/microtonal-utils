@@ -8,8 +8,8 @@
 const ne = require('nearley');
 const Interval = require('./interval.js');
 var grammar = require('./parser/grammar.js');
-var {isPythagorean, pySymb} = require('./pythagorean.js');
-var {fjsSymb} = require('./fjs.js');
+var {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
+var {fjsSymb, fjsNote} = require('./fjs.js');
 var {updnsSymb} = require('./edo.js');
 
 function parse(str) {
@@ -78,9 +78,21 @@ function parse(str) {
     }
   }
   if (result.type == "note") {
-    result.tuning = refNote.hertz.mul(intv).valueOf();
+    result.freq = refNote.hertz.mul(intv).valueOf();
     result.intv = intv;
     result.symb = {};
+    const intvToA4 = intv.mul(refNote.intvToA4);
+    let fjs = fjsNote(intvToA4);
+    if (fjs) {
+      result.symb['FJS'] = fjs;
+    }
+    // if (prefEDO) {
+    //   let e2 = intv['2'] || Fraction(0);
+    //   result.symb['ups-and-downs'] = [updnsNote(prefEDO,e2.mul(prefEDO).n), prefEDO];
+    // }
+    if (!fjs && isPythagorean(intv)) {
+      result.symb['other'] = pySymb(intv);
+    }
   }
   return result;
 }

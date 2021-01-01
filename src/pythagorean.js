@@ -103,7 +103,8 @@ function offset(a,b) {
   const g = generator(i);
   const v = octaves(i);
   const zd = g + v * 7;
-  return Fraction(Math.sign(zd) * (2 * Math.floor((4 * g + 3) / 7) - g), 4);
+  const szd = zd == 0 ? 1 : Math.sign(zd)
+  return Fraction(szd * (2 * Math.floor((4 * g + 3) / 7) - g), 4);
 }
 
 /**
@@ -167,6 +168,92 @@ function pySymb(a,b) {
   return pyQuality(a,b) + d;
 }
 
+/**
+  * Returns the interval to A of the given base note name (i.e. A, B, C, D, E,
+  * F or G) within a single octave of scientific pitch notation
+  *
+  * @param {String} x
+  * @returns {Interval}
+  */
+function baseNoteIntvToA(x) {
+  if (x == "C") { return pyInterval(-6, 0.5) /* M6 down */ }
+  if (x == "D") { return pyInterval(-5, 0)   /* P5 down */ }
+  if (x == "E") { return pyInterval(-4, 0)   /* P4 down */ }
+  if (x == "F") { return pyInterval(-3, 0.5) /* M3 down */ }
+  if (x == "G") { return pyInterval(-2, 0.5) /* M2 down */ }
+  if (x == "A") { return Interval(1)         /* P1 */      }
+  if (x == "B") { return pyInterval(2, 0.5)  /* M2 */      }
+}
+
+/**
+  * Returns the octave in scientific pitch notation of the given interval to A4
+  *
+  * @param {Interval} intvToA4
+  * @returns {Integer}
+  */
+function octaveOfIntvToA4(a,b) {
+  const intvToA4 = Interval(a,b);
+  const intvToC4 = intvToA4.div(baseNoteIntvToA("C"));
+  return 4 + Math.floor(Math.log(intvToC4.valueOf()) / Math.log(2));
+}
+
+/**
+  * Returns the note name of the given non-neutral pythagorean interval to A4.
+  * The returned string uses ASCII instead of uniode wherever possible iff the
+  * second argument is given and is true
+  *
+  * @param {Interval} intvToA4
+  * @param {Boolean} useASCII
+  * @returns {String}
+  */
+function pyNote(intvToA4, useASCII) {
+  const intvToF4 = Interval(intvToA4).div(baseNoteIntvToA("F"));
+  if (!isPythagorean(intvToF4) || (intvToF4['3'] && intvToF4['3'].d != 1)) {
+    throw "interval is not a non-neutral pythagorean interval"
+  }
+  const e3 = intvToF4['3'] ? intvToF4['3'].s * intvToF4['3'].n : Fraction(0);
+  const zd = mod(4*e3, 7);
+  let o = Math.floor(e3 / 7);
+
+  let octave = octaveOfIntvToA4(intvToA4);
+  if (octave == 4) { octave = ""; }
+
+  let baseNote;
+  if (zd == 0) { baseNote = "F"; }
+  if (zd == 1) { baseNote = "G"; }
+  if (zd == 2) { baseNote = "A"; }
+  if (zd == 3) { baseNote = "B"; }
+  if (zd == 4) { baseNote = "C"; }
+  if (zd == 5) { baseNote = "D"; }
+  if (zd == 6) { baseNote = "E"; }
+
+  let accidentals = "";
+  if (o == 0 && baseNote == "A") {
+    accidentals += "♮";
+  }
+  while (o > 1) {
+    accidentals += useASCII ? "X" : "𝄪";
+    o -= 2;
+  }
+  if (o == 1) {
+    accidentals += useASCII ? "#" : "♯";
+  }
+  while (o < -1) {
+    if (useASCII) {
+      accidentals += "b";
+      o += 1;
+    } else {
+      accidentals += "𝄫";
+      o += 2;
+    }
+  }
+  if (o == -1) {
+    accidentals += useASCII ? "b" : "♭";
+  }
+
+  return baseNote + accidentals + octave;
+}
+
 module['exports'].pyInterval = pyInterval;
 module['exports'].isPythagorean = isPythagorean;
 module['exports'].generator = generator;
@@ -177,5 +264,9 @@ module['exports'].redDeg = redDeg;
 module['exports'].isPerfectDeg = isPerfectDeg;
 module['exports'].pyQuality = pyQuality;
 module['exports'].pySymb = pySymb;
+module['exports'].pySymb = pySymb;
+module['exports'].baseNoteIntvToA = baseNoteIntvToA;
+module['exports'].octaveOfIntvToA4 = octaveOfIntvToA4;
+module['exports'].pyNote = pyNote;
 
 })(this);
