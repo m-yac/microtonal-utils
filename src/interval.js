@@ -1,6 +1,6 @@
 /**
  * @module interval.js
- * Copyright (c) 2020, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * Copyright (c) 2021, Matthew Yacavone (matthew [at] yacavone [dot] net)
  **/
 
 (function(root) {
@@ -177,23 +177,6 @@ Interval.prototype = {
   },
 
   /**
-   * Compares two intervals. Specifically, returns 0 if the intervals are equal,
-   * 1 if the first interval is greater than the second, and -1 if the second
-   * interval is greater than the first.
-   */
-  "compare": function(a,b) {
-    const rhs = parse(a,b);
-    return this.div(rhs).toNthRoot().k.compare(Fraction(1));
-  },
-
-  /**
-   * Checks if the two intervals are the same.
-   */
-  "equals": function(a,b) {
-    return this.compare(a,b) == 0;
-  },
-
-  /**
    * Converts an interval to its decimal value
    */
   "valueOf": function() {
@@ -205,56 +188,120 @@ Interval.prototype = {
   },
 
   /**
-   * Reduces an interval w.r.t. another interval. If the second argument is not
-   * given or is undefined, it is taken to be 2 (an octave).
+   * Compares two intervals. Specifically, returns 0 if the intervals are equal,
+   * 1 if the first interval is greater than the second, and -1 if the second
+   * interval is greater than the first.
+   */
+  "compare": function(a,b) {
+    const diff = this.div(a,b);
+    const {k,n} = diff.toNthRoot();
+    if (isFinite(k.n) && isFinite(k.d)) {
+      // do an exact comparison if k is finite
+      return k.compare(Fraction(1));
+    }
+    else {
+      // otherwise the numbers are just too big - for now we approximate
+      return (1 < diff.valueOf()) - (diff.valueOf() < 1);
+    }
+  },
+
+  /**
+   * Checks if the two intervals are the same.
+   */
+  "equals": function(a,b) {
+    return this.compare(a,b) == 0;
+  },
+
+  /**
+   * If the given argument is a prime, returns a pair whose first element is the
+   * exponent of that prime in this interval, and whose second element is the
+   * interval without that prime (i.e. the rest of the factorization).
+   *
+   * For example, `Interval(8*5,7).factorOut(2)` returns `[3, Interval(5,7)]`.
+   *
+   * More generally, if the given argument is an interval `i` with factorization
+   * `p1^e1 ... pm^em` (where the `pk`s are prime and in ascending order, and
+   * each `ek > 0`), returns a pair `[g, this.div(i.pow(g))]` where `g` is the
+   * smallest fraction such that `this.div(i.pow(g))` contains no factors of
+   * `pm` (the largest prime in the factorization of `i`).
+   *
+   * For example, `Interval(9,8).factorOut(3,2)` returns `[2, Interval(1,2)]`.
+   */
+  "factorOut": function(a,b) {
+    const base = new Interval(a,b);
+    const gp = Math.max(...Object.keys(base));
+    if (isFinite(gp)) {
+      const g = (this[gp] || Fraction(0)).div(base[gp]);
+      let res = keys(this, base);
+      for (const i in res) {
+        res[i] = (this[i] || Fraction(0)).sub((base[i] || Fraction(0)).mul(g));
+      }
+      return [g, new Interval(res)];
+    }
+    else {
+      return [Fraction(0), this];
+    }
+  },
+
+  /**
+   * Converts an interval to its decimal value log the given base. If no
+   * argument is given, the base is taken to be 2 (an octave).
+   *
+   * Note that this function uses `factorOut` to preserve as much precision as
+   * possible - for example, for any interval `i` and fraction `k`, then
+   * `i.pow(k).valueOf_log(i) == k` *exactly*.
+   */
+  "valueOf_log": function(a,b) {
+    let base = new Interval(2);
+    if (a != undefined || b != undefined) {
+      base = new Interval(a,b);
+    }
+    const [g, res] = this.factorOut(base);
+    return g + Math.log(res.valueOf()) / Math.log(base.valueOf());
+  },
+
+  /**
+   * Reduces an interval w.r.t. another interval. If no argument is given, it
+   * is taken to be 2 (an octave).
+   *
+   * For all intervals `i`, `j` this function satisfies the equality:
+   * `i.div(i.red(j)).equals(j.pow(Math.floor(i.valueOf_log(j))))`
    */
   "red": function(a,b) {
-    var rhs = new Interval(2);
-    if (a || b) {
-      rhs = new Interval(a,b);
+    var base = new Interval(2);
+    if (a != undefined || b != undefined) {
+      base = new Interval(a,b);
     }
-    // the exponent of the closest power of `rhs` to `this`
-    const logval = Math.log(this.valueOf()) / Math.log(rhs.valueOf());
-    const e = Math.round(logval);
-    // if `this` is greater than or equal to this power, divide by it
-    if (this.compare(rhs.pow(e)) >= 0) {
-      return this.div(rhs.pow(e));
-    }
-    // otherwise divide by the power one below it
-    else {
-      return this.div(rhs.pow(e-1));
-    }
+    const e = Math.floor(this.valueOf_log(base));
+    return this.div(base.pow(e));
   },
 
   /**
-   * Balanced reduces an interval w.r.t. another interval. If the second
-   * argument is not given or is undefined, it is taken to be 2 (an octave).
+   * Balanced reduces an interval w.r.t. another interval. If no argument is
+   * given, the it is taken to be 2 (an octave).
+   *
+   * For all intervals `i`, `j` this function satisfies the equality:
+   * `i.div(i.reb(j)).equals(j.pow(Math.round(i.valueOf_log(j))))`
    */
   "reb": function(a,b) {
-    var rhs = new Interval(2);
-    if (a || b) {
-      rhs = new Interval (a,b);
+    var base = new Interval(2);
+    if (a != undefined || b != undefined) {
+      base = new Interval(a,b);
     }
-    // the exponent of the closest half-power of `rhs` to `this`
-    const logval = Math.log(this.valueOf()) / Math.log(rhs.valueOf());
-    const e = Math.round(logval+0.5)-0.5;
-    // if `this` is greater than this power, divide by it rounded up
-    if (this.compare(rhs.pow(e)) > 0) {
-      return this.div(rhs.pow(e+0.5));
-    }
-    // otherwise divide by it rounded down
-    else {
-      return this.div(rhs.pow(e-0.5));
-    }
+    const e = Math.round(this.valueOf_log(base));
+    return this.div(base.pow(e));
   },
 
   /**
-   * Converts an interval to its value in cents
+   * Converts an interval to its value in cents.
+   *
+   * Note that this function uses `factorOut` to preserve as much precision as
+   * possible - for example, for any fraction `k`,
+   * `Interval(2).pow(k).toCents() == k.mul(1200)` *exactly*.
    */
   "toCents": function() {
-    const e2 = this['2'] || Fraction(0);
-    var this_no2 = this.div(Interval(2).pow(e2));
-    return (e2.valueOf() + Math.log(this_no2.valueOf()) / Math.log(2)) * 1200;
+    const [e2, res] = this.factorOut(2);
+    return e2.mul(1200) + Math.log(res.valueOf()) / Math.log(2) * 1200;
   }
 
 }

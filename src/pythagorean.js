@@ -1,6 +1,6 @@
 /**
  * @module pythagorean.js
- * Copyright (c) 2020, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * Copyright (c) 2021, Matthew Yacavone (matthew [at] yacavone [dot] net)
  **/
 
 (function(root) {
@@ -145,16 +145,16 @@ function pyQuality(a,b) {
     if (o == 0.5  ) { return "M" }
     if (o == -0.25) { return "sm" }
     if (o == -0.5 ) { return "m" }
-    o = o.sub(o.s * Fraction(1,2));
+    o = o.sub(o.s,2);
   }
   if (o == 0.5 ) { return "sA" }
   if (o == 1   ) { return "A" }
   if (o == -0.5) { return "sd" }
   if (o == -1  ) { return "d" }
-  if (o > 1  && o.d == 1) { return o.n + "A" }
-  if (o > 1  && o.d != 1) { return o.toFraction() + "-A" }
-  if (o < -1 && o.d == 1) { return o.n + "d" }
-  if (o < -1 && o.d != 1) { return o.neg().toFraction() + "-d" }
+  if (o > 0 && o.d == 1) { return o.n + "A" }
+  if (o > 0 && o.d != 1) { return o.toFraction() + "-A" }
+  if (o < 0 && o.d == 1) { return o.n + "d" }
+  if (o < 0 && o.d != 1) { return o.neg().toFraction() + "-d" }
 }
 
 /**
