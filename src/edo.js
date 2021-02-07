@@ -5,6 +5,7 @@
 
 (function(root) {
 
+const {gcd, egcd} = require('mathutils');
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 const py = require('./pythagorean.js');
@@ -43,6 +44,52 @@ function edoPy(edo,a,b) {
 }
 
 /**
+  * Returns the pythagorean interval with the smallest generator which
+  * corresponds to the given EDO step, i.e. for which `edoPy` returns the given
+  * EDO step. Note that there may be no such interval, in which case this
+  * function returns `undefined`.
+  *
+  * All other intervals for which `edoPy` returns the given EDO step are
+  * the result of this function times some power of `edoPyComma`.
+  *
+  * In summary, for every pythagorean interval i there exists some integer k
+  * such that `edoPyInv(edo, edoPy(edo, i)) == i.mul(edoPyComma(edo).pow(k))`,
+  * and for all integers n and k, either `edoPyInv(edo, n)` is undefined or
+  * `edoPy(edo, edoPyInv(edo, n).mul(edoPyComma(edo).pow(k))) == n`.
+  *
+  * @param {Integer} edo
+  * @param {Integer} n
+  * @returns {Interval}
+  */
+function edoPyInv(edo,n) {
+  const p5 = edoApprox(edo,3,2);
+  // d == x * p5 + 4 * y * edo
+  const [d, x, y] = egcd(p5, 4 * edo);
+  if ((4 * n) % d == 0) {
+    // n == (g / 4) * p5 + o * edo
+    const [g, o] = [x * (4*n/d), y * (4*n/d)];
+    // n == (g_bal / 4) * p5 + o_bal * edo && -(edo/d)/2 < g_bal/4 <= (edo/d)/2
+    const edo_2d = Math.floor((4*edo/d - 1) / 2);
+    const g_bal = mod(g + edo_2d, 4*edo/d) - edo_2d;
+    const o_bal = o - p5 * ((g_bal - g) / (4 * edo));
+    return Interval(3,2).pow(g_bal,4).mul(Interval(2).pow(o_bal));
+  }
+}
+
+/**
+  * The smallest pythagorean interval tempered out in the given edo (I believe
+  * this is the correct description...)
+  *
+  * @param {Integer} edo
+  * @returns {Interval}
+  */
+function edoPyComma(edo) {
+  const p5 = edoApprox(edo,3,2);
+  const d = gcd(p5, 4 * edo);
+  return Interval(3,2).pow(-4 * edo / d, 4).mul(Interval(2).pow(p5 / d));
+}
+
+/**
   * Checks whether neutral pythagorean intervals are realized in the given EDO,
   * i.e. if `edoApprox(edo,Interval(3,2))` is divisible by 2
   *
@@ -64,7 +111,12 @@ function edoHasSemiNeutrals(edo) {
   return edoApprox(edo,3,2) % 4 == 0;
 }
 
-function fifthGens(edo) {
+let fifthGensCache = {};
+
+function fifthGens(edo,n) {
+  if (fifthGensCache[edo]) {
+    return fifthGensCache[edo];
+  }
   var steps = [];
   for (let i = 0; i < edo; i++) { steps.push(Array(0)); }
   const fifth = edoApprox(edo,3,2);
@@ -82,7 +134,8 @@ function fifthGens(edo) {
       g = g > 0 ? -g : -g+2;
     }
   }
-  return steps
+  fifthGensCache[edo] = steps;
+  return n ? steps[mod(n,edo)] : steps;
 }
 
 /**
@@ -119,8 +172,11 @@ function updnsSymb(edo,n) {
 
 module['exports'].edoApprox = edoApprox;
 module['exports'].edoPy = edoPy;
+module['exports'].edoPyInv = edoPyInv;
+module['exports'].edoPyComma = edoPyComma;
 module['exports'].edoHasNeutrals = edoHasNeutrals;
 module['exports'].edoHasSemiNeutrals = edoHasSemiNeutrals;
+module['exports'].fifthGens = fifthGens;
 module['exports'].updnsSymb = updnsSymb;
 
 })(this);
