@@ -1,0 +1,241 @@
+/**
+ * @module approx.js
+ * Copyright (c) 2021, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ **/
+
+(function(root) {
+
+const pf = require('primes-and-factors');
+const Fraction = require('fraction.js');
+const Interval = require('./interval.js');
+const {edoApprox} = require('./edo.js');
+
+function signPerms(intv) {
+  const keys = Object.keys(intv);
+  let ret = [];
+  for (let bits = 0; bits < (1 << keys.length); bits++) {
+    ret.push(keys.map((_,i) => (bits & (1 << i)) == 0 ? 1 : -1));
+  }
+  return ret;
+}
+
+function applySignPerm(sp, intv) {
+  let [i, ret] = [0, {}];
+  for (const [p,e] of Object.entries(intv)) {
+    ret[p] = e.mul(sp[i]);
+    i++;
+  }
+  return Interval(ret);
+}
+
+/**
+  * Finds best rational approximations of the given interval, sorted by Tenney
+  * harmonic distance. Returns a pair whose first element is true iff no better
+  * approximaions can be found - i.e. if either an exact approximation is found
+  * or there are no more intervals in the given odd-limit to check.
+  *
+  * @param {Interval} i
+  * @param {Object} [opts]
+  * @param {Integer} [opts.cutoff] defaults to 50c
+  * @param {Integer} [opts.primeLimit]
+  * @param {Integer} [opts.oddLimit]
+  * @param {Integer} [opts.startIteration] defaults to 0
+  * @param {Integer} [opts.numIterations] defaults to 1
+  * @param {boolean} [opts.useExactDiffs] defaults to false
+  * @returns {{0: boolean, 1: {ratio: Fraction, diff: (number|Interval)}[]}}
+  */
+function bestRationalApproxs(a,b, opts) {
+  if (!opts) {
+    if (typeof b == 'object' && b != null) {
+      opts = b;
+      b = undefined;
+    } else {
+      opts = {};
+    }
+  }
+  const intv = Interval(a,b);
+  console.time("rationalApprox");
+  let {cutoff, primeLimit, oddLimit, startIteration, numIterations, useExactDiffs} = opts;
+  let [hitOddLimitMax, foundExact] = [false, false];
+
+  // some heuristics for the iteration size, i.e. the number of odd numbers
+  // to check in a given iteration
+  let iterationSize = 100;
+  if (primeLimit) {
+    // for large prime limits, this iteration size is approximately half the
+    // prime limit itself, but for small prime limits (roughly less than 47)
+    // this is larger, to account for the fact that valid intervals are sparser
+    iterationSize = Math.ceil(2000/primeLimit + (primeLimit+1)/2);
+    // a prime limit of 2 means we also have an odd limit of 1!
+    if (primeLimit <= 2) { oddLimit = 1; }
+  }
+
+  // the size of the largest odd number which would generate a valid interval
+  // in our odd limit
+  const oddLimit_max = oddLimit * Math.abs(oddLimit-2);
+  if (oddLimit) {
+    iterationSize = Math.min(iterationSize, Math.ceil((oddLimit_max+1)/2));
+  }
+
+  if (cutoff == undefined) { cutoff = Interval(2).pow(1,12).sqrt(); }
+  if (primeLimit == undefined && oddLimit) { primeLimit = oddLimit; }
+  if (startIteration == undefined) { startIteration = 0; }
+  if (numIterations == undefined) { numIterations = 1; }
+  let n_max = (startIteration + numIterations) * iterationSize;
+
+  // if our n_max is greater than the largest odd number which would generate a
+  // valid interval in our odd limit, we don't have to check any more than that!
+  if (oddLimit && n_max >= (oddLimit_max+1)/2) {
+    n_max = (oddLimit_max+1)/2;
+    hitOddLimitMax = true;
+  }
+
+  const intv_red = intv.red();
+  const vs = intv.div(intv_red);
+  let [last_diff, ret] = [Interval(2), []];
+  // this loop iterates through all odd numbers `2*n + 1` for `n` in the range
+  // `[startIteration * iterationSize + 1, numIterations * iterationSize)`
+  for (let n = startIteration * iterationSize; !foundExact && n < n_max; n++) {
+    const i = Interval(2*n + 1);
+    if (primeLimit && Object.keys(i).some(p => p > primeLimit)) {
+      continue;
+    }
+    // For a given odd `i` with factorization `p1^e1 ... pm^em` (where `pk` is
+    // prime and `ek > 0` for all `k`), `i_perms` is the array of all intervals
+    // with factorizations `p1^(+/- e1) ... pm^(+/- em)`. For example, if
+    // `i = 45` then `i = 3^2 * 5^1` and
+    // `i_perms = [ 3^2 * 5^1, 3^(-2) * 5^1, 3^2 * 5^(-1), 3^(-2) * 5(-1) ]`.
+    const i_perms = signPerms(i).map(sp => applySignPerm(sp, i));
+    // For each of these factorizations, we then add in the power of 2 which
+    // gets it closest to `intv`, then package the result up with its difference
+    // to `intv`. We do the former by finding the balanced octave-reduced
+    // difference to `intv` then adding this difference back to `intv`; the
+    // result will always be our original factorization times the power of 2
+    // which minimizes its difference to `intv`
+    const to_check = i_perms.map(function (j) {
+                       const diff = j.div(intv).reb();
+                       return [intv.mul(diff), diff];
+                     }).sort((a,b) => a[1].compare(b[1]));
+    for (const [j, diff] of to_check) {
+      const ratio = j.toFrac();
+      if (oddLimit && (   (ratio.n % 2 != 0 && ratio.n > oddLimit)
+                       || (ratio.d % 2 != 0 && ratio.d > oddLimit))) {
+        continue;
+      }
+      const abs_diff = diff.compare(1) < 0 ? diff.recip() : diff;
+      if (abs_diff.compare(cutoff) < 0 && abs_diff.compare(last_diff) <= 0) {
+        ret.push({ ratio: ratio, diff: useExactDiffs ? diff : diff.toCents() });
+        last_diff = abs_diff;
+        if (last_diff.equals(1)) { foundExact = true };
+      }
+    }
+  }
+  console.timeEnd("rationalApprox");
+  if (hitOddLimitMax || foundExact) { console.log("rationalApprox: exhausted") }
+  return [hitOddLimitMax || foundExact, ret];
+}
+
+/**
+  * Finds best EDO step approximations of the given interval, sorted by EDO
+  * size.
+  *
+  * @param {Interval} i
+  * @param {Object} [opts]
+  * @param {Integer} [opts.cutoff] defaults to 50c
+  * @param {Integer} [opts.startEDO] defaults to 5
+  * @param {Integer} [opts.endEDO] defaults to 60
+  * @param {boolean} [opts.useExactDiffs] defaults to false
+  * @returns {{steps: Array, diff: (number|Interval)}[]}
+  */
+function bestEDOApproxsByEDO(a,b, opts) {
+  if (!opts) {
+    if (typeof b == 'object' && b != null) {
+      opts = b;
+      b = undefined;
+    } else {
+      opts = {};
+    }
+  }
+  const intv = Interval(a,b);
+  if (opts == undefined) { opts = {}; }
+  let {cutoff, startEDO, endEDO, useExactDiffs} = opts;
+  if (cutoff == undefined) { cutoff = Interval(2).pow(1,12).sqrt(); }
+  if (startEDO == undefined) { startEDO = 5; }
+  if (endEDO == undefined) { endEDO = 60; }
+
+  let foundExact = false;
+  let [last_diff, ret] = [Interval(2), []];
+  for (let edo = startEDO; !foundExact && edo <= endEDO; edo++) {
+    const steps = edoApprox(edo, intv);
+    const diff = intv.div(Interval(2).pow(steps,edo));
+    const abs_diff = diff.compare(1) < 0 ? diff.recip() : diff;
+    if (abs_diff.compare(cutoff) < 0 && abs_diff.compare(last_diff) <= 0) {
+      if (abs_diff.compare(last_diff) == 0) {
+        ret[ret.length - 1].steps.push([steps, edo]);
+      }
+      else {
+        ret.push({ steps: [[steps,edo]], diff: useExactDiffs ? diff : diff.toCents() });
+        last_diff = abs_diff;
+        if (last_diff.equals(1)) { foundExact = true };
+      }
+    }
+  }
+
+  return ret;
+}
+
+/**
+  * Finds best EDO step approximations of the given interval, sorted by error.
+  *
+  * @param {Interval} i
+  * @param {Object} [opts]
+  * @param {Integer} [opts.startEDO] defaults to 5
+  * @param {Integer} [opts.endEDO] defaults to 60
+  * @param {boolean} [opts.useExactDiffs] defaults to false
+  * @returns {{steps: Array, diff: (number|Interval)}[]}
+  */
+function bestEDOApproxsByDiff(a,b, opts) {
+  if (!opts) {
+    if (typeof b == 'object' && b != null) {
+      opts = b;
+      b = undefined;
+    } else {
+      opts = {};
+    }
+  }
+  const intv = Interval(a,b);
+  if (opts == undefined) { opts = {}; }
+  let {startEDO, endEDO, useExactDiffs} = opts;
+  if (startEDO == undefined) { startEDO = 5; }
+  if (endEDO == undefined) { endEDO = 60; }
+
+  let ret = [];
+  for (let edo = startEDO; edo <= endEDO; edo++) {
+    const steps = edoApprox(edo, intv);
+    const diff = intv.div(Interval(2).pow(steps,edo));
+    const abs_diff = diff.compare(1) < 0 ? diff.recip() : diff;
+    const to_add = { steps: [[steps, edo]], diff: diff, abs_diff: abs_diff };
+    let added = false;
+    for (let i = 0; !added && i < ret.length; i++) {
+      if (diff.equals(ret[i].diff)) {
+        ret[i].steps.push([steps,edo]);
+        added = true;
+      }
+      else if (abs_diff.compare(ret[i].abs_diff) < 0) {
+        ret.splice(i, 0, to_add);
+        added = true;
+      }
+    }
+    if (!added) {
+      ret.push(to_add);
+    }
+  }
+
+  return ret.map(x => ({ steps: x.steps, diff: useExactDiffs ? x.diff : x.diff.toCents() }));
+}
+
+module['exports'].bestRationalApproxs = bestRationalApproxs;
+module['exports'].bestEDOApproxsByEDO = bestEDOApproxsByEDO;
+module['exports'].bestEDOApproxsByDiff = bestEDOApproxsByDiff;
+
+})(this);
