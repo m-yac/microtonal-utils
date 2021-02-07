@@ -203,7 +203,7 @@ function octaveOfIntvToA4(a,b) {
   * second argument is given and is true
   *
   * @param {Interval} intvToA4
-  * @param {Boolean} useASCII
+  * @param {Boolean} [useASCII=false]
   * @returns {String}
   */
 function pyNote(intvToA4, useASCII) {
@@ -228,7 +228,7 @@ function pyNote(intvToA4, useASCII) {
   if (zd == 6) { baseNote = "E"; }
 
   let accidentals = "";
-  if (o == 0 && baseNote == "A") {
+  if (o == 0 && baseNote == "A" && octave != "") {
     accidentals += "♮";
   }
   while (o > 1) {
