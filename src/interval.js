@@ -1,5 +1,5 @@
 /**
- * The interval datatype
+ * The interval datatype, based on `Fraction` from `fraction.js` on npm
  * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
  * @module interval
  **/
@@ -88,9 +88,10 @@ function Interval(a,b) {
 Interval.prototype = {
 
   /**
-   * Multiplies two intervals
+   * Multiplies (i.e. composes) two intervals
    *
    * @param {Interval} i
+   * @returns {Interval}
    */
   "mul": function(a,b) {
     const rhs = parse(a,b);
@@ -105,6 +106,7 @@ Interval.prototype = {
    * Divides two intervals
    *
    * @param {Interval} i
+   * @returns {Interval}
    */
   "div": function(a,b) {
     const rhs = parse(a,b);
@@ -117,6 +119,8 @@ Interval.prototype = {
 
   /**
    * Takes the reciprocal/inverse of an interval
+   *
+   * @returns {Interval}
    */
   "recip": function() {
     let ret = keys(this);
@@ -130,6 +134,7 @@ Interval.prototype = {
    * Raises an interval to a fractional power
    *
    * @param {Fraction} k
+   * @returns {Interval}
    */
   "pow": function(a,b) {
     let ret = keys(this);
@@ -140,9 +145,10 @@ Interval.prototype = {
   },
 
   /**
-   * Takes the nth root of an interval
+   * The nth root of an interval
    *
    * @param {integer} n
+   * @returns {Interval}
    */
   "root": function(a) {
     return this.pow(Fraction(1,a));
@@ -150,6 +156,8 @@ Interval.prototype = {
 
   /**
    * The square root of an interval
+   *
+   * @returns {Interval}
    */
   "sqrt": function() {
     return this.pow(1/2);
@@ -157,6 +165,8 @@ Interval.prototype = {
 
   /**
    * Converts an interval with integer prime exponents to a fraction
+   *
+   * @returns {Fraction}
    */
   "toFrac": function() {
     let ret = Fraction(1);
@@ -171,9 +181,9 @@ Interval.prototype = {
   },
 
   /**
-   * Converts an interval with fractional prime exponents to the nth root of a
-   * fraction. Specifically, this function returns an `Object` of type
-   * `{{k: Fraction, n:Integer}}`.
+   * Converts an interval to the nth root of a fraction
+   *
+   * @returns {{k: Fraction, n: Integer}}
    */
   "toNthRoot": function() {
     let n_fr = Fraction(1);
@@ -185,6 +195,8 @@ Interval.prototype = {
 
   /**
    * Converts an interval to its decimal value
+   *
+   * @returns {number}
    */
   "valueOf": function() {
     let ret = 1;
@@ -200,6 +212,7 @@ Interval.prototype = {
    * interval is greater than the first.
    *
    * @param {Interval} i
+   * @returns {integer}
    */
   "compare": function(a,b) {
     const diff = this.div(a,b);
@@ -218,6 +231,7 @@ Interval.prototype = {
    * Checks if the two intervals are the same.
    *
    * @param {Interval} i
+   * @returns {boolean}
    */
   "equals": function(a,b) {
     return this.compare(a,b) == 0;
@@ -239,6 +253,7 @@ Interval.prototype = {
    * For example, `Interval(9,8).factorOut(3,2)` returns `[2, Interval(1,2)]`.
    *
    * @param {Interval} i
+   * @returns {Pair.<Fraction,Interval>}
    */
   "factorOut": function(a,b) {
     const base = new Interval(a,b);
@@ -265,6 +280,7 @@ Interval.prototype = {
    * `i.pow(k).valueOf_log(i) == k` *exactly*.
    *
    * @param {Interval} [i=Interval(2)]
+   * @returns {number}
    */
   "valueOf_log": function(a,b) {
     let base = new Interval(2);
@@ -283,6 +299,7 @@ Interval.prototype = {
    * `i.div(i.red(j)).equals(j.pow(Math.floor(i.valueOf_log(j))))`
    *
    * @param {Interval} [i=Interval(2)]
+   * @returns {Interval}
    */
   "red": function(a,b) {
     let base = new Interval(2);
@@ -301,6 +318,7 @@ Interval.prototype = {
    * `i.div(i.reb(j)).equals(j.pow(Math.round(i.valueOf_log(j))))`
    *
    * @param {Interval} [i=Interval(2)]
+   * @returns {Interval}
    */
   "reb": function(a,b) {
     let base = new Interval(2);
@@ -317,6 +335,8 @@ Interval.prototype = {
    * Note that this function uses `factorOut` to preserve as much precision as
    * possible - for example, for any fraction `k`,
    * `Interval(2).pow(k).toCents() == k.mul(1200)` *exactly*.
+   *
+   * @returns {number}
    */
   "toCents": function() {
     const [e2, res] = this.factorOut(2);
@@ -325,6 +345,8 @@ Interval.prototype = {
 
   /**
    * Converts an interval to its Tenney harmonic distance, or Tenney height.
+   *
+   * @returns {number}
    */
   "tenneyHD": function() {
     let ret = Interval(1);
