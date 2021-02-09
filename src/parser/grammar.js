@@ -6,7 +6,7 @@ function id(x) { return x[0]; }
 
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
-const {pyInterval, redDeg, octaveOfIntvToA4} = require('../pythagorean.js');
+const {pySymb, pyInterval, redDeg, octaveOfIntvToA4} = require('../pythagorean.js');
 const {fjsFactor} = require('../fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
@@ -213,25 +213,23 @@ var grammar = {
     {"name": "pyNote", "symbols": [{"literal":"A"}], "postprocess": _ => refIntvToA4 => refIntvToA4.recip()},
     {"name": "pyNote$macrocall$2", "symbols": [/[B-G]/]},
     {"name": "pyNote$macrocall$3", "symbols": ["pyNoteNoAccs"]},
-    {"name": "pyNote$macrocall$1$ebnf$1", "symbols": ["posInt"], "postprocess": id},
+    {"name": "pyNote$macrocall$1$ebnf$1", "symbols": ["int"], "postprocess": id},
     {"name": "pyNote$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pyNote$macrocall$1", "symbols": ["pyNote$macrocall$2", "pyNote$macrocall$3", "pyNote$macrocall$1$ebnf$1"], "postprocess":  d => function(refIntvToA4) {
-        const d2 = d[2] ? d[2] : 4;
-        const refOctave = octaveOfIntvToA4(refIntvToA4);
+        const d2 = d[2] ? parseInt(d[2]) : 4;
         return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
                         .mul(d[1][0])
-                        .mul(Interval(2).pow(d2 - refOctave)) } },
+                        .mul(Interval(2).pow(d2 - 4)); } },
     {"name": "pyNote", "symbols": ["pyNote$macrocall$1"], "postprocess": id},
     {"name": "pyNote$macrocall$5", "symbols": [/[A-G]/]},
     {"name": "pyNote$macrocall$6", "symbols": ["pyNoteAccs"]},
-    {"name": "pyNote$macrocall$4$ebnf$1", "symbols": ["posInt"], "postprocess": id},
+    {"name": "pyNote$macrocall$4$ebnf$1", "symbols": ["int"], "postprocess": id},
     {"name": "pyNote$macrocall$4$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "pyNote$macrocall$4", "symbols": ["pyNote$macrocall$5", "pyNote$macrocall$6", "pyNote$macrocall$4$ebnf$1"], "postprocess":  d => function(refIntvToA4) {
-        const d2 = d[2] ? d[2] : 4;
-        const refOctave = octaveOfIntvToA4(refIntvToA4);
+        const d2 = d[2] ? parseInt(d[2]) : 4;
         return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
                         .mul(d[1][0])
-                        .mul(Interval(2).pow(d2 - refOctave)) } },
+                        .mul(Interval(2).pow(d2 - 4)); } },
     {"name": "pyNote", "symbols": ["pyNote$macrocall$4"], "postprocess": id},
     {"name": "pyNoteNoAccs", "symbols": [], "postprocess": _ => Interval(1)},
     {"name": "pyNoteAccs", "symbols": [{"literal":"♮"}], "postprocess": _ => Interval(1)},
@@ -273,14 +271,13 @@ var grammar = {
     {"name": "pyNoteAccs", "symbols": ["pyNoteAccs$ebnf$5", "pyNoteAccs$ebnf$6"], "postprocess": d => pyInterval(-1, 2*d[0].length + d[1].length)},
     {"name": "npyNote$macrocall$2", "symbols": [/[A-G]/]},
     {"name": "npyNote$macrocall$3", "symbols": ["npyNoteAccs"]},
-    {"name": "npyNote$macrocall$1$ebnf$1", "symbols": ["posInt"], "postprocess": id},
+    {"name": "npyNote$macrocall$1$ebnf$1", "symbols": ["int"], "postprocess": id},
     {"name": "npyNote$macrocall$1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "npyNote$macrocall$1", "symbols": ["npyNote$macrocall$2", "npyNote$macrocall$3", "npyNote$macrocall$1$ebnf$1"], "postprocess":  d => function(refIntvToA4) {
-        const d2 = d[2] ? d[2] : 4;
-        const refOctave = octaveOfIntvToA4(refIntvToA4);
+        const d2 = d[2] ? parseInt(d[2]) : 4;
         return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
                         .mul(d[1][0])
-                        .mul(Interval(2).pow(d2 - refOctave)) } },
+                        .mul(Interval(2).pow(d2 - 4)); } },
     {"name": "npyNote", "symbols": ["npyNote$macrocall$1"], "postprocess": id},
     {"name": "npyNoteAccs$ebnf$1", "symbols": []},
     {"name": "npyNoteAccs$ebnf$1$subexpression$1$string$1", "symbols": [{"literal":"\ud834"}, {"literal":"\udd2a"}], "postprocess": function joiner(d) {return d.join('');}},

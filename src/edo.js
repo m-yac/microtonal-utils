@@ -153,7 +153,8 @@ function addUpdns(edo, steps) {
     }
     new_steps[i] = new_steps[i].filter(udsk => Math.abs(udsk[0]) <= minUpdns
                                                && (!hasNonNeutral || Number.isInteger(udsk[1])))
-                               .sort((a,b) => a[0] == b[0] ? b[1] - a[1] : b[0] - a[0]);
+                               .sort((a,b) => a[0] == b[0] ? Math.abs(a[1]) - Math.abs(b[1])
+                                                           : b[0] - a[0]);
   }
   return new_steps;
 }
@@ -179,7 +180,7 @@ function updnsSymbCache(edo) {
   let [lo, hi] = [-6, 6]; // d5 m2 m6 m3 m7 P4 | P1 | P5 M2 M6 M3 M7 A4
   // Special case for perfect EDOs
   if (fifth/edo == 4/7) {
-    [lo, hi] = [-5, 5]; // m2 m6 m3 m7 P4 | P1 | P5 M2 M6 M3 M7
+    [lo, hi] = [-1.5, 1.5]; // (~2) P4 (~6) | P1 | (~3) P5 (~7)
   }
   // Special case for pentatonic EDOs
   if (fifth/edo == 3/5) {

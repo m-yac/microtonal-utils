@@ -6,11 +6,12 @@
 (function(root) {
 
 const ne = require('nearley');
+const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 var grammar = require('./parser/grammar.js');
 var {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
-var {fjsSymb, fjsNote} = require('./fjs.js');
-var {updnsSymb} = require('./edo.js');
+var {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
+var {edoPy, updnsSymb, updnsNote} = require('./edo.js');
 
 function parse(str) {
 
@@ -31,72 +32,90 @@ function parse(str) {
     console.log("Parse was ambiguous! Full results:");
     console.dir(parser.results, { depth: null });
   }
-  let   result  = { type: results[0][0] };
-  const intv    = results[0][2];
-  let   prefEDO = parseInt(results[0][3]);
-  const refNote = results[0][4];
+  let ret = { type: results[0][0]
+            , intv: results[0][2]
+            , refNote: results[0][4]
+            , prefEDO: parseInt(results[0][3]) };
 
   // If `intv` is an EDO step (i.e. a fractional power of two),
-  if (Object.entries(intv).length == (intv['2'] != null)) {
-    let e2 = intv['2'] || Fraction(0);
-    // forget `prefEDO` if `intv` is not `2^(k/prefEDO)` (sanity check)
-    if (prefEDO && e2.mul(prefEDO).d != 1) {
-      prefEDO = null;
+  if (Object.entries(ret.intv).length == (ret.intv['2'] != null)) {
+    let e2 = ret.intv['2'] || Fraction(0);
+    // forget `ret.prefEDO` if `ret.intv` is not `2^(k/prefEDO)` (sanity check)
+    if (ret.prefEDO && e2.mul(ret.prefEDO).d != 1) {
+      delete ret.prefEDO;
     }
-    // set `prefEDO` if `intv` is a simple enough power of two
-    if (!prefEDO && (e2.d == 3 || e2.d == 4)) {
-      prefEDO = 12;
+    // set `ret.prefEDO` if `ret.intv` is a simple enough power of two
+    if (!ret.prefEDO && (e2.d == 3 || e2.d == 4)) {
+      ret.prefEDO = 12;
     }
-    if (!prefEDO && 4 < e2.d && e2.d < 50) {
-      prefEDO = e2.d;
+    if (!ret.prefEDO && 4 < e2.d && e2.d < 50) {
+      ret.prefEDO = e2.d;
     }
   }
-  // Otherwise, forget `prefEDO` (sanity check)
+  // Otherwise, forget `ret.prefEDO` (sanity check)
   else {
-    prefEDO = null;
+    delete ret.prefEDO;
   }
 
-  // package everything up nicely
-  if (result.type == "interval") {
-    result.cents = intv.toCents();
-    result.intv = intv;
-    result.symb = {};
+  return ret;
+}
+
+function parseCvt(str) {
+  let {type, intv, refNote, prefEDO} = parse(str);
+  let ret = { type: type };
+  if (type == "interval") {
+    ret.cents = intv.toCents();
+    ret.intv = intv;
+    if (prefEDO) {
+      let e2 = (intv['2'] || Fraction(0)).mul(prefEDO);
+      ret.edoSteps = [e2.s*e2.n, prefEDO];
+    }
+    ret.symb = {};
     let fjs = fjsSymb(intv);
+    let fjsn = fjsSymb(intv, fjsnParams);
     if (fjs) {
-      result.symb['FJS'] = fjs;
+      ret.symb['FJS'] = fjs;
+    }
+    if (fjsn && fjsn != fjs) {
+      ret.symb['FJS+Neutrals'] = fjsn;
     }
     if (prefEDO) {
-      let e2 = intv['2'] || Fraction(0);
-      result.symb['EDO-steps'] = [e2.mul(prefEDO).n, prefEDO];
-      result.symb['ups-and-downs'] = [updnsSymb(prefEDO,e2.mul(prefEDO).n), prefEDO];
+      let e2 = (intv['2'] || Fraction(0)).mul(prefEDO);
+      ret.symb['ups-and-downs'] = updnsSymb(prefEDO,e2.s*e2.n).map(s => s + "\\" + prefEDO);
     }
-    if (!fjs && isPythagorean(intv)) {
-      result.symb['other'] = pySymb(intv);
+    if (!fjsn && isPythagorean(intv)) {
+      ret.symb['other'] = pySymb(intv);
     }
     if (intv.equals(Interval(2).sqrt())) {
-      result.symb['other'] = "TT";
+      ret.symb['other'] = "TT";
     }
   }
-  if (result.type == "note") {
-    result.freq = refNote.hertz.mul(intv).valueOf();
-    result.intv = intv;
-    result.symb = {};
+  if (type == "note") {
+    ret.hertz = refNote.hertz.mul(intv).valueOf();
+    ret.intvToRef = intv;
+    if (prefEDO) {
+      let e2 = (intv['2'] || Fraction(0)).mul(prefEDO);
+      ret.edoStepsToRef = [e2.s*e2.n, prefEDO];
+    }
+    const refEDOStepsToA4 = edoPy(prefEDO, refNote.intvToA4);
+    ret.ref = { hertz: refNote.hertz.valueOf()
+              , intvToA4: refNote.intvToA4
+              , edoStepsToA4: [refEDOStepsToA4, prefEDO] };
+    ret.symb = {};
     const intvToA4 = intv.mul(refNote.intvToA4);
     let fjs = fjsNote(intvToA4);
     if (fjs) {
-      result.symb['FJS'] = fjs;
+      ret.symb['FJS'] = fjs;
     }
-    // if (prefEDO) {
-    //   let e2 = intv['2'] || Fraction(0);
-    //   result.symb['ups-and-downs'] = [updnsNote(prefEDO,e2.mul(prefEDO).n), prefEDO];
-    // }
-    if (!fjs && isPythagorean(intv)) {
-      result.symb['other'] = pySymb(intv);
+    if (prefEDO) {
+      let e2 = (intv['2'] || Fraction(0)).mul(prefEDO).add(refEDOStepsToA4);
+      ret.symb['ups-and-downs'] = updnsNote(prefEDO,e2.s*e2.n).map(s => s + "\\" + prefEDO);
     }
   }
-  return result;
+  return ret;
 }
 
 module['exports'].parse = parse;
+module['exports'].parseCvt = parseCvt;
 
 })(this);
