@@ -45,6 +45,7 @@ function applySignPerm(sp, intv) {
   * @returns {Pair.<boolean, Array.<{ratio: Fraction, diff: (number|Interval)}>>}
   */
 function bestRationalApproxs(a,b, opts) {
+  // if only two arguments are given, the second one is `opts`!
   if (!opts) {
     if (typeof b == 'object' && b != null) {
       opts = b;
@@ -149,6 +150,7 @@ function bestRationalApproxs(a,b, opts) {
   * @returns {Array.<{steps: Array, diff: (number|Interval)}>}
   */
 function bestEDOApproxsByEDO(a,b, opts) {
+  // if only two arguments are given, the second one is `opts`!
   if (!opts) {
     if (typeof b == 'object' && b != null) {
       opts = b;
@@ -197,6 +199,7 @@ function bestEDOApproxsByEDO(a,b, opts) {
   * @returns {Array.<{steps: Array, diff: (number|Interval)}>}
   */
 function bestEDOApproxsByDiff(a,b, opts) {
+  // if only two arguments are given, the second one is `opts`!
   if (!opts) {
     if (typeof b == 'object' && b != null) {
       opts = b;

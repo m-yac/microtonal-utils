@@ -1,8 +1,8 @@
 {
-  "name": "microtonal-calculator",
+  "name": "microtonal-utils",
   "version": "1.0.0",
-  "description": "general-purpose calculator for microtonal music theory",
-  "main": "lib/index.js",
+  "description": "a library for calculating with microtonal intervals and notes",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

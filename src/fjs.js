@@ -104,6 +104,7 @@ function fjsComma(p, params) {
   * @returns {boolean}
   */
 function fjsFactor(a,b, params) {
+  // if only two arguments are given, the second one is `params`!
   if (!params) {
     if (typeof b == 'object' && b != null) {
       params = b;
@@ -130,6 +131,7 @@ function fjsFactor(a,b, params) {
   * @returns {{ accStr: string, pyi: Interval }}
   */
 function fjsAccidentals(a,b, params) {
+  // if only two arguments are given, the second one is `params`!
   if (!params) {
     if (typeof b == 'object' && b != null) {
       params = b;
@@ -183,6 +185,7 @@ function fjsAccidentals(a,b, params) {
   * @returns {string}
   */
 function fjsSymb(a,b, params) {
+  // if only two arguments are given, the second one is `params`!
   if (!params) {
     if (typeof b == 'object' && b != null) {
       params = b;
@@ -209,6 +212,7 @@ function fjsSymb(a,b, params) {
   * @returns {string}
   */
 function fjsNote(a,b, params) {
+  // if only two arguments are given, the second one is `params`!
   if (!params) {
     if (typeof b == 'object' && b != null) {
       params = b;

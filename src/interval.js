@@ -66,11 +66,21 @@ const parse = function(a, b) {
 }
 
 /**
-  * Module constructor
+  * Constructs an `Interval`. Valid argument combinations are two integers
+  * (e.g. `Interval(3,2)`), a single number (e.g. `Interval(3/2)`), an array
+  * containing 0-2 integers (e.g. `Interval([3,2])`), a factorization
+  * (e.g. `Interval({2: -1, 3: 1})`), a `Fraction`, or an `Interval`.
+  *
+  * As a convention, all functions which have a JSDoc parameter of type
+  * `Interval` should be able to accept any of these argument combinations in
+  * place of that parameter. For example, `mul` in this file, or
+  * `bestRationalApproxs` in `approx.js`.
+  *
+  * If both arguments are omitted, the result is `Interval(1)`.
   *
   * @constructor
   * @param {(number|Fraction|Object)=} a
-  * @param {number=} b
+  * @param {integer=} b
   */
 function Interval(a,b) {
 
@@ -88,7 +98,10 @@ function Interval(a,b) {
 Interval.prototype = {
 
   /**
-   * Multiplies (i.e. composes) two intervals
+   * Multiplies (i.e. composes) two intervals.
+   *
+   * e.g. `Interval(3,2).mul(5,4)` is the composition of `3/2` and `5/4`, the
+   * interval `15/8`, or `Interval(15,8)`
    *
    * @param {Interval} i
    * @returns {Interval}
@@ -103,7 +116,9 @@ Interval.prototype = {
   },
 
   /**
-   * Divides two intervals
+   * Divides two intervals.
+   *
+   * e.g. `Interval(2).div(3,2)` is exactly `Interval(4,3)`
    *
    * @param {Interval} i
    * @returns {Interval}
@@ -118,7 +133,9 @@ Interval.prototype = {
   },
 
   /**
-   * Takes the reciprocal/inverse of an interval
+   * Takes the reciprocal/inverse of an interval.
+   *
+   * e.g. `Interval(3,2).recip()` is exactly `Interval(2,3)`
    *
    * @returns {Interval}
    */
@@ -131,7 +148,15 @@ Interval.prototype = {
   },
 
   /**
-   * Raises an interval to a fractional power
+   * Raises an interval to a fractional power.
+   *
+   * e.g. `Interval(4,3).pow(2)` is the composition of `4/3` with itself, the
+   * interval `16/9`
+   *
+   * e.g. `Interval(2).pow(4,12)` is the interval `4\12`, four steps of 12-EDO
+   *
+   * e.g. `Interval(5).pow(1,4)` is the fourth root of `5`, the fifth in
+   * quarter-comma meantone
    *
    * @param {Fraction} k
    * @returns {Interval}
@@ -145,7 +170,7 @@ Interval.prototype = {
   },
 
   /**
-   * The nth root of an interval
+   * The nth root of an interval, i.e. `pow(1,n)`.
    *
    * @param {integer} n
    * @returns {Interval}
@@ -155,7 +180,7 @@ Interval.prototype = {
   },
 
   /**
-   * The square root of an interval
+   * The square root of an interval, i.e. `pow(1,2)`.
    *
    * @returns {Interval}
    */
@@ -164,7 +189,12 @@ Interval.prototype = {
   },
 
   /**
-   * Converts an interval with integer prime exponents to a fraction
+   * Converts an interval with integer prime exponents, i.e. an interval which
+   * can be expressed as a fraction, to a `Fraction`.
+   *
+   * e.g. `Interval(3,2).toFrac()` is exactly `Fraction(3,2)`
+   *
+   * e.g. `Interval(2).sqrt().toFrac()` throws an error
    *
    * @returns {Fraction}
    */
@@ -181,7 +211,25 @@ Interval.prototype = {
   },
 
   /**
-   * Converts an interval to the nth root of a fraction
+   * Takes the mediant of two intervals with integer prime exponents, i.e. two
+   * intervals which can be expressed as fractions.
+   *
+   * e.g. `Interval(5,4).med(9,7)` is the mediant of the intervals `5/4` and
+   * `9/7`, the interval `14/11`
+   *
+   * @returns {Interval}
+   */
+  "med": function(a,b) {
+    let [f1, f2] = [this.toFrac(), Interval(a,b).toFrac()];
+    return new Interval(f1.n + f2.n, f1.d + f2.d);
+  },
+
+  /**
+   * Converts any interval to its representation as the nth root of a fraction.
+   *
+   * e.g. `Interval(3,2).toNthRoot()` is exactly `{k: Interval(3,2), n: 1}`
+   *
+   * e.g. `Interval({2: 1/2, 5: 1/3})` is exactly `{k: Interval({2: 3, 5: 2}), n: 6}`
    *
    * @returns {{k: Fraction, n: Integer}}
    */
@@ -194,7 +242,11 @@ Interval.prototype = {
   },
 
   /**
-   * Converts an interval to its decimal value
+   * Converts an interval to its decimal value, for automatic use by javascript.
+   * Note that this function should not be used to compare relative sizes of
+   * intervals, use `valueOf_log` or `toCents` instead.
+   *
+   * e.g. `Interval(3,2).valueOf()` is exactly `1.5`
    *
    * @returns {number}
    */
@@ -207,9 +259,17 @@ Interval.prototype = {
   },
 
   /**
-   * Compares two intervals. Specifically, returns 0 if the intervals are equal,
-   * 1 if the first interval is greater than the second, and -1 if the second
-   * interval is greater than the first.
+   * Performs an exact comparison of two intervals. Specifically, returns 0 if
+   * the intervals are equal, 1 if the first interval is greater than the
+   * second, and -1 if the second interval is greater than the first.
+   *
+   * In general, `i1 ineq i2`, where `i1`, `i2` are intervals and `ineq` is an
+   * inequality (e.g. `>=`), can be incorrect since javascript uses `valueOf`
+   * to convert both sides to finite precision floating point numbers before
+   * doing the comparision. To perform an exact version of the same check,
+   * use `i1.compare(i2) ineq 0`.
+   *
+   * e.g. `Interval(2).sqrt().compare(3,2) < 0` is true since `sqrt(2) < 3/2`
    *
    * @param {Interval} i
    * @returns {integer}
@@ -228,7 +288,12 @@ Interval.prototype = {
   },
 
   /**
-   * Checks if the two intervals are the same.
+   * Checks if the two intervals are the same. In general, `i1 == i2`, where
+   * `i1`, `i2` are intervals, can give false positives since javascript uses
+   * `valueOf` to convert both sides to finite precision floating point numbers
+   * before doing the comparision.
+   *
+   * e.g. `Interval(4,3).pow(2).equals(16,9)` is true
    *
    * @param {Interval} i
    * @returns {boolean}
@@ -242,7 +307,7 @@ Interval.prototype = {
    * exponent of that prime in this interval, and whose second element is the
    * interval without that prime (i.e. the rest of the factorization).
    *
-   * For example, `Interval(8*5,7).factorOut(2)` returns `[3, Interval(5,7)]`.
+   * e.g. `Interval(8*5,7).factorOut(2)` is exactly `[3, Interval(5,7)]`.
    *
    * More generally, if the given argument is an interval `i` with factorization
    * `p1^e1 ... pm^em` (where the `pk`s are prime and in ascending order, and
@@ -250,7 +315,7 @@ Interval.prototype = {
    * smallest fraction such that `this.div(i.pow(g))` contains no factors of
    * `pm` (the largest prime in the factorization of `i`).
    *
-   * For example, `Interval(9,8).factorOut(3,2)` returns `[2, Interval(1,2)]`.
+   * e.g. `Interval(9,8).factorOut(3,2)` is exactly `[2, Interval(1,2)]`.
    *
    * @param {Interval} i
    * @returns {Pair.<Fraction,Interval>}
@@ -275,9 +340,13 @@ Interval.prototype = {
    * Converts an interval to its decimal value log the given base. If no
    * argument is given, the base is taken to be 2 (an octave).
    *
+   * e.g. `Interval(3,2).valueOf_log()` gives `0.5849625007211561`
+   *
    * Note that this function uses `factorOut` to preserve as much precision as
    * possible - for example, for any interval `i` and fraction `k`, then
    * `i.pow(k).valueOf_log(i) == k` *exactly*.
+   *
+   * e.g. `Interval(3,2).pow(1,2).valueOf_log(3,2)` gives `0.5`
    *
    * @param {Interval} [i=Interval(2)]
    * @returns {number}
@@ -294,6 +363,8 @@ Interval.prototype = {
   /**
    * Reduces an interval w.r.t. another interval. If no argument is given, it
    * is taken to be 2 (an octave).
+   *
+   * e.g. `Interval(3,2).pow(2).red()` is exactly `Interval(9,8)`
    *
    * For all intervals `i`, `j` this function satisfies the equality:
    * `i.div(i.red(j)).equals(j.pow(Math.floor(i.valueOf_log(j))))`
@@ -314,6 +385,8 @@ Interval.prototype = {
    * Balanced reduces an interval w.r.t. another interval. If no argument is
    * given, the it is taken to be 2 (an octave).
    *
+   * e.g. `Interval(3,2).reb()` is exactly `Interval(2,3)`
+   *
    * For all intervals `i`, `j` this function satisfies the equality:
    * `i.div(i.reb(j)).equals(j.pow(Math.round(i.valueOf_log(j))))`
    *
@@ -332,9 +405,13 @@ Interval.prototype = {
   /**
    * Converts an interval to its value in cents.
    *
+   * e.g. `Interval(3,2).toCents()` gives `701.9550008653873`
+   *
    * Note that this function uses `factorOut` to preserve as much precision as
    * possible - for example, for any fraction `k`,
    * `Interval(2).pow(k).toCents() == k.mul(1200)` *exactly*.
+   *
+   * e.g. `Interval(2).pow(4,12).toCents()` is exactly `400`
    *
    * @returns {number}
    */
@@ -345,6 +422,8 @@ Interval.prototype = {
 
   /**
    * Converts an interval to its Tenney harmonic distance, or Tenney height.
+   *
+   * e.g. `Interval(3,2).tenneyHD()` gives `2.584962500721156`
    *
    * @returns {number}
    */
