@@ -79,6 +79,9 @@ function parse(str) {
  * @property {string} type always "interval"
  * @property {number} cents the resulting interval converted to cents
  * @property {Interval} intv the resulting interval object
+ * @property {Fraction=} ratio the resulting interval as a JI ratio
+ * @property {number=} tenneyHD the Tenney harmonic distance of the resulting
+ *                              interval as a JI ratio
  * @property {Pair.<integer,integer>=} edoSteps the resulting interval as some
  *                                              number of EDO steps
  * @property {Object.<string,string>} symb various symbols for the resulting
@@ -120,6 +123,10 @@ function parseCvt(str) {
   if (type == "interval") {
     ret.cents = intv.toCents();
     ret.intv = intv;
+    try {
+      ret.ratio = intv.toFrac();
+      ret.tenneyHD = intv.tenneyHD();
+    } catch (_) {}
     if (prefEDO) {
       let e2 = (intv['2'] || Fraction(0)).mul(prefEDO);
       ret.edoSteps = [e2.s*e2.n, prefEDO];

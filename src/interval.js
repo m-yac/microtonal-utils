@@ -321,6 +321,17 @@ Interval.prototype = {
   "toCents": function() {
     const [e2, res] = this.factorOut(2);
     return e2.mul(1200) + Math.log(res.valueOf()) / Math.log(2) * 1200;
+  },
+
+  /**
+   * Converts an interval to its Tenney harmonic distance, or Tenney height.
+   */
+  "tenneyHD": function() {
+    let ret = Interval(1);
+    for (const i in keys(this)) {
+      ret[i] = this[i].abs();
+    }
+    return ret.valueOf_log();
   }
 
 }
