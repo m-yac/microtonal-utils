@@ -1,9 +1,8 @@
 /**
- * @module approx.js
- * Copyright (c) 2021, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * Best rational and EDO approximations of intervals
+ * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * @module approx
  **/
-
-(function(root) {
 
 const pf = require('primes-and-factors');
 const Fraction = require('fraction.js');
@@ -36,13 +35,14 @@ function applySignPerm(sp, intv) {
   *
   * @param {Interval} i
   * @param {Object} [opts]
-  * @param {Integer} [opts.cutoff] defaults to 50c
-  * @param {Integer} [opts.primeLimit]
-  * @param {Integer} [opts.oddLimit]
-  * @param {Integer} [opts.startIteration] defaults to 0
-  * @param {Integer} [opts.numIterations] defaults to 1
-  * @param {boolean} [opts.useExactDiffs] defaults to false
-  * @returns {{0: boolean, 1: {ratio: Fraction, diff: (number|Interval)}[]}}
+  * @param {integer} [opts.cutoff] defaults to 50 cents
+  * @param {integer} [opts.primeLimit]
+  * @param {integer} [opts.oddLimit]
+  * @param {integer} [opts.startIteration] defaults to 0
+  * @param {integer} [opts.numIterations] defaults to 1
+  * @param {boolean} [opts.useExactDiffs] defaults to false, controls the type
+  *                                       of each 'diff' property
+  * @returns {Pair.<boolean, Array.<{ratio: Fraction, diff: (number|Interval)}>>}
   */
 function bestRationalApproxs(a,b, opts) {
   if (!opts) {
@@ -141,11 +141,12 @@ function bestRationalApproxs(a,b, opts) {
   *
   * @param {Interval} i
   * @param {Object} [opts]
-  * @param {Integer} [opts.cutoff] defaults to 50c
-  * @param {Integer} [opts.startEDO] defaults to 5
-  * @param {Integer} [opts.endEDO] defaults to 60
-  * @param {boolean} [opts.useExactDiffs] defaults to false
-  * @returns {{steps: Array, diff: (number|Interval)}[]}
+  * @param {integer} [opts.cutoff] defaults to 50 cents
+  * @param {integer} [opts.startEDO] defaults to 5
+  * @param {integer} [opts.endEDO] defaults to 60
+  * @param {boolean} [opts.useExactDiffs] defaults to false, controls the type
+  *                                       of each 'diff' property
+  * @returns {Array.<{steps: Array, diff: (number|Interval)}>}
   */
 function bestEDOApproxsByEDO(a,b, opts) {
   if (!opts) {
@@ -189,10 +190,11 @@ function bestEDOApproxsByEDO(a,b, opts) {
   *
   * @param {Interval} i
   * @param {Object} [opts]
-  * @param {Integer} [opts.startEDO] defaults to 5
-  * @param {Integer} [opts.endEDO] defaults to 60
-  * @param {boolean} [opts.useExactDiffs] defaults to false
-  * @returns {{steps: Array, diff: (number|Interval)}[]}
+  * @param {integer} [opts.startEDO] defaults to 5
+  * @param {integer} [opts.endEDO] defaults to 60
+  * @param {boolean} [opts.useExactDiffs] defaults to false, controls the type
+  *                                       of each 'diff' property
+  * @returns {Array.<{steps: Array, diff: (number|Interval)}>}
   */
 function bestEDOApproxsByDiff(a,b, opts) {
   if (!opts) {
@@ -234,8 +236,6 @@ function bestEDOApproxsByDiff(a,b, opts) {
   return ret.map(x => ({ steps: x.steps, diff: useExactDiffs ? x.diff : x.diff.toCents() }));
 }
 
-module['exports'].bestRationalApproxs = bestRationalApproxs;
-module['exports'].bestEDOApproxsByEDO = bestEDOApproxsByEDO;
-module['exports'].bestEDOApproxsByDiff = bestEDOApproxsByDiff;
-
-})(this);
+module.exports.bestRationalApproxs = bestRationalApproxs;
+module.exports.bestEDOApproxsByEDO = bestEDOApproxsByEDO;
+module.exports.bestEDOApproxsByDiff = bestEDOApproxsByDiff;

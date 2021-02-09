@@ -1,23 +1,37 @@
 /**
- * @module parser.js
- * Copyright (c) 2020, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * Interface for parsing interval/note expressions
+ * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * @module parser
  **/
-
-(function(root) {
 
 const ne = require('nearley');
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
-var grammar = require('./parser/grammar.js');
-var {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
-var {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
-var {edoPy, updnsSymb, updnsNote} = require('./edo.js');
+const grammar = require('./parser/grammar.js');
+const {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
+const {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
+const {edoPy, updnsSymb, updnsNote} = require('./edo.js');
 
+/**
+ * @typedef {Object} RawParseResult
+ * @property {string} type either "interval" or "note"
+ * @property {Interval} intv the resulting interval (to the reference, if
+ *                           type is "note")
+ * @property {{hertz: Interval, intvToA4: Interval}} refNote the reference note
+ * @property {integer=} prefEDO the preferred EDO, if any, of the interval
+ */
+
+/**
+  * Parses the given string
+  *
+  * @param {string} str
+  * @returns {RawParseResult}
+  */
 function parse(str) {
 
   const parser = new ne.Parser(ne.Grammar.fromCompiled(grammar));
   parser.feed(str);
-  var results = parser.results;
+  let results = parser.results;
 
   if (results.length == 0) {
     throw "No parse"
@@ -60,6 +74,46 @@ function parse(str) {
   return ret;
 }
 
+/**
+ * @typedef {Object} IntvParseResult
+ * @property {string} type always "interval"
+ * @property {number} cents the resulting interval converted to cents
+ * @property {Interval} intv the resulting interval object
+ * @property {Pair.<integer,integer>=} edoSteps the resulting interval as some
+ *                                              number of EDO steps
+ * @property {Object.<string,string>} symb various symbols for the resulting
+ *                                         interval, including FJS,
+ *                                         FJS + Neutrals, and ups-and-downs
+ *                                         notations
+ */
+
+/**
+ * @typedef {Object} NoteParseResult
+ * @property {string} type always "note"
+ * @property {number} freq the resulting interval converted to hertz
+ * @property {Interval} intvToRef the resulting interval to the reference
+ * @property {Pair.<integer,integer>=} edoStepsToRef the resulting interval as
+ *                                                   some number of EDO steps
+ *                                                   to the reference
+ * @property {ReferenceNote} ref the reference note
+ * @property {Object.<string,string>} symb various symbols for the resulting
+ *                                         interval, including FJS and
+ *                                         ups-and-downs notations
+ */
+
+/**
+ * @typedef {Object} ReferenceNote
+ * @property {Interval} hertz
+ * @property {Interval} intvToA4
+ * @property {Pair.<integer,integer>=} edoStepsToA4
+ */
+
+/**
+  * Parses the given string and converts it to a few other convenient forms
+  *
+  * @param {string} str
+  * @returns {IntvParseResult|NoteParseResult}
+  */
 function parseCvt(str) {
   let {type, intv, refNote, prefEDO} = parse(str);
   let ret = { type: type };
@@ -97,10 +151,8 @@ function parseCvt(str) {
       let e2 = (intv['2'] || Fraction(0)).mul(prefEDO);
       ret.edoStepsToRef = [e2.s*e2.n, prefEDO];
     }
-    const refEDOStepsToA4 = edoPy(prefEDO, refNote.intvToA4);
     ret.ref = { hertz: refNote.hertz.valueOf()
-              , intvToA4: refNote.intvToA4
-              , edoStepsToA4: [refEDOStepsToA4, prefEDO] };
+              , intvToA4: refNote.intvToA4 };
     ret.symb = {};
     const intvToA4 = intv.mul(refNote.intvToA4);
     let fjs = fjsNote(intvToA4);
@@ -108,6 +160,8 @@ function parseCvt(str) {
       ret.symb['FJS'] = fjs;
     }
     if (prefEDO) {
+      const refEDOStepsToA4 = edoPy(prefEDO, refNote.intvToA4);
+      ret.ref.edoStepsToA4 = [refEDOStepsToA4, prefEDO];
       let e2 = (intv['2'] || Fraction(0)).mul(prefEDO).add(refEDOStepsToA4);
       ret.symb['ups-and-downs'] = updnsNote(prefEDO,e2.s*e2.n).map(s => s + "\\" + prefEDO);
     }
@@ -117,5 +171,3 @@ function parseCvt(str) {
 
 module['exports'].parse = parse;
 module['exports'].parseCvt = parseCvt;
-
-})(this);

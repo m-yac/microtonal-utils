@@ -1,9 +1,8 @@
 /**
- * @module fjs.js
- * Copyright (c) 2020, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * Functions for working with FJS intervals
+ * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * @module fjs
  **/
-
-(function(root) {
 
 const pf = require('primes-and-factors');
 const Fraction = require('fraction.js');
@@ -77,7 +76,7 @@ const fjsnParams = { RoT: fjsnRoT, fifthsSeq: fjsnFifthsSeq, hasNeutrals: true }
   * Returns the FJS comma associated to a prime interval greater than 3
   * (i.e. 5, 7, 11, etc.)
   *
-  * @param {Integer} p
+  * @param {integer} p
   * @param {{RoT: Fraction, fifthSeq: Fraction}} [params=fjsParams]
   * @returns {boolean}
   */
@@ -114,7 +113,7 @@ function fjsFactor(a,b, params) {
     }
   }
   const k = Interval(a,b);
-  var ret = Interval(1);
+  let ret = Interval(1);
   for (const [p,e] of Object.entries(k)) {
     ret = ret.mul(fjsComma(p,params).pow(e));
   }
@@ -128,7 +127,7 @@ function fjsFactor(a,b, params) {
   *
   * @param {Interval} i
   * @param {{RoT: Fraction, fifthSeq: Fraction}} [params=fjsParams]
-  * @returns {{ accStr: String, pyi: Interval }}
+  * @returns {{ accStr: string, pyi: Interval }}
   */
 function fjsAccidentals(a,b, params) {
   if (!params) {
@@ -140,9 +139,9 @@ function fjsAccidentals(a,b, params) {
     }
   }
   const i = Interval(a,b);
-  var pyi = i;
-  var otos = [];
-  var utos = [];
+  let pyi = i;
+  let otos = [];
+  let utos = [];
   for (let [p,e] of Object.entries(i)) {
     if (p != 2 && p != 3) {
       pyi = pyi.div(fjsComma(p,params).pow(e));
@@ -181,7 +180,7 @@ function fjsAccidentals(a,b, params) {
   *
   * @param {Interval} i
   * @param {{RoT: Fraction, fifthSeq: Fraction}} [params=fjsParams]
-  * @returns {String}
+  * @returns {string}
   */
 function fjsSymb(a,b, params) {
   if (!params) {
@@ -207,7 +206,7 @@ function fjsSymb(a,b, params) {
   *
   * @param {Interval} i
   * @param {{RoT: Fraction, fifthSeq: Fraction}} [params=fjsParams]
-  * @returns {String}
+  * @returns {string}
   */
 function fjsNote(a,b, params) {
   if (!params) {
@@ -237,5 +236,3 @@ module['exports'].fjsComma = fjsComma;
 module['exports'].fjsFactor = fjsFactor;
 module['exports'].fjsSymb = fjsSymb;
 module['exports'].fjsNote = fjsNote;
-
-})(this);

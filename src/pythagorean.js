@@ -1,9 +1,8 @@
 /**
- * @module pythagorean.js
- * Copyright (c) 2021, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * Functions for working with pythagorean and neutral pythagorean intervals
+ * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * @module pythagorean
  **/
-
-(function(root) {
 
 const pf = require('primes-and-factors');
 const Fraction = require('fraction.js');
@@ -16,7 +15,7 @@ function mod(a,n) {
 /**
   * Constructs an interval from a pythagorean degree and offset
   *
-  * @param {Integer} d
+  * @param {integer} d
   * @param {Fraction} o
   * @returns {Interval}
   */
@@ -35,7 +34,7 @@ function pyInterval(d,a,b) {
 /**
   * Checks whether the given interval is pythagorean
   *
-  * @param {Interval} o
+  * @param {Interval} i
   * @returns {boolean}
   */
 function isPythagorean(a,b) {
@@ -49,8 +48,8 @@ function isPythagorean(a,b) {
 /**
   * For a given pythagorean interval `(3/2)^(g/4) * 2^v`, returns the `g`.
   *
-  * @param {Interval} o
-  * @returns {Integer}
+  * @param {Interval} i
+  * @returns {integer}
   */
 function generator(a,b) {
   const i = new Interval(a,b);
@@ -64,8 +63,8 @@ function generator(a,b) {
 /**
   * For a given pythagorean interval `(3/2)^(g/4) * 2^v`, returns the `v`.
   *
-  * @param {Interval} o
-  * @returns {Integer}
+  * @param {Interval} i
+  * @returns {integer}
   */
 function octaves(a,b) {
   const i = new Interval(a,b);
@@ -82,7 +81,7 @@ function octaves(a,b) {
   * Returns the degree of the given pythagorean interval
   *
   * @param {Interval} i
-  * @returns {Integer}
+  * @returns {integer}
   */
 function degree(a,b) {
   const i = new Interval(a,b);
@@ -110,8 +109,8 @@ function offset(a,b) {
 /**
   * Reduces a pythagorean degree so it lies between 1 and 7
   *
-  * @param {Integer} d
-  * @returns {Integer}
+  * @param {integer} d
+  * @returns {integer}
   */
 function redDeg(d) {
   return mod(d - Math.sign(d), 7) + 1;
@@ -121,7 +120,7 @@ function redDeg(d) {
   * Checks whether a given degree (of a pythagorean interval) is a unison,
   * fourth, or fifth
   *
-  * @param {Integer} d
+  * @param {integer} d
   * @returns {boolean}
   */
 function isPerfectDeg(d) {
@@ -132,10 +131,10 @@ function isPerfectDeg(d) {
   * Returns the quality of the given pythagorean interval
   *
   * @param {Interval} i
-  * @returns {String}
+  * @returns {string}
   */
 function pyQuality(a,b) {
-  var o = offset(a,b);
+  let o = offset(a,b);
   if (isPerfectDeg(degree(a,b))) {
     if (o == 0    ) { return "P" }
   }
@@ -161,7 +160,7 @@ function pyQuality(a,b) {
   * Returns the symbol of the given pythagorean interval
   *
   * @param {Interval} i
-  * @returns {String}
+  * @returns {string}
   */
 function pySymb(a,b) {
   const d = degree(a,b);
@@ -172,7 +171,7 @@ function pySymb(a,b) {
   * Returns the interval to A of the given base note name (i.e. A, B, C, D, E,
   * F or G) within a single octave of scientific pitch notation
   *
-  * @param {String} x
+  * @param {string} baseNote
   * @returns {Interval}
   */
 function baseNoteIntvToA(x) {
@@ -189,7 +188,7 @@ function baseNoteIntvToA(x) {
   * Returns the octave in scientific pitch notation of the given interval to A4
   *
   * @param {Interval} intvToA4
-  * @returns {Integer}
+  * @returns {integer}
   */
 function octaveOfIntvToA4(a,b) {
   const intvToA4 = Interval(a,b);
@@ -204,7 +203,7 @@ function octaveOfIntvToA4(a,b) {
   *
   * @param {Interval} intvToA4
   * @param {Boolean} [useASCII=false]
-  * @returns {String}
+  * @returns {string}
   */
 function pyNote(intvToA4, useASCII) {
   const intvToF4 = Interval(intvToA4).div(baseNoteIntvToA("F"));
@@ -268,5 +267,3 @@ module['exports'].pySymb = pySymb;
 module['exports'].baseNoteIntvToA = baseNoteIntvToA;
 module['exports'].octaveOfIntvToA4 = octaveOfIntvToA4;
 module['exports'].pyNote = pyNote;
-
-})(this);

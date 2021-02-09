@@ -1,15 +1,14 @@
 /**
- * @module interval.js
- * Copyright (c) 2021, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * The interval datatype
+ * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * @module interval
  **/
-
-(function(root) {
 
 const pf = require('primes-and-factors');
 const Fraction = require('fraction.js');
 
 const keys = function(a, b) {
-  var ret = {};
+  let ret = {};
   for (const [k,v] of Object.entries(a)) {
     ret[k] = 1;
   }
@@ -31,7 +30,7 @@ const parse = function(a, b) {
     }
     const afs = pf.getPrimeExponentObject(a);
     const bfs = pf.getPrimeExponentObject(b);
-    var ret = keys(afs,bfs);
+    let ret = keys(afs,bfs);
     for (const i in ret) {
       ret[i] = Fraction((afs[i] || 0) - (bfs[i] || 0));
     }
@@ -39,15 +38,15 @@ const parse = function(a, b) {
   }
   else if (typeof a == "object") {
     if ("d" in a && "n" in a) {
-      var sn = a["n"];
+      let sn = a["n"];
       if ("s" in a) {
         sn *= a["s"];
       }
       return parse(sn, a["d"]);
     }
     else {
-      var allPrimes = true
-      var ret = {};
+      let allPrimes = true
+      let ret = {};
       for (const i in keys(a)) {
         allPrimes &= pf.isPrime(Number(i));
         if (Fraction(a[i]) != 0) {
@@ -70,13 +69,13 @@ const parse = function(a, b) {
   * Module constructor
   *
   * @constructor
-  * @param {number|Fraction|Object=} a
+  * @param {(number|Fraction|Object)=} a
   * @param {number=} b
   */
-function Interval(a, b) {
+function Interval(a,b) {
 
   if (!(this instanceof Interval)) {
-    return new Interval(a, b);
+    return new Interval(a,b);
   }
 
   const p = parse(a,b);
@@ -90,10 +89,12 @@ Interval.prototype = {
 
   /**
    * Multiplies two intervals
+   *
+   * @param {Interval} i
    */
   "mul": function(a,b) {
     const rhs = parse(a,b);
-    var ret = keys(this,rhs);
+    let ret = keys(this,rhs);
     for (const i in ret) {
       ret[i] = (this[i] || Fraction(0)).add(rhs[i] || Fraction(0));
     }
@@ -102,10 +103,12 @@ Interval.prototype = {
 
   /**
    * Divides two intervals
+   *
+   * @param {Interval} i
    */
   "div": function(a,b) {
     const rhs = parse(a,b);
-    var ret = keys(this,rhs);
+    let ret = keys(this,rhs);
     for (const i in ret) {
       ret[i] = (this[i] || Fraction(0)).sub(rhs[i] || Fraction(0));
     }
@@ -116,7 +119,7 @@ Interval.prototype = {
    * Takes the reciprocal/inverse of an interval
    */
   "recip": function() {
-    var ret = keys(this);
+    let ret = keys(this);
     for (const i in ret) {
       ret[i] = this[i].neg();
     }
@@ -125,9 +128,11 @@ Interval.prototype = {
 
   /**
    * Raises an interval to a fractional power
+   *
+   * @param {Fraction} k
    */
   "pow": function(a,b) {
-    var ret = keys(this);
+    let ret = keys(this);
     for (const i in ret) {
       ret[i] = this[i].mul(Fraction(a,b));
     }
@@ -136,6 +141,8 @@ Interval.prototype = {
 
   /**
    * Takes the nth root of an interval
+   *
+   * @param {integer} n
    */
   "root": function(a) {
     return this.pow(Fraction(1,a));
@@ -152,7 +159,7 @@ Interval.prototype = {
    * Converts an interval with integer prime exponents to a fraction
    */
   "toFrac": function() {
-    var ret = Fraction(1);
+    let ret = Fraction(1);
     for (const i in keys(this)) {
       if (this[i].d == 1) {
         ret = ret.mul(Fraction(i).pow(this[i].s * this[i].n));
@@ -169,7 +176,7 @@ Interval.prototype = {
    * `{{k: Fraction, n:Integer}}`.
    */
   "toNthRoot": function() {
-    var n_fr = Fraction(1);
+    let n_fr = Fraction(1);
     for (const i in keys(this)) {
       n_fr = n_fr.gcd(this[i]);
     }
@@ -180,7 +187,7 @@ Interval.prototype = {
    * Converts an interval to its decimal value
    */
   "valueOf": function() {
-    var ret = 1;
+    let ret = 1;
     for (const i in keys(this)) {
       ret *= Math.pow(i,this[i].valueOf())
     }
@@ -191,6 +198,8 @@ Interval.prototype = {
    * Compares two intervals. Specifically, returns 0 if the intervals are equal,
    * 1 if the first interval is greater than the second, and -1 if the second
    * interval is greater than the first.
+   *
+   * @param {Interval} i
    */
   "compare": function(a,b) {
     const diff = this.div(a,b);
@@ -207,6 +216,8 @@ Interval.prototype = {
 
   /**
    * Checks if the two intervals are the same.
+   *
+   * @param {Interval} i
    */
   "equals": function(a,b) {
     return this.compare(a,b) == 0;
@@ -226,6 +237,8 @@ Interval.prototype = {
    * `pm` (the largest prime in the factorization of `i`).
    *
    * For example, `Interval(9,8).factorOut(3,2)` returns `[2, Interval(1,2)]`.
+   *
+   * @param {Interval} i
    */
   "factorOut": function(a,b) {
     const base = new Interval(a,b);
@@ -250,6 +263,8 @@ Interval.prototype = {
    * Note that this function uses `factorOut` to preserve as much precision as
    * possible - for example, for any interval `i` and fraction `k`, then
    * `i.pow(k).valueOf_log(i) == k` *exactly*.
+   *
+   * @param {Interval} [i=Interval(2)]
    */
   "valueOf_log": function(a,b) {
     let base = new Interval(2);
@@ -266,9 +281,11 @@ Interval.prototype = {
    *
    * For all intervals `i`, `j` this function satisfies the equality:
    * `i.div(i.red(j)).equals(j.pow(Math.floor(i.valueOf_log(j))))`
+   *
+   * @param {Interval} [i=Interval(2)]
    */
   "red": function(a,b) {
-    var base = new Interval(2);
+    let base = new Interval(2);
     if (a != undefined || b != undefined) {
       base = new Interval(a,b);
     }
@@ -282,9 +299,11 @@ Interval.prototype = {
    *
    * For all intervals `i`, `j` this function satisfies the equality:
    * `i.div(i.reb(j)).equals(j.pow(Math.round(i.valueOf_log(j))))`
+   *
+   * @param {Interval} [i=Interval(2)]
    */
   "reb": function(a,b) {
-    var base = new Interval(2);
+    let base = new Interval(2);
     if (a != undefined || b != undefined) {
       base = new Interval(a,b);
     }
@@ -306,15 +325,4 @@ Interval.prototype = {
 
 }
 
-if (typeof define === "function" && define["amd"]) {
-  define([], function() {
-    return Interval;
-  });
-} else if (typeof exports === "object") {
-  Object.defineProperty(Interval, "__esModule", { 'value': true });
-  module['exports'] = Interval;
-} else {
-  root['Interval'] = Interval;
-}
-
-})(this);
+module.exports = Interval;

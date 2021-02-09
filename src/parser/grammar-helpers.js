@@ -1,6 +1,4 @@
 
-(function(root) {
-
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
 const {pyInterval, isPerfectDeg, baseNoteIntvToA} = require('../pythagorean.js');
@@ -41,5 +39,3 @@ module['exports'].augOrDimPyInterval = augOrDimPyInterval;
 module['exports'].ensureNo2Or3 = ensureNo2Or3;
 module['exports'].cbnEDOs = cbnEDOs;
 module['exports'].baseNoteIntvToReference = baseNoteIntvToReference;
-
-})(this);

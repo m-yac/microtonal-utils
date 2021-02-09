@@ -1,9 +1,8 @@
 /**
- * @module edo.js
- * Copyright (c) 2021, Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * Functions for working with intervals in an EDO
+ * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * @module edo
  **/
-
-(function(root) {
 
 const {gcd, egcd} = require('mathutils');
 const Fraction = require('fraction.js');
@@ -17,9 +16,9 @@ function mod(a,n) {
 /**
   * Returns the EDO step closest to the given interval
   *
-  * @param {Integer} edo
+  * @param {integer} edo
   * @param {Interval} i
-  * @returns {Integer}
+  * @returns {integer}
   */
 function edoApprox(edo,a,b) {
   return Math.round(edo * Interval(a,b).toCents() / 1200);
@@ -29,9 +28,9 @@ function edoApprox(edo,a,b) {
   * Returns the EDO step which corresponds to the given pythagorean interval,
   * where a P5 corresponds to `edoApprox(edo,Interval(3,2))`
   *
-  * @param {Integer} edo
+  * @param {integer} edo
   * @param {Interval} i
-  * @returns {Integer}
+  * @returns {integer}
   */
 function edoPy(edo,a,b) {
   const i = Interval(a,b);
@@ -57,8 +56,8 @@ function edoPy(edo,a,b) {
   * and for all integers n and k, either `edoPyInv(edo, n)` is undefined or
   * `edoPy(edo, edoPyInv(edo, n).mul(edoPyComma(edo).pow(k))) == n`.
   *
-  * @param {Integer} edo
-  * @param {Integer} n
+  * @param {integer} edo
+  * @param {integer} n
   * @returns {Interval}
   */
 function edoPyInv(edo,n) {
@@ -80,7 +79,7 @@ function edoPyInv(edo,n) {
   * The smallest pythagorean interval tempered out in the given edo (I believe
   * this is the correct description...)
   *
-  * @param {Integer} edo
+  * @param {integer} edo
   * @returns {Interval}
   */
 function edoPyComma(edo) {
@@ -93,7 +92,7 @@ function edoPyComma(edo) {
   * Checks whether neutral pythagorean intervals are realized in the given EDO,
   * i.e. if `edoApprox(edo,Interval(3,2))` is divisible by 2
   *
-  * @param {Integer} edo
+  * @param {integer} edo
   * @returns {boolean}
   */
 function edoHasNeutrals(edo) {
@@ -104,7 +103,7 @@ function edoHasNeutrals(edo) {
   * Checks whether semi-neutral pythagorean intervals are realized in the given
   * EDO, i.e. if `edoApprox(edo,Interval(3,2))` is divisible by 4
   *
-  * @param {Integer} edo
+  * @param {integer} edo
   * @returns {boolean}
   */
 function edoHasSemiNeutrals(edo) {
@@ -204,9 +203,9 @@ function updnsSymbCache(edo) {
   * Returns the ups-and-downs notation symbol for the given steps in the given
   * EDO
   *
-  * @param {Integer} edo
-  * @param {Integer} n
-  * @returns {String}
+  * @param {integer} edo
+  * @param {integer} n
+  * @returns {string}
   */
 function updnsSymb(edo,n) {
   const nr = mod(n,edo);
@@ -247,10 +246,10 @@ function updnsNoteCache(edo) {
   * the given EDO. The returned string uses ASCII instead of uniode wherever
   * possible iff the third argument is given and is true
   *
-  * @param {Integer} edo
-  * @param {Integer} n
+  * @param {integer} edo
+  * @param {integer} n
   * @param {Boolean} [useASCII=false]
-  * @returns {String}
+  * @returns {string}
   */
 function updnsNote(edo, n, useASCII) {
   const nr = mod(n,edo);
@@ -273,5 +272,3 @@ module['exports'].edoHasNeutrals = edoHasNeutrals;
 module['exports'].edoHasSemiNeutrals = edoHasSemiNeutrals;
 module['exports'].updnsSymb = updnsSymb;
 module['exports'].updnsNote = updnsNote;
-
-})(this);
