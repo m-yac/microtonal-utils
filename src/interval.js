@@ -433,6 +433,37 @@ Interval.prototype = {
       ret[i] = this[i].abs();
     }
     return ret.valueOf_log();
+  },
+
+  /**
+   * Converts an interval to a monzo.
+   *
+   * e.g. `Interval(11,9).toMonzo()` gives `[0,-2,0,0,1]`
+   *
+   * @returns {number}
+   */
+  "toMonzo": function() {
+    let max_p = 0;
+    for (const i in keys(this)) {
+      max_p = Math.max(max_p, i);
+    }
+    let [ret, isFrac] = [[], true];
+    if (2 <= max_p) {
+      ret[0] = this[2] || Fraction(0);
+      isFrac &= !this[2] || this[2].d == 1;
+    }
+    let i = 1;
+    for (let p = 3; p <= max_p; p += 2) {
+      if (pf.isPrime(p)) {
+        ret[i] = this[p] || Fraction(0);
+        isFrac &= !this[p] || this[p].d == 1;
+        i++;
+      }
+    }
+    if (isFrac) {
+      ret = ret.map(r => r.s * r.n);
+    }
+    return ret;
   }
 
 }

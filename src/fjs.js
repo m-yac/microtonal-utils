@@ -73,12 +73,39 @@ function* fjsnFifthsSeq() {
 const fjsnParams = { RoT: fjsnRoT, fifthsSeq: fjsnFifthsSeq, hasNeutrals: true };
 
 /**
+  * Returns the FJS fifth shift associated to any interval.
+  *
+  * @param {Interval} i
+  * @param {{RoT: Fraction, fifthSeq: Fraction}} [params=fjsParams]
+  * @returns {Fraction}
+  */
+function fjsFifthShift(a,b, params) {
+  // if only two arguments are given, the second one is `params`!
+  if (!params) {
+    if (typeof b == 'object' && b != null) {
+      params = b;
+      b = undefined;
+    } else {
+      params = fjsParams;
+    }
+  }
+  const intv = Interval(a,b);
+  const fifthsSeqGen = params.fifthsSeq();
+  for (const g of fifthsSeqGen) {
+    let c = intv.div(Interval(3,2).pow(g)).reb();
+    if (c.compare(params.RoT) < 0 && params.RoT.recip().compare(c) < 0) {
+      return g;
+    }
+  }
+}
+
+/**
   * Returns the FJS comma associated to a prime interval greater than 3
   * (i.e. 5, 7, 11, etc.)
   *
   * @param {integer} p
   * @param {{RoT: Fraction, fifthSeq: Fraction}} [params=fjsParams]
-  * @returns {boolean}
+  * @returns {Interval}
   */
 function fjsComma(p, params) {
   if (!params) { params = fjsParams; }
@@ -101,7 +128,7 @@ function fjsComma(p, params) {
   *
   * @param {Interval} k
   * @param {{RoT: Fraction, fifthSeq: Fraction}} [params=fjsParams]
-  * @returns {boolean}
+  * @returns {Interval}
   */
 function fjsFactor(a,b, params) {
   // if only two arguments are given, the second one is `params`!
@@ -236,6 +263,7 @@ module['exports'].fjsParams = fjsParams;
 module['exports'].fjsnRoT = fjsnRoT;
 module['exports'].fjsnFifthsSeq = fjsnFifthsSeq;
 module['exports'].fjsnParams = fjsnParams;
+module['exports'].fjsFifthShift = fjsFifthShift;
 module['exports'].fjsComma = fjsComma;
 module['exports'].fjsFactor = fjsFactor;
 module['exports'].fjsSymb = fjsSymb;
