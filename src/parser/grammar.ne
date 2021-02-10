@@ -3,7 +3,7 @@
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
 const {pySymb, pyInterval, redDeg, octaveOfIntvToA4} = require('../pythagorean.js');
-const {fjsFactor} = require('../fjs.js');
+const {fjsFactor, fjsParams, fjsnParams} = require('../fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
 
@@ -202,7 +202,7 @@ intvSExpr2 ->
 
 intvSymbol ->
     fjsIntv   {% id %}
-  | npyIntv   {% id %}
+  | fjsnIntv  {% id %}
   | snpyIntv  {% id %}
   | "TT"      {% _ => Interval(2).sqrt() %}
 
@@ -219,22 +219,30 @@ noteSymbol ->
   | npyNote  {% id %}
 
 # -------------
-# FJS interval and note symbols
+# FJS and FJS + Neutrals interval and note symbols
 # type: Interval and Interval => Interval
 
 fjsIntv ->
-    pyIntv               {% id %}
-  | fjsIntv "^" fjsAccs  {% d => d[0].mul(d[2]) %}
-  | fjsIntv "_" fjsAccs  {% d => d[0].div(d[2]) %}
+    pyIntv                {% id %}
+  | fjsIntv "^" fjsAccs   {% d => d[0].mul(d[2](fjsParams)) %}
+  | fjsIntv "_" fjsAccs   {% d => d[0].div(d[2](fjsParams)) %}
+fjsnIntv ->
+    npyIntv               {% id %}
+  | fjsnIntv "^" fjsAccs  {% d => d[0].mul(d[2](fjsnParams)) %}
+  | fjsnIntv "_" fjsAccs  {% d => d[0].div(d[2](fjsnParams)) %}
 
 fjsNote ->
-    pyNote               {% id %}
-  | fjsNote "^" fjsAccs  {% d => refIntvToA4 => d[0](refIntvToA4).mul(d[2]) %}
-  | fjsNote "_" fjsAccs  {% d => refIntvToA4 => d[0](refIntvToA4).div(d[2]) %}
+    pyNote                {% id %}
+  | fjsNote "^" fjsAccs   {% d => refIntvToA4 => d[0](refIntvToA4).mul(d[2](fjsParams)) %}
+  | fjsNote "_" fjsAccs   {% d => refIntvToA4 => d[0](refIntvToA4).div(d[2](fjsParams)) %}
+fjsnNote ->
+    npyNote               {% id %}
+  | fjsnNote "^" fjsAccs  {% d => refIntvToA4 => d[0](refIntvToA4).mul(d[2](fjsnParams)) %}
+  | fjsnNote "_" fjsAccs  {% d => refIntvToA4 => d[0](refIntvToA4).div(d[2](fjsnParams)) %}
 
 fjsAccs ->
-    fjsAcc              {% d => fjsFactor(d[0]) %}
-  | fjsAccs "," fjsAcc  {% d => d[0].mul(fjsFactor(d[2])) %}
+    fjsAcc              {% d => params => fjsFactor(d[0], params) %}
+  | fjsAccs "," fjsAcc  {% d => params => d[0](params).mul(fjsFactor(d[2], params)) %}
 
 fjsAcc ->
     posInt                        {% (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject) %}

@@ -7,7 +7,7 @@ function id(x) { return x[0]; }
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
 const {pySymb, pyInterval, redDeg, octaveOfIntvToA4} = require('../pythagorean.js');
-const {fjsFactor} = require('../fjs.js');
+const {fjsFactor, fjsParams, fjsnParams} = require('../fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
 
@@ -157,7 +157,7 @@ var grammar = {
     {"name": "intvSExpr2", "symbols": ["intvSymbol"], "postprocess": id},
     {"name": "intvSExpr2", "symbols": [{"literal":"("}, "_", "intvSExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
     {"name": "intvSymbol", "symbols": ["fjsIntv"], "postprocess": id},
-    {"name": "intvSymbol", "symbols": ["npyIntv"], "postprocess": id},
+    {"name": "intvSymbol", "symbols": ["fjsnIntv"], "postprocess": id},
     {"name": "intvSymbol", "symbols": ["snpyIntv"], "postprocess": id},
     {"name": "intvSymbol$string$1", "symbols": [{"literal":"T"}, {"literal":"T"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "intvSymbol", "symbols": ["intvSymbol$string$1"], "postprocess": _ => Interval(2).sqrt()},
@@ -166,13 +166,19 @@ var grammar = {
     {"name": "noteSymbol", "symbols": ["fjsNote"], "postprocess": id},
     {"name": "noteSymbol", "symbols": ["npyNote"], "postprocess": id},
     {"name": "fjsIntv", "symbols": ["pyIntv"], "postprocess": id},
-    {"name": "fjsIntv", "symbols": ["fjsIntv", {"literal":"^"}, "fjsAccs"], "postprocess": d => d[0].mul(d[2])},
-    {"name": "fjsIntv", "symbols": ["fjsIntv", {"literal":"_"}, "fjsAccs"], "postprocess": d => d[0].div(d[2])},
+    {"name": "fjsIntv", "symbols": ["fjsIntv", {"literal":"^"}, "fjsAccs"], "postprocess": d => d[0].mul(d[2](fjsParams))},
+    {"name": "fjsIntv", "symbols": ["fjsIntv", {"literal":"_"}, "fjsAccs"], "postprocess": d => d[0].div(d[2](fjsParams))},
+    {"name": "fjsnIntv", "symbols": ["npyIntv"], "postprocess": id},
+    {"name": "fjsnIntv", "symbols": ["fjsnIntv", {"literal":"^"}, "fjsAccs"], "postprocess": d => d[0].mul(d[2](fjsnParams))},
+    {"name": "fjsnIntv", "symbols": ["fjsnIntv", {"literal":"_"}, "fjsAccs"], "postprocess": d => d[0].div(d[2](fjsnParams))},
     {"name": "fjsNote", "symbols": ["pyNote"], "postprocess": id},
-    {"name": "fjsNote", "symbols": ["fjsNote", {"literal":"^"}, "fjsAccs"], "postprocess": d => refIntvToA4 => d[0](refIntvToA4).mul(d[2])},
-    {"name": "fjsNote", "symbols": ["fjsNote", {"literal":"_"}, "fjsAccs"], "postprocess": d => refIntvToA4 => d[0](refIntvToA4).div(d[2])},
-    {"name": "fjsAccs", "symbols": ["fjsAcc"], "postprocess": d => fjsFactor(d[0])},
-    {"name": "fjsAccs", "symbols": ["fjsAccs", {"literal":","}, "fjsAcc"], "postprocess": d => d[0].mul(fjsFactor(d[2]))},
+    {"name": "fjsNote", "symbols": ["fjsNote", {"literal":"^"}, "fjsAccs"], "postprocess": d => refIntvToA4 => d[0](refIntvToA4).mul(d[2](fjsParams))},
+    {"name": "fjsNote", "symbols": ["fjsNote", {"literal":"_"}, "fjsAccs"], "postprocess": d => refIntvToA4 => d[0](refIntvToA4).div(d[2](fjsParams))},
+    {"name": "fjsnNote", "symbols": ["npyNote"], "postprocess": id},
+    {"name": "fjsnNote", "symbols": ["fjsnNote", {"literal":"^"}, "fjsAccs"], "postprocess": d => refIntvToA4 => d[0](refIntvToA4).mul(d[2](fjsnParams))},
+    {"name": "fjsnNote", "symbols": ["fjsnNote", {"literal":"_"}, "fjsAccs"], "postprocess": d => refIntvToA4 => d[0](refIntvToA4).div(d[2](fjsnParams))},
+    {"name": "fjsAccs", "symbols": ["fjsAcc"], "postprocess": d => params => fjsFactor(d[0], params)},
+    {"name": "fjsAccs", "symbols": ["fjsAccs", {"literal":","}, "fjsAcc"], "postprocess": d => params => d[0](params).mul(fjsFactor(d[2], params))},
     {"name": "fjsAcc", "symbols": ["posInt"], "postprocess": (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject)},
     {"name": "fjsAcc$string$1", "symbols": [{"literal":"s"}, {"literal":"q"}, {"literal":"r"}, {"literal":"t"}, {"literal":"("}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "fjsAcc", "symbols": ["fjsAcc$string$1", "fjsAcc", {"literal":")"}], "postprocess": d => d[1].sqrt()},
