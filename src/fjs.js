@@ -80,7 +80,7 @@ const fjsnParams = { RoT: fjsnRoT, fifthsSeq: fjsnFifthsSeq, hasNeutrals: true }
   * @returns {Fraction}
   */
 function fjsFifthShift(a,b, params) {
-  // if only two arguments are given, the second one is `params`!
+  // if only two arguments are given, the second one may be `params`!
   if (!params) {
     if (typeof b == 'object' && b != null) {
       params = b;
@@ -131,7 +131,7 @@ function fjsComma(p, params) {
   * @returns {Interval}
   */
 function fjsFactor(a,b, params) {
-  // if only two arguments are given, the second one is `params`!
+  // if only two arguments are given, the second one may be `params`!
   if (!params) {
     if (typeof b == 'object' && b != null) {
       params = b;
@@ -158,7 +158,7 @@ function fjsFactor(a,b, params) {
   * @returns {{ accStr: string, pyi: Interval }}
   */
 function fjsAccidentals(a,b, params) {
-  // if only two arguments are given, the second one is `params`!
+  // if only two arguments are given, the second one may be `params`!
   if (!params) {
     if (typeof b == 'object' && b != null) {
       params = b;
@@ -198,9 +198,12 @@ function fjsAccidentals(a,b, params) {
       }
     }
   }
-  const otoStr = otos.length == 0 ? "" : "^" + otos.join(",");
-  const utoStr = utos.length == 0 ? "" : "_" + utos.join(",");
-  return { accStr: otoStr + utoStr, pyi: pyi };
+  const modulus = params.hasNeutrals ? 2 : 4;
+  if (py.isPythagorean(pyi) && py.generator(pyi) % modulus == 0) {
+    const otoStr = otos.length == 0 ? "" : "^" + otos.join(",");
+    const utoStr = utos.length == 0 ? "" : "_" + utos.join(",");
+    return { accStr: otoStr + utoStr, pyi: pyi };
+  }
 }
 
 /**
@@ -212,21 +215,9 @@ function fjsAccidentals(a,b, params) {
   * @returns {string}
   */
 function fjsSymb(a,b, params) {
-  // if only two arguments are given, the second one is `params`!
-  if (!params) {
-    if (typeof b == 'object' && b != null) {
-      params = b;
-      b = undefined;
-    } else {
-      params = fjsParams;
-    }
-  }
-  const {accStr, pyi} = fjsAccidentals(a,b, params);
-  const modulus = params.hasNeutrals ? 2 : 4;
-  // If, after applying all the accidentals, the result is a permitted
-  // pythagorean interval then an FJS symbol exists for this interval
-  if (py.isPythagorean(pyi) && py.generator(pyi) % modulus == 0) {
-    return py.pySymb(pyi) + accStr;
+  const res = fjsAccidentals(a,b, params);
+  if (res) {
+    return py.pySymb(res.pyi) + res.accStr;
   }
 }
 
@@ -239,21 +230,9 @@ function fjsSymb(a,b, params) {
   * @returns {string}
   */
 function fjsNote(a,b, params) {
-  // if only two arguments are given, the second one is `params`!
-  if (!params) {
-    if (typeof b == 'object' && b != null) {
-      params = b;
-      b = undefined;
-    } else {
-      params = fjsParams;
-    }
-  }
-  const {accStr, pyi} = fjsAccidentals(a,b, params);
-  const modulus = params.hasNeutrals ? 2 : 4;
-  // If, after applying all the accidentals, the result is a permitted
-  // pythagorean interval then an FJS symbol exists for this interval
-  if (py.isPythagorean(pyi) && py.generator(pyi) % modulus == 0) {
-    return py.pyNote(pyi) + accStr;
+  const res = fjsAccidentals(a,b, params);
+  if (res) {
+    return py.pyNote(res.pyi) + res.accStr;
   }
 }
 
@@ -266,5 +245,6 @@ module['exports'].fjsnParams = fjsnParams;
 module['exports'].fjsFifthShift = fjsFifthShift;
 module['exports'].fjsComma = fjsComma;
 module['exports'].fjsFactor = fjsFactor;
+module['exports'].fjsAccidentals = fjsAccidentals;
 module['exports'].fjsSymb = fjsSymb;
 module['exports'].fjsNote = fjsNote;

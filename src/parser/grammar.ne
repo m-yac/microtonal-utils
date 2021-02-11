@@ -101,7 +101,8 @@ intvAExpr3 ->
   | decimal "c"
     {% d => function () {
          const d0 = Fraction(d[0]).div(1200);
-         return [Interval(2).pow(d0), d0.mul(48).d == 1 ? d0.d : null] } %}
+         const prefEDO = 48 % d0.d == 0 ? (24 % d0.d == 0 ? (12 % d0.d == 0 ? 12 : 24) : 48) : null;
+         return [Interval(2).pow(d0), prefEDO] } %}
   | intvEDOExpr3 _ "\\" _ posInt
     {% (d,_,reject) => function (r) {
          const d0 = d[0]({intvToA4: r.intvToA4, edo: d[4]});
@@ -144,7 +145,7 @@ intvEDOExpr3 ->
     "-" _ intvEDOExpr4                 {% d => r => - d[2](r) %}
   | intvEDOExpr4                       {% id %}
 intvEDOExpr4 ->
-    posInt                             {% d => _ => parseInt(d[0]) %}
+    nonNegInt                          {% d => _ => parseInt(d[0]) %}
   | upsDns pyIntv                      {% d => r => d[0] + edoPy(r.edo,d[1]) %}
   | upsDns npyIntv
     {% (d,_,reject) => r =>
@@ -152,6 +153,11 @@ intvEDOExpr4 ->
   | upsDns snpyIntv
     {% (d,_,reject) => r =>
          !edoHasSemiNeutrals(r.edo) ? reject : d[0] + edoPy(r.edo,d[1]) %}
+  # alternate notation for up/down perfect intervals
+  | upsDns posInt
+    {% (d,_,reject) => r =>
+         d[0] == 0 || !(redDeg(d[1]) == 4 || redDeg(d[1]) == 5) ? reject :
+           d[0] + edoPy(r.edo,pyInterval(d[1],0)) %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
   | upsDns "~" posInt

@@ -11,6 +11,7 @@ const grammar = require('./parser/grammar.js');
 const {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
 const {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
 const {edoPy, updnsSymb, updnsNote} = require('./edo.js');
+const {enNames} = require('./english.js');
 
 /**
  * @typedef {Object} RawParseResult
@@ -34,7 +35,7 @@ function parse(str) {
   let results = parser.results;
 
   if (results.length == 0) {
-    throw "No parse"
+    throw "No parse";
   }
   if (results.some(d => d[0] == "interval" && d[1] == true)) {
     results = results.filter(d => !(d[0] == "interval" && d[1] == false));
@@ -45,6 +46,9 @@ function parse(str) {
   if (results.length > 1) {
     console.log("Parse was ambiguous! Full results:");
     console.dir(parser.results, { depth: null });
+  }
+  if (results[0][2] == undefined) {
+    throw "Unknown parse error";
   }
   let ret = { type: results[0][0]
             , intv: results[0][2]
@@ -59,10 +63,10 @@ function parse(str) {
       delete ret.prefEDO;
     }
     // set `ret.prefEDO` if `ret.intv` is a simple enough power of two
-    if (!ret.prefEDO && (e2.d == 3 || e2.d == 4)) {
+    if (!ret.prefEDO && (e2.d == 2 || e2.d == 3 || e2.d == 4)) {
       ret.prefEDO = 12;
     }
-    if (!ret.prefEDO && 4 < e2.d && e2.d < 50) {
+    if (!ret.prefEDO && 4 < e2.d && e2.d <= 60) {
       ret.prefEDO = e2.d;
     }
   }
@@ -88,6 +92,9 @@ function parse(str) {
  *                                         interval, including FJS,
  *                                         FJS + Neutrals, and ups-and-downs
  *                                         notations
+ * @property {Array.<string>} english (experimental) english name for the
+ *                                    resulting interval, based on
+ *                                    FJS + Neutrals and ups-and-downs notations
  */
 
 /**
@@ -149,6 +156,10 @@ function parseCvt(str) {
     }
     if (intv.equals(Interval(2).sqrt())) {
       ret.symb['other'] = "TT";
+    }
+    const nms = enNames(intv, {prefEDO: prefEDO});
+    if (nms.length > 0) {
+      ret.english = nms;
     }
   }
   if (type == "note") {

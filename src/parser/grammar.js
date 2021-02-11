@@ -91,7 +91,8 @@ var grammar = {
     {"name": "intvAExpr3", "symbols": ["intvSymbol"], "postprocess": d => _ => [d[0], null]},
     {"name": "intvAExpr3", "symbols": ["decimal", {"literal":"c"}], "postprocess":  d => function () {
         const d0 = Fraction(d[0]).div(1200);
-        return [Interval(2).pow(d0), d0.mul(48).d == 1 ? d0.d : null] } },
+        const prefEDO = 48 % d0.d == 0 ? (24 % d0.d == 0 ? (12 % d0.d == 0 ? 12 : 24) : 48) : null;
+        return [Interval(2).pow(d0), prefEDO] } },
     {"name": "intvAExpr3", "symbols": ["intvEDOExpr3", "_", {"literal":"\\"}, "_", "posInt"], "postprocess":  (d,_,reject) => function (r) {
         const d0 = d[0]({intvToA4: r.intvToA4, edo: d[4]});
         if (d0 == reject) { return reject; }
@@ -116,12 +117,15 @@ var grammar = {
     {"name": "intvEDOExpr2", "symbols": ["intvEDOExpr3"], "postprocess": id},
     {"name": "intvEDOExpr3", "symbols": [{"literal":"-"}, "_", "intvEDOExpr4"], "postprocess": d => r => - d[2](r)},
     {"name": "intvEDOExpr3", "symbols": ["intvEDOExpr4"], "postprocess": id},
-    {"name": "intvEDOExpr4", "symbols": ["posInt"], "postprocess": d => _ => parseInt(d[0])},
+    {"name": "intvEDOExpr4", "symbols": ["nonNegInt"], "postprocess": d => _ => parseInt(d[0])},
     {"name": "intvEDOExpr4", "symbols": ["upsDns", "pyIntv"], "postprocess": d => r => d[0] + edoPy(r.edo,d[1])},
     {"name": "intvEDOExpr4", "symbols": ["upsDns", "npyIntv"], "postprocess":  (d,_,reject) => r =>
         !edoHasNeutrals(r.edo) ? reject : d[0] + edoPy(r.edo,d[1]) },
     {"name": "intvEDOExpr4", "symbols": ["upsDns", "snpyIntv"], "postprocess":  (d,_,reject) => r =>
         !edoHasSemiNeutrals(r.edo) ? reject : d[0] + edoPy(r.edo,d[1]) },
+    {"name": "intvEDOExpr4", "symbols": ["upsDns", "posInt"], "postprocess":  (d,_,reject) => r =>
+        d[0] == 0 || !(redDeg(d[1]) == 4 || redDeg(d[1]) == 5) ? reject :
+          d[0] + edoPy(r.edo,pyInterval(d[1],0)) },
     {"name": "intvEDOExpr4", "symbols": ["upsDns", {"literal":"~"}, "posInt"], "postprocess":  (d,_,reject) => r =>
         !edoHasNeutrals(r.edo) || redDeg(d[2]) == 1 ? reject :
           redDeg(d[2]) == 4 ? d[0] + edoPy(r.edo,pyInterval(d[2],1,2)) :

@@ -13,6 +13,7 @@
     "fraction.js": "^4.0.12",
     "mathutils": "0.0.1",
     "nearley": "^2.19.8",
+    "number-to-words": "^1.2.4",
     "primes-and-factors": "^1.3.3"
   }
 }

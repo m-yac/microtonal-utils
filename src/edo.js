@@ -270,5 +270,7 @@ module['exports'].edoPyInv = edoPyInv;
 module['exports'].edoPyComma = edoPyComma;
 module['exports'].edoHasNeutrals = edoHasNeutrals;
 module['exports'].edoHasSemiNeutrals = edoHasSemiNeutrals;
+module['exports'].updnsSymbCache = updnsSymbCache;
 module['exports'].updnsSymb = updnsSymb;
+module['exports'].updnsNoteCache = updnsNoteCache;
 module['exports'].updnsNote = updnsNote;

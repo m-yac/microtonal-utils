@@ -5,6 +5,7 @@
  **/
 
 const pf = require('primes-and-factors');
+const ntw = require('number-to-words');
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 
@@ -127,44 +128,93 @@ function isPerfectDeg(d) {
   return redDeg(d) == 1 || redDeg(d) == 4 || redDeg(d) == 5;
 }
 
+function case2(n, a, b) {
+  if (n == 0 || !n) { return a; }
+  return b;
+}
+
+function case3(n, a, b, c) {
+  if (n == 0 || !n) { return a; }
+  if (n == 1) { return b; }
+  return c;
+}
+
 /**
   * Returns the quality of the given pythagorean interval
   *
   * @param {Interval} i
+  * @param {{verbosity: integer}=} opts verbosity can be the default 0
+  *                                     (e.g. "d"), 1 (e.g. "dim"), or 2
+  *                                     (e.g. "diminished")
   * @returns {string}
   */
-function pyQuality(a,b) {
+function pyQuality(a,b, opts) {
+  // if only two arguments are given, the second one may be `opts`!
+  if (!opts && typeof b == 'object' && b != null) {
+      opts = b;
+      b = undefined;
+  }
+  const {verbosity} = opts || {};
   let o = offset(a,b);
   if (isPerfectDeg(degree(a,b))) {
-    if (o == 0    ) { return "P" }
+    if (o == 0    ) { return case2(verbosity, "P", "perfect"); }
   }
   else {
-    if (o == 0    ) { return "n" }
-    if (o == 0.25 ) { return "sM" }
-    if (o == 0.5  ) { return "M" }
-    if (o == -0.25) { return "sm" }
-    if (o == -0.5 ) { return "m" }
+    if (o == 0    ) { return case2(verbosity, "n", "neutral"); }
+    if (o == 0.25 ) { return case2(verbosity, "sM", "semi-major"); }
+    if (o == 0.5  ) { return case2(verbosity, "M", "major"); }
+    if (o == -0.25) { return case2(verbosity, "sm", "semi-minor"); }
+    if (o == -0.5 ) { return case2(verbosity, "m", "minor"); }
     o = o.sub(o.s,2);
   }
-  if (o == 0.5 ) { return "sA" }
-  if (o == 1   ) { return "A" }
-  if (o == -0.5) { return "sd" }
-  if (o == -1  ) { return "d" }
-  if (o > 0 && o.d == 1) { return o.n + "A" }
-  if (o > 0 && o.d != 1) { return o.toFraction() + "-A" }
-  if (o < 0 && o.d == 1) { return o.n + "d" }
-  if (o < 0 && o.d != 1) { return o.neg().toFraction() + "-d" }
+  if (o == 0.5 ) { return case3(verbosity, "sA", "semi-aug", "semi-augmented"); }
+  if (o == 1   ) { return case3(verbosity, "A", "aug", "augmented"); }
+  if (o == -0.5) { return case3(verbosity, "sd", "semi-dim", "semi-diminished"); }
+  if (o == -1  ) { return case3(verbosity, "d", "dim", "diminished"); }
+  if (o ==  2 && verbosity == 2) { return "doubly augmented"; }
+  if (o == -2 && verbosity == 2) { return "doubly diminished"; }
+  if (o > 0 && o.d == 1) { return o.n + case3(verbosity, "A", "-aug", "-augmented"); }
+  if (o > 0 && o.d != 1) { return o.toFraction() + case3(verbosity, "-A", "-aug", "-augmented"); }
+  if (o < 0 && o.d == 1) { return o.n + case3(verbosity, "d", "-dim", "-diminished"); }
+  if (o < 0 && o.d != 1) { return o.neg().toFraction() + case3(verbosity, "-d", "-dim", "-diminished"); }
+}
+
+function degreeString(d, verbosity) {
+  if (verbosity == 0 || !verbosity) {
+    return d;
+  }
+  if (verbosity == 1) {
+    return ntw.toOrdinal(Math.abs(d));
+  }
+  if (Math.abs(d) == 1) {
+    return "unison"
+  }
+  if (Math.abs(d) == 8) {
+    return "octave"
+  }
+  return ntw.toWordsOrdinal(Math.abs(d));
 }
 
 /**
   * Returns the symbol of the given pythagorean interval
   *
   * @param {Interval} i
+  * @param {{verbosity: integer}=} opts verbosity can be the default 0
+  *                                     (e.g. "d2"), 1 (e.g. "dim 2nd"), or 2
+  *                                     (e.g. "diminished second")
   * @returns {string}
   */
-function pySymb(a,b) {
+function pySymb(a,b, opts) {
+  // if only two arguments are given, the second one may be `opts`!
+  if (!opts && typeof b == 'object' && b != null) {
+      opts = b;
+      b = undefined;
+  }
+  const {verbosity} = opts || {};
   const d = degree(a,b);
-  return pyQuality(a,b) + d;
+  const d_str = case2(verbosity, "", " ") + degreeString(d, verbosity);
+  const down_str = verbosity && d < 0 ? " down" : "";
+  return pyQuality(a,b, opts) + d_str + down_str;
 }
 
 /**
