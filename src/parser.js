@@ -14,6 +14,37 @@ const {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
 const {edoPy, updnsSymb, updnsNote} = require('./edo.js');
 const {enNames} = require('./english.js');
 
+function expectedSymbols(parser) {
+  let symbs = [];
+  const lastColumnIndex = parser.table.length - 2;
+  const lastColumn = parser.table[lastColumnIndex];
+  const expectantStates = lastColumn.states
+      .filter(function(state) {
+          var nextSymbol = state.rule.symbols[state.dot];
+          return nextSymbol && typeof nextSymbol !== "string";
+      });
+
+  const stateStacks = expectantStates
+      .map(function(state) {
+          return parser.buildFirstStateStack(state, []) || [state];
+      }, parser);
+  // Display each state that is expecting a terminal symbol next.
+  stateStacks.forEach(function(stateStack) {
+      var state = stateStack[0];
+      var nextSymbol = state.rule.symbols[state.dot];
+      var symbolDisplay = parser.getSymbolDisplay(nextSymbol);
+      symbs.push(symbolDisplay);
+  }, parser);
+
+  // remove duplicates
+  symbs = [...new Set(symbs)];
+  symbs.sort((a,b) => a.length - b.length);
+  if (symbs.length > 1) {
+    symbs[symbs.length-1] = "or " + symbs[symbs.length-1];
+  }
+  return "expected a " + symbs.join(", ");
+}
+
 /**
  * @typedef {Object} RawParseResult
  * @property {string} type either "interval" or "note"
@@ -32,7 +63,10 @@ const {enNames} = require('./english.js');
 function parse(str) {
 
   const parser = new ne.Parser(ne.Grammar.fromCompiled(grammar));
-  parser.feed(str);
+  try { parser.feed(str) }
+  catch (err) {
+    throw new Error ("Parse error at col " + err.offset + ", " + expectedSymbols(parser));
+  }
   let results = parser.results;
 
   for (let i = 0; i < results.length; i++) {
@@ -42,7 +76,10 @@ function parse(str) {
   }
 
   if (results.length == 0) {
-    throw "No parse";
+    try { parser.feed("$"); }
+    catch (err) {
+      throw new Error ("Parse error at col " + err.offset + ", " + expectedSymbols(parser));
+    }
   }
   if (results.some(d => d.type[0] == "interval" && d.type[1] == "symbol")) {
     results = results.filter(d => !(d.type[0] == "interval" && d.type[1] != "symbol"));
