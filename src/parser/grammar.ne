@@ -242,14 +242,17 @@ noteSExpr1 ->
 # @returns {(Interval|Array)}
 
 intvSymbol ->
-    fjsIntv   {% id %}
-  | nfjsIntv  {% id %}
-  | snpyIntv  {% id %}
-  | "TT"      {% _ => Interval(2).sqrt() %}
+    fjsIntv                        {% id %}
+  | nfjsNeutIntv                   {% id %}
+  | "NFJS" _ "(" _ nfjsIntv _ ")"  {% d => d[4] %}
+  | snpyIntv                       {% id %}
+  | "TT"                           {% _ => Interval(2).sqrt() %}
 
 noteSymbol ->
-    fjsNote  {% id %}
-  | npyNote  {% id %}
+    fjsNote                        {% id %}
+  | nfjsNeutNote                   {% id %}
+  | "NFJS" _ "(" _ nfjsNote _ ")"  {% d => d[4] %}
+  | npyNote                        {% id %}
 
 # ------------------------------
 # Pythagorean interval symbols
@@ -295,7 +298,7 @@ genPyNote[NOTE,ACCS] ->
     $NOTE $ACCS int:?
     {% function(d) {
          const d2 = d[2] ? parseInt(d[2]) : 4;
-         return ["mul", ["div", baseNoteIntvToA(d[0]), ["!refIntvToA4"]]
+         return ["mul", ["div", baseNoteIntvToA(d[0][0]), ["!refIntvToA4"]]
                       , d[1][0].mul(Interval(2).pow(d2 - 4))]; } %}
 
 pyNote ->
@@ -325,23 +328,27 @@ npyNoteAccs ->
 # FJS and Neutral FJS interval and note symbols
 # @returns {(Interval|Array)}
 
-fjsIntv ->
-    pyIntv                {% id %}
-  | fjsIntv "^" fjsAccs   {% d => ["mul", d[0], d[2](fjsParams)] %}
-  | fjsIntv "_" fjsAccs   {% d => ["div", d[0], d[2](fjsParams)] %}
-nfjsIntv ->
-    npyIntv               {% id %}
-  | nfjsIntv "^" fjsAccs  {% d => ["mul", d[0], d[2](nfjsParams)] %}
-  | nfjsIntv "_" fjsAccs  {% d => ["div", d[0], d[2](nfjsParams)] %}
+genFJSSymb[BASE,REC] ->
+    $BASE             {% d => _ => d[0][0] %}
+  | $REC "^" fjsAccs  {% d => params => ["mul", d[0][0], d[2](params)] %}
+  | $REC "_" fjsAccs  {% d => params => ["div", d[0][0], d[2](params)] %}
 
-fjsNote ->
-    pyNote                {% id %}
-  | fjsNote "^" fjsAccs   {% d => ["mul", d[0], d[2](fjsParams)] %}
-  | fjsNote "_" fjsAccs   {% d => ["div", d[0], d[2](fjsParams)] %}
-nfjsNote ->
-    npyNote               {% id %}
-  | nfjsNote "^" fjsAccs  {% d => ["mul", d[0], d[2](nfjsParams)] %}
-  | nfjsNote "_" fjsAccs  {% d => ["div", d[0], d[2](nfjsParams)] %}
+fjsIntv -> genFJSSymb[pyIntv,fjsIntv]  {% d => d[0](fjsParams) %}
+fjsNote -> genFJSSymb[pyNote,fjsNote]  {% d => d[0](fjsParams) %}
+
+# be warned that these (specifically nfjsNonNeutIntv and nfjsNonNeutNote) will
+#  give different answers than the above on the same input!
+nfjsIntv -> nfjsNeutIntv {% id %} | nfjsNonNeutIntv {% id %}
+nfjsNote -> nfjsNeutNote {% id %} | nfjsNonNeutNote {% id %}
+
+nfjsNeutIntv ->
+  genFJSSymb[npyIntv,nfjsNeutIntv]    {% d => d[0](nfjsParams) %}
+nfjsNonNeutIntv ->
+  genFJSSymb[pyIntv,nfjsNonNeutIntv]  {% d => d[0](nfjsParams) %}
+nfjsNeutNote ->
+  genFJSSymb[npyNote,nfjsNeutNote]    {% d => d[0](nfjsParams) %}
+nfjsNonNeutNote ->
+  genFJSSymb[pyNote,nfjsNonNeutNote]  {% d => d[0](nfjsParams) %}
 
 fjsAccs ->
     fjsAcc              {% d => params => fjsFactor(d[0], params) %}
