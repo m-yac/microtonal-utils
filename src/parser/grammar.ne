@@ -121,7 +121,7 @@ noteMExpr2 ->
     "approx"  _ "(" _ noteMExpr1 _ "," _ posInt _ ")" {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
   | noteSymbol                                        {% id %}
   | noteMEDOExpr2 _ "\\" _ posInt                     {% d => ["!inEDO", d[0], parseInt(d[4])] %}
-  | decimal hertz                                     {% d => ["div", d[0], ["!refHertz"]] %}
+  | decimal hertz                                     {% d => ["div", Interval(d[0]), ["!refHertz"]] %}
   | "(" _ noteMExpr1 _ ")"                            {% d => d[2] %}
 
 # -------------------------------
@@ -335,7 +335,7 @@ pyNote ->
 pyNoteNoAccs -> null  {% _ => Interval(1) %}
 
 pyNoteAccs ->
-    "♮"                          {% _ => Interval(1) %}
+    ("♮" | "nat")                {% _ => Interval(1) %}
   | ("♯" | "#"):+                {% d => pyInterval(1, d[0].length) %}
   | ("𝄪" | "X"):+ ("♯" | "#"):*  {% d => pyInterval(1, 2*d[0].length + d[1].length) %}
   | ("♭" | "b"):+                {% d => pyInterval(-1, d[0].length) %}
