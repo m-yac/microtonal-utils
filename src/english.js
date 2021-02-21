@@ -12,7 +12,7 @@ const {pySymb, generator} = require('./pythagorean.js');
 const {fjsFifthShift, fjsAccidentals, fjsnParams} = require('./fjs.js');
 const {updnsSymbCache} = require('./edo.js');
 
-const primeNames = { '5':  ["pental", "ptl."]
+const primeNames = { '5':  ["classic", "cls."]
                    , '7':  ["septimal", "sep."]
                    , '11': ["undecimal", "und."]
                    , '13': ["tridecimal", "trid."]
