@@ -1,3 +1,29 @@
+#
+# Grammar for interval and note expressions
+# @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+#
+# This file generates a parser by running:
+# ```
+# nearleyc src/parser/grammar.ne -o src/parser/grammar.js
+# ```
+#
+# You can then get nicely formatted output by passing your string to the `parse`
+#  or `parseCvt` functions from `parser.js`.
+#
+# You can also get the raw output of this parser by doing the following:
+# ```
+# const ne = resquire('nearley');
+# const grammar = require('./parser/grammar.js');
+# parser.feed(str);
+# const result = parser.results[0];
+# ```
+# Then to evaluate these results (i.e. convert the raw output into the Interval
+#  it represents), do the following:
+# ```
+# const {evalExpr} = require('./parser/eval.js');
+# const resultIntv = evalExpr(result[0].expr, result[0].refNote).val;
+# ```
+
 @{%
 
 const Fraction = require('fraction.js');
@@ -18,17 +44,17 @@ const {evalExpr} = require('./eval.js');
 
 top1 ->
     _ top2 _
-    {% function (d,_,reject) { let d1 = Object.assign({},d[1]);
+    {% function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
                                d1.refNote = helpers.defaultRefNote;
                                return d1; } %}
   | _ top2 __ "where" __ pyNote _ "=" _ decimal hertz:? _
-    {% function (d,_,reject) { let d1 = Object.assign({},d[1]);
+    {% function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
                                d1.refNote = {};
                                d1.refNote.intvToA4 = evalExpr(d[5], helpers.defaultRefNote).val;
                                d1.refNote.hertz    = Interval(d[9]);
                                return d1; } %}
   | _ top2 __ "where" __ pyNote _ "=" _ pyNote _ "\\" _ posInt _
-    {% function (d,_,reject) { let d1 = Object.assign({},d[1]);
+    {% function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
                                const d5 = evalExpr(d[5], helpers.defaultRefNote).val;
                                const d9 = evalExpr(d[9], helpers.defaultRefNote).val;
                                const d13 = parseInt(d[13]);
@@ -51,10 +77,10 @@ top2 ->
 # Interval and note expressions
 # ------------------------------------------------------
 
-# ...
+# When reading the rest of this file, it's useful to keep in mind that:
 # `["ident", a0, a1, ..., an]` gets evaluated to `a0.ident(a1,...,an)`
 # `["operator", a0, a1]` gets evaluated to `a0 operator a1` (e.g. "+")
-# `["!ident", a0, ..., an]` has some special handling - see semantics.js
+# `["!ident", a0, ..., an]` has some special handling - see eval.js
 
 # -------------------------------------
 # Multiplicative interval expressions

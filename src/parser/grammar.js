@@ -22,19 +22,19 @@ var grammar = {
     {"name": "__$ebnf$1", "symbols": ["__$ebnf$1", "wschar"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "__", "symbols": ["__$ebnf$1"], "postprocess": function(d) {return null;}},
     {"name": "wschar", "symbols": [/[ \t\n\v\f]/], "postprocess": id},
-    {"name": "top1", "symbols": ["_", "top2", "_"], "postprocess":  function (d,_,reject) { let d1 = Object.assign({},d[1]);
+    {"name": "top1", "symbols": ["_", "top2", "_"], "postprocess":  function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
         d1.refNote = helpers.defaultRefNote;
         return d1; } },
     {"name": "top1$string$1", "symbols": [{"literal":"w"}, {"literal":"h"}, {"literal":"e"}, {"literal":"r"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "top1$ebnf$1", "symbols": ["hertz"], "postprocess": id},
     {"name": "top1$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "top1", "symbols": ["_", "top2", "__", "top1$string$1", "__", "pyNote", "_", {"literal":"="}, "_", "decimal", "top1$ebnf$1", "_"], "postprocess":  function (d,_,reject) { let d1 = Object.assign({},d[1]);
+    {"name": "top1", "symbols": ["_", "top2", "__", "top1$string$1", "__", "pyNote", "_", {"literal":"="}, "_", "decimal", "top1$ebnf$1", "_"], "postprocess":  function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
         d1.refNote = {};
         d1.refNote.intvToA4 = evalExpr(d[5], helpers.defaultRefNote).val;
         d1.refNote.hertz    = Interval(d[9]);
         return d1; } },
     {"name": "top1$string$2", "symbols": [{"literal":"w"}, {"literal":"h"}, {"literal":"e"}, {"literal":"r"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "top1", "symbols": ["_", "top2", "__", "top1$string$2", "__", "pyNote", "_", {"literal":"="}, "_", "pyNote", "_", {"literal":"\\"}, "_", "posInt", "_"], "postprocess":  function (d,_,reject) { let d1 = Object.assign({},d[1]);
+    {"name": "top1", "symbols": ["_", "top2", "__", "top1$string$2", "__", "pyNote", "_", {"literal":"="}, "_", "pyNote", "_", {"literal":"\\"}, "_", "posInt", "_"], "postprocess":  function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
         const d5 = evalExpr(d[5], helpers.defaultRefNote).val;
         const d9 = evalExpr(d[9], helpers.defaultRefNote).val;
         const d13 = parseInt(d[13]);

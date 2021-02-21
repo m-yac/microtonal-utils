@@ -1,3 +1,8 @@
+/**
+ * A function for evaluating the results of running `grammar.ne`
+ * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
+ * @module eval
+ **/
 
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
@@ -9,6 +14,13 @@ function cbnEDOs(a,b) {
   return a && b ? Fraction(1,a).gcd(1,b).d : undefined
 }
 
+/**
+  * Evaluates the result of running `grammar.ne`
+  *
+  * @param {Array} e the expression to evaluate
+  * @param {{hertz: Interval, intvToA4: Interval}} refNote the reference note
+  * @returns {{val: Interval, prefEDO: integer}}
+  */
 function evalExpr(e, r, edo) {
   if (Array.isArray(e)) {
     // don't fail in the case of a nested array
@@ -91,6 +103,5 @@ function evalExpr(e, r, edo) {
   }
   return { val: e, prefEDO: e == 2 ? 1 : undefined };
 }
-
 
 module['exports'].evalExpr = evalExpr;

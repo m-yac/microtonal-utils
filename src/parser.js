@@ -67,7 +67,7 @@ function expectedSymbols(parser) {
 function parse(str) {
 
   const parser = new ne.Parser(ne.Grammar.fromCompiled(grammar));
-  try { parser.feed(str) }
+  try { parser.feed(str); }
   catch (err) {
     throw new Error ("Parse error at col " + err.offset + ", " + expectedSymbols(parser));
   }
