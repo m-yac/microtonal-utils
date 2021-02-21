@@ -69,7 +69,8 @@ function enNames(a,b, opts) {
         const fifthShift = fjsFifthShift(p, nfjsParams);
         const g = fjs.pyi['3'] || Fraction(0);
         // Ensure otonality matches (e.g. let through "M3^5" but not "M3_5")
-        if (e.s == fifthShift.s * g.s) {
+        //  and neutral-ness matches (e.g. let through "M3^1" but not "n3^5")
+        if (e.s == fifthShift.s * g.s && g.d == fifthShift.d) {
           // Ensure multiplicity matches, i.e. n-aug/dim have (n+1) primes
           //  (e.g. let through M3^5 and A4^5,5 but not M3^5,5 or A4^5)
           let multiplicityMatches = false;
@@ -83,10 +84,11 @@ function enNames(a,b, opts) {
               multiplicityMatches = (e.n == 2 + Math.floor((g.n - 6)/7))
             }
           }
-          // ...but for primes with neutral fifth shifts, we just handle the
-          //  non-aug/dim case, since it's not clear to me what to do elsewhere
+          // ...but for primes with neutral fifth shifts, we just handle cases
+          //  where the neutral interval is small, since it's not clear to me
+          //  what to do in the general case
           if (fifthShift.d == 2) {
-            multiplicityMatches = (g.n < 6 && e.n == 1);
+            multiplicityMatches = (g.n <= 11 && e.n == 1);
           }
           if (multiplicityMatches) {
             // make sure we don't have "perfect" in the name for a 4th or 5th
