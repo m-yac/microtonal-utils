@@ -28,7 +28,7 @@
 
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
-const {pyInterval, redDeg, baseNoteIntvToA} = require('../pythagorean.js');
+const {pyInterval, pyRedDeg, baseNoteIntvToA} = require('../pythagorean.js');
 const {fjsFactor, fjsParams, nfjsParams} = require('../fjs.js');
 const {edoPy} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
@@ -396,14 +396,14 @@ upsDnsIntv ->
   | upsDns snpyIntv  {% d => ["+", d[0], ["!edoPy", d[1]]] %}
   # alternate notation for up/down perfect intervals
   | upsDns posInt
-    {% (d,_,reject) => (redDeg(d[1]) == 4 || redDeg(d[1]) == 5) && d[0] != 0
+    {% (d,_,reject) => (pyRedDeg(d[1]) == 4 || pyRedDeg(d[1]) == 5) && d[0] != 0
                        ? ["+", d[0], ["!edoPy", parseIng(d[1])]] : reject %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
   | upsDns "~" posInt
-    {% (d,_,reject) => redDeg(d[2]) == 1 ? reject :
-                       redDeg(d[2]) == 4 ? ["+", d[0], ["!edoPy", pyInterval(d[2],1,2)]] :
-                       redDeg(d[2]) == 5 ? ["+", d[0], ["!edoPy", pyInterval(d[2],-1,2)]] :
+    {% (d,_,reject) => pyRedDeg(d[2]) == 1 ? reject :
+                       pyRedDeg(d[2]) == 4 ? ["+", d[0], ["!edoPy", pyInterval(d[2],1,2)]] :
+                       pyRedDeg(d[2]) == 5 ? ["+", d[0], ["!edoPy", pyInterval(d[2],-1,2)]] :
                                            ["+", d[0], ["!edoPy", pyInterval(d[2],0)]] %}
 
 upsDnsNote ->

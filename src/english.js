@@ -8,7 +8,7 @@
 const pf = require('primes-and-factors');
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
-const {pySymb, generator} = require('./pythagorean.js');
+const {pySymb, pyGenerator} = require('./pythagorean.js');
 const {fjsFifthShift, fjsAccidentals, nfjsParams} = require('./fjs.js');
 const {updnsSymbCache} = require('./edo.js');
 
@@ -65,7 +65,7 @@ function enNames(a,b, opts) {
       // We don't consider cases where the prime doesn't have the name, the FJS
       //  accidental is not an integer, or the pythagorean interval is an
       //  octave
-      if (primeNames[p] && e.d == 1 && generator(fjs.pyi) != 0) {
+      if (primeNames[p] && e.d == 1 && pyGenerator(fjs.pyi) != 0) {
         const fifthShift = fjsFifthShift(p, nfjsParams);
         const g = fjs.pyi['3'] || Fraction(0);
         // Ensure otonality matches (e.g. let through "M3^5" but not "M3_5")
@@ -92,7 +92,7 @@ function enNames(a,b, opts) {
           }
           if (multiplicityMatches) {
             // make sure we don't have "perfect" in the name for a 4th or 5th
-            if (Math.abs(generator(fjs.pyi)) == 4) {
+            if (Math.abs(pyGenerator(fjs.pyi)) == 4) {
               const typ = intv.compare(fjs.pyi) > 0 ? "super" : "sub";
               if (abbreviate) { pyi_symb = pyi_symb.replace("perfect", typ); }
               else { pyi_symb = pyi_symb.replace("perfect ", typ + "-"); }

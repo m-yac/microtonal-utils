@@ -199,7 +199,7 @@ function fjsAccidentals(a,b, params) {
     }
   }
   const modulus = params.hasNeutrals ? 2 : 4;
-  if (py.isPythagorean(pyi) && py.generator(pyi) % modulus == 0) {
+  if (py.isPythagorean(pyi) && py.pyGenerator(pyi) % modulus == 0) {
     const otoStr = otos.length == 0 ? "" : "^" + otos.join(",");
     const utoStr = utos.length == 0 ? "" : "_" + utos.join(",");
     return { accStr: otoStr + utoStr, pyi: pyi };

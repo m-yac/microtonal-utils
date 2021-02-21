@@ -52,7 +52,7 @@ function isPythagorean(a,b) {
   * @param {Interval} i
   * @returns {integer}
   */
-function generator(a,b) {
+function pyGenerator(a,b) {
   const i = new Interval(a,b);
   const g = (i['3'] || Fraction(0)).mul(4);
   if (g.d != 1) {
@@ -67,7 +67,7 @@ function generator(a,b) {
   * @param {Interval} i
   * @returns {integer}
   */
-function octaves(a,b) {
+function pyOctaves(a,b) {
   const i = new Interval(a,b);
   const e2 = (i['2'] || Fraction(0));
   const e3 = (i['3'] || Fraction(0));
@@ -84,10 +84,10 @@ function octaves(a,b) {
   * @param {Interval} i
   * @returns {integer}
   */
-function degree(a,b) {
+function pyDegree(a,b) {
   const i = new Interval(a,b);
-  const g = generator(i);
-  const v = octaves(i);
+  const g = pyGenerator(i);
+  const v = pyOctaves(i);
   const zd = g + v * 7;
   return zd == 0 ? 1 : zd + Math.sign(zd);
 }
@@ -98,10 +98,10 @@ function degree(a,b) {
   * @param {Interval} i
   * @returns {Fraction}
   */
-function offset(a,b) {
+function pyOffset(a,b) {
   const i = new Interval(a,b);
-  const g = generator(i);
-  const v = octaves(i);
+  const g = pyGenerator(i);
+  const v = pyOctaves(i);
   const zd = g + v * 7;
   const szd = zd == 0 ? 1 : Math.sign(zd)
   return Fraction(szd * (2 * Math.floor((4 * g + 3) / 7) - g), 4);
@@ -113,7 +113,7 @@ function offset(a,b) {
   * @param {integer} d
   * @returns {integer}
   */
-function redDeg(d) {
+function pyRedDeg(d) {
   return mod(d - Math.sign(d), 7) + 1;
 }
 
@@ -125,7 +125,7 @@ function redDeg(d) {
   * @returns {boolean}
   */
 function isPerfectDeg(d) {
-  return redDeg(d) == 1 || redDeg(d) == 4 || redDeg(d) == 5;
+  return pyRedDeg(d) == 1 || pyRedDeg(d) == 4 || pyRedDeg(d) == 5;
 }
 
 function case2(n, a, b) {
@@ -155,8 +155,8 @@ function pyQuality(a,b, opts) {
       b = undefined;
   }
   const {verbosity} = opts || {};
-  let o = offset(a,b);
-  if (isPerfectDeg(degree(a,b))) {
+  let o = pyOffset(a,b);
+  if (isPerfectDeg(pyDegree(a,b))) {
     if (o == 0    ) { return case2(verbosity, "P", "perfect"); }
   }
   else {
@@ -179,7 +179,7 @@ function pyQuality(a,b, opts) {
   if (o < 0 && o.d != 1) { return o.neg().toFraction() + case3(verbosity, "-d", "-dim", "-diminished"); }
 }
 
-function degreeString(d, verbosity) {
+function pyDegreeString(d, verbosity) {
   if (verbosity == 0 || !verbosity) {
     return d;
   }
@@ -211,8 +211,8 @@ function pySymb(a,b, opts) {
       b = undefined;
   }
   const {verbosity} = opts || {};
-  const d = degree(a,b);
-  const d_str = case2(verbosity, "", " ") + degreeString(d, verbosity);
+  const d = pyDegree(a,b);
+  const d_str = case2(verbosity, "", " ") + pyDegreeString(d, verbosity);
   const down_str = verbosity && d < 0 ? " down" : "";
   return pyQuality(a,b, opts) + d_str + down_str;
 }
@@ -305,11 +305,11 @@ function pyNote(intvToA4, useASCII) {
 
 module['exports'].pyInterval = pyInterval;
 module['exports'].isPythagorean = isPythagorean;
-module['exports'].generator = generator;
-module['exports'].octaves = octaves;
-module['exports'].degree = degree;
-module['exports'].offset = offset;
-module['exports'].redDeg = redDeg;
+module['exports'].pyGenerator = pyGenerator;
+module['exports'].pyOctaves = pyOctaves;
+module['exports'].pyDegree = pyDegree;
+module['exports'].pyOffset = pyOffset;
+module['exports'].pyRedDeg = pyRedDeg;
 module['exports'].isPerfectDeg = isPerfectDeg;
 module['exports'].pyQuality = pyQuality;
 module['exports'].pySymb = pySymb;

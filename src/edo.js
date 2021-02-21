@@ -34,8 +34,8 @@ function edoApprox(edo,a,b) {
   */
 function edoPy(edo,a,b) {
   const i = Interval(a,b);
-  const g = Fraction(py.generator(i) * edoApprox(edo,3,2), 4);
-  const v = py.octaves(i);
+  const g = Fraction(py.pyGenerator(i) * edoApprox(edo,3,2), 4);
+  const v = py.pyOctaves(i);
   if (g.d != 1) {
     throw edo + "-EDO has no " + py.pySymb(i,{verbosity:1}) + " interval"
   }
