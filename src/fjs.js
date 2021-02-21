@@ -38,21 +38,21 @@ function* fjsFifthsSeq() {
 const fjsParams = { RoT: fjsRoT, fifthsSeq: fjsFifthsSeq, hasNeutrals: false };
 
 /**
-  * The radius of tolerance of the FJS + Neutrals, a pythagorean
+  * The radius of tolerance of the Neutral FJS, a pythagorean
   * semi-diminished second ("sd2", the interval exactly halfway between a
   * pythagorean "d2" and "m2", or about `33.38c`)
   *
   * @constant {Interval}
   */
-const fjsnRoT = py.pyInterval(2,-1); // "sd2" ~= 33.38c
+const nfjsRoT = py.pyInterval(2,-1); // "sd2" ~= 33.38c
 
 /**
-  * The (finite) fifths sequence of the FJS + Neutrals,
+  * The (finite) fifths sequence of the Neutral FJS,
   * `0, 1, -1, 2, -2, ..., 6, -6, 1/2, -1/2, 3/2, -3/2, ..., 11/2, -11/2`
   *
   * @yields {Fraction}
   */
-function* fjsnFifthsSeq() {
+function* nfjsFifthsSeq() {
   yield 0;
   for (let g = 1; g <= 6; g++) {
     yield Fraction(g);
@@ -65,12 +65,12 @@ function* fjsnFifthsSeq() {
 }
 
 /**
-  * The parameters of the FJS + Neutrals, `fjsnRoT`, `fjsnFifthsSeq`, and
+  * The parameters of the Neutral FJS, `nfjsRoT`, `nfjsFifthsSeq`, and
   * `hasNeutrals = true`
   *
   * @constant {{RoT: Fraction, fifthSeq: Fraction, hasNeutrals: boolean}}
   */
-const fjsnParams = { RoT: fjsnRoT, fifthsSeq: fjsnFifthsSeq, hasNeutrals: true };
+const nfjsParams = { RoT: nfjsRoT, fifthsSeq: nfjsFifthsSeq, hasNeutrals: true };
 
 /**
   * Returns the FJS fifth shift associated to any interval.
@@ -239,9 +239,9 @@ function fjsNote(a,b, params) {
 module['exports'].fjsRoT = fjsRoT;
 module['exports'].fjsFifthsSeq = fjsFifthsSeq;
 module['exports'].fjsParams = fjsParams;
-module['exports'].fjsnRoT = fjsnRoT;
-module['exports'].fjsnFifthsSeq = fjsnFifthsSeq;
-module['exports'].fjsnParams = fjsnParams;
+module['exports'].nfjsRoT = nfjsRoT;
+module['exports'].nfjsFifthsSeq = nfjsFifthsSeq;
+module['exports'].nfjsParams = nfjsParams;
 module['exports'].fjsFifthShift = fjsFifthShift;
 module['exports'].fjsComma = fjsComma;
 module['exports'].fjsFactor = fjsFactor;

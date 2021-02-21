@@ -1,5 +1,5 @@
 /**
- * English names for intervals based on the FJS + Neutrals and ups-and-downs
+ * English names for intervals based on the Neutral FJS and ups-and-downs
  * notations (very much incomplete!)
  * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
  * @module english
@@ -9,7 +9,7 @@ const pf = require('primes-and-factors');
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 const {pySymb, generator} = require('./pythagorean.js');
-const {fjsFifthShift, fjsAccidentals, fjsnParams} = require('./fjs.js');
+const {fjsFifthShift, fjsAccidentals, nfjsParams} = require('./fjs.js');
 const {updnsSymbCache} = require('./edo.js');
 
 const primeNames = { '5':  ["classic", "cls."]
@@ -21,7 +21,7 @@ const primeNames = { '5':  ["classic", "cls."]
 
 /**
   * Attempts to give english names to the given interval based on the
-  * FJS + Neutrals and ups-and-downs notations.
+  * Neutral FJS and ups-and-downs notations.
   *
   * @param {Interval} i
   * @param {{abbreviate: boolean, prefEDO: }=} opts
@@ -45,8 +45,8 @@ function enNames(a,b, opts) {
     nms.push("tritone");
   }
 
-  // FJS + Neutrals intervals
-  const fjs = fjsAccidentals(a,b, fjsnParams);
+  // Neutral FJS intervals
+  const fjs = fjsAccidentals(a,b, nfjsParams);
   if (fjs) {
     let pyi_symb = pySymb(fjs.pyi, {verbosity: verbosity});
     const resFact = Object.entries(intv).filter(pe => pe[0] > 3);
@@ -66,7 +66,7 @@ function enNames(a,b, opts) {
       //  accidental is not an integer, or the pythagorean interval is an
       //  octave
       if (primeNames[p] && e.d == 1 && generator(fjs.pyi) != 0) {
-        const fifthShift = fjsFifthShift(p, fjsnParams);
+        const fifthShift = fjsFifthShift(p, nfjsParams);
         const g = fjs.pyi['3'] || Fraction(0);
         // Ensure otonality matches (e.g. let through "M3^5" but not "M3_5")
         if (e.s == fifthShift.s * g.s) {

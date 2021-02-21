@@ -10,7 +10,7 @@ const Interval = require('./interval.js');
 const grammar = require('./parser/grammar.js');
 const {evalExpr} = require('./parser/eval.js');
 const {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
-const {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
+const {fjsSymb, fjsNote, nfjsParams} = require('./fjs.js');
 const {edoApprox, edoPy, updnsSymb, updnsNote} = require('./edo.js');
 const {enNames} = require('./english.js');
 
@@ -135,11 +135,11 @@ function parse(str) {
  *                                              number of EDO steps
  * @property {Object.<string,string>} symb various symbols for the resulting
  *                                         interval, including FJS,
- *                                         FJS + Neutrals, and ups-and-downs
+ *                                         Neutral FJS, and ups-and-downs
  *                                         notations
  * @property {Array.<string>} english (experimental) english name for the
  *                                    resulting interval, based on
- *                                    FJS + Neutrals and ups-and-downs notations
+ *                                    Neutral FJS and ups-and-downs notations
  */
 
 /**
@@ -185,18 +185,18 @@ function parseCvt(str) {
     }
     ret.symb = {};
     let fjs = fjsSymb(intv);
-    let fjsn = fjsSymb(intv, fjsnParams);
+    let nfjs = fjsSymb(intv, nfjsParams);
     if (fjs) {
       ret.symb['FJS'] = fjs;
     }
-    if (fjsn && fjsn != fjs) {
-      ret.symb['FJS+Neutrals'] = fjsn;
+    if (nfjs && nfjs != fjs) {
+      ret.symb['Neutral FJS'] = nfjs;
     }
     if (prefEDO) {
       let e2 = (intv['2'] || Fraction(0)).mul(prefEDO);
       ret.symb['ups-and-downs'] = updnsSymb(prefEDO,e2.s*e2.n).map(s => s + "\\" + prefEDO);
     }
-    if (!fjsn && isPythagorean(intv)) {
+    if (!nfjs && isPythagorean(intv)) {
       ret.symb['other'] = pySymb(intv);
     }
     if (intv.equals(Interval(2).sqrt())) {

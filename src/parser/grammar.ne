@@ -3,7 +3,7 @@
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
 const {pyInterval, redDeg, baseNoteIntvToA} = require('../pythagorean.js');
-const {fjsFactor, fjsParams, fjsnParams} = require('../fjs.js');
+const {fjsFactor, fjsParams, nfjsParams} = require('../fjs.js');
 const {edoPy} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
 const {evalExpr} = require('./eval.js');
@@ -237,7 +237,7 @@ noteSExpr1 ->
 
 intvSymbol ->
     fjsIntv   {% id %}
-  | fjsnIntv  {% id %}
+  | nfjsIntv  {% id %}
   | snpyIntv  {% id %}
   | "TT"      {% _ => Interval(2).sqrt() %}
 
@@ -315,27 +315,27 @@ npyNoteAccs ->
   | ("𝄳" | "d"):+ ("♭" | "b"):* "𝄫":*
     {% d => pyInterval(-1, 2*d[0].length + d[1].length + 0.5*d[2].length) %}
 
-# --------------------------------------------------
-# FJS and FJS + Neutrals interval and note symbols
+# -----------------------------------------------
+# FJS and Neutral FJS interval and note symbols
 # @returns {(Interval|Array)}
 
 fjsIntv ->
     pyIntv                {% id %}
   | fjsIntv "^" fjsAccs   {% d => ["mul", d[0], d[2](fjsParams)] %}
   | fjsIntv "_" fjsAccs   {% d => ["div", d[0], d[2](fjsParams)] %}
-fjsnIntv ->
+nfjsIntv ->
     npyIntv               {% id %}
-  | fjsnIntv "^" fjsAccs  {% d => ["mul", d[0], d[2](fjsnParams)] %}
-  | fjsnIntv "_" fjsAccs  {% d => ["div", d[0], d[2](fjsnParams)] %}
+  | nfjsIntv "^" fjsAccs  {% d => ["mul", d[0], d[2](nfjsParams)] %}
+  | nfjsIntv "_" fjsAccs  {% d => ["div", d[0], d[2](nfjsParams)] %}
 
 fjsNote ->
     pyNote                {% id %}
   | fjsNote "^" fjsAccs   {% d => ["mul", d[0], d[2](fjsParams)] %}
   | fjsNote "_" fjsAccs   {% d => ["div", d[0], d[2](fjsParams)] %}
-fjsnNote ->
+nfjsNote ->
     npyNote               {% id %}
-  | fjsnNote "^" fjsAccs  {% d => ["mul", d[0], d[2](fjsnParams)] %}
-  | fjsnNote "_" fjsAccs  {% d => ["div", d[0], d[2](fjsnParams)] %}
+  | nfjsNote "^" fjsAccs  {% d => ["mul", d[0], d[2](nfjsParams)] %}
+  | nfjsNote "_" fjsAccs  {% d => ["div", d[0], d[2](nfjsParams)] %}
 
 fjsAccs ->
     fjsAcc              {% d => params => fjsFactor(d[0], params) %}

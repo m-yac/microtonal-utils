@@ -7,7 +7,7 @@ function id(x) { return x[0]; }
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
 const {pyInterval, redDeg, baseNoteIntvToA} = require('../pythagorean.js');
-const {fjsFactor, fjsParams, fjsnParams} = require('../fjs.js');
+const {fjsFactor, fjsParams, nfjsParams} = require('../fjs.js');
 const {edoPy} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
 const {evalExpr} = require('./eval.js');
@@ -164,7 +164,7 @@ var grammar = {
     {"name": "noteSExpr1", "symbols": ["upsDnsNote", "_", {"literal":"\\"}, "_", "posInt"], "postprocess": d => ["!inEDO", d[0], parseInt(d[4])]},
     {"name": "noteSExpr1", "symbols": [{"literal":"("}, "_", "noteSExpr1", "_", {"literal":")"}], "postprocess": d => d[2]},
     {"name": "intvSymbol", "symbols": ["fjsIntv"], "postprocess": id},
-    {"name": "intvSymbol", "symbols": ["fjsnIntv"], "postprocess": id},
+    {"name": "intvSymbol", "symbols": ["nfjsIntv"], "postprocess": id},
     {"name": "intvSymbol", "symbols": ["snpyIntv"], "postprocess": id},
     {"name": "intvSymbol$string$1", "symbols": [{"literal":"T"}, {"literal":"T"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "intvSymbol", "symbols": ["intvSymbol$string$1"], "postprocess": _ => Interval(2).sqrt()},
@@ -304,15 +304,15 @@ var grammar = {
     {"name": "fjsIntv", "symbols": ["pyIntv"], "postprocess": id},
     {"name": "fjsIntv", "symbols": ["fjsIntv", {"literal":"^"}, "fjsAccs"], "postprocess": d => ["mul", d[0], d[2](fjsParams)]},
     {"name": "fjsIntv", "symbols": ["fjsIntv", {"literal":"_"}, "fjsAccs"], "postprocess": d => ["div", d[0], d[2](fjsParams)]},
-    {"name": "fjsnIntv", "symbols": ["npyIntv"], "postprocess": id},
-    {"name": "fjsnIntv", "symbols": ["fjsnIntv", {"literal":"^"}, "fjsAccs"], "postprocess": d => ["mul", d[0], d[2](fjsnParams)]},
-    {"name": "fjsnIntv", "symbols": ["fjsnIntv", {"literal":"_"}, "fjsAccs"], "postprocess": d => ["div", d[0], d[2](fjsnParams)]},
+    {"name": "nfjsIntv", "symbols": ["npyIntv"], "postprocess": id},
+    {"name": "nfjsIntv", "symbols": ["nfjsIntv", {"literal":"^"}, "fjsAccs"], "postprocess": d => ["mul", d[0], d[2](nfjsParams)]},
+    {"name": "nfjsIntv", "symbols": ["nfjsIntv", {"literal":"_"}, "fjsAccs"], "postprocess": d => ["div", d[0], d[2](nfjsParams)]},
     {"name": "fjsNote", "symbols": ["pyNote"], "postprocess": id},
     {"name": "fjsNote", "symbols": ["fjsNote", {"literal":"^"}, "fjsAccs"], "postprocess": d => ["mul", d[0], d[2](fjsParams)]},
     {"name": "fjsNote", "symbols": ["fjsNote", {"literal":"_"}, "fjsAccs"], "postprocess": d => ["div", d[0], d[2](fjsParams)]},
-    {"name": "fjsnNote", "symbols": ["npyNote"], "postprocess": id},
-    {"name": "fjsnNote", "symbols": ["fjsnNote", {"literal":"^"}, "fjsAccs"], "postprocess": d => ["mul", d[0], d[2](fjsnParams)]},
-    {"name": "fjsnNote", "symbols": ["fjsnNote", {"literal":"_"}, "fjsAccs"], "postprocess": d => ["div", d[0], d[2](fjsnParams)]},
+    {"name": "nfjsNote", "symbols": ["npyNote"], "postprocess": id},
+    {"name": "nfjsNote", "symbols": ["nfjsNote", {"literal":"^"}, "fjsAccs"], "postprocess": d => ["mul", d[0], d[2](nfjsParams)]},
+    {"name": "nfjsNote", "symbols": ["nfjsNote", {"literal":"_"}, "fjsAccs"], "postprocess": d => ["div", d[0], d[2](nfjsParams)]},
     {"name": "fjsAccs", "symbols": ["fjsAcc"], "postprocess": d => params => fjsFactor(d[0], params)},
     {"name": "fjsAccs", "symbols": ["fjsAccs", {"literal":","}, "fjsAcc"], "postprocess": d => params => d[0](params).mul(fjsFactor(d[2], params))},
     {"name": "fjsAcc", "symbols": ["posInt"], "postprocess": (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject)},
