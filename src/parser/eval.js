@@ -3,7 +3,7 @@ const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
 const {pyInterval, isPerfectDeg, baseNoteIntvToA} = require('../pythagorean.js');
 const {fjsFactor} = require('../fjs.js');
-const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
+const {edoApprox, edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 
 function cbnEDOs(a,b) {
   return a && b ? Fraction(1,a).gcd(1,b).d : undefined
@@ -38,6 +38,11 @@ function evalExpr(e, r, edo) {
       const arg0 = Fraction(evalExpr(e[1],r).val).div(1200);
       return { val: Interval(2).pow(arg0)
              , prefEDO: 48 % arg0.d == 0 ? 24 % arg0.d == 0 ? 12 % arg0.d == 0 ? 12 : 24 : 48 : undefined };
+    }
+    if (e[0] == "!edoApprox") { // `edo` should not be defined
+      const arg0 = evalExpr(e[1],r).val;
+      const arg1 = evalExpr(e[2],r).val;
+      return { val: Interval(2).pow(edoApprox(arg1, arg0)).pow(1,arg1), prefEDO: arg1 };
     }
     if (e[0] == "!inEDO") { // `edo` should be undefined
       const arg1 = evalExpr(e[2],r).val;
