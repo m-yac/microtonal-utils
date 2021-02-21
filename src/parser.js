@@ -11,8 +11,12 @@ const grammar = require('./parser/grammar.js');
 const {evalExpr} = require('./parser/eval.js');
 const {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
 const {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
-const {edoPy, updnsSymb, updnsNote} = require('./edo.js');
+const {edoApprox, edoPy, updnsSymb, updnsNote} = require('./edo.js');
 const {enNames} = require('./english.js');
+
+function mod(a,n) {
+  return ((a % n) + n) % n;
+}
 
 function expectedSymbols(parser) {
   let symbs = [];
@@ -205,6 +209,12 @@ function parseCvt(str) {
   }
   if (type == "note") {
     ret.hertz = refNote.hertz.mul(intv).valueOf();
+    const intvToA4 = intv.mul(refNote.intvToA4);
+    const closest12EDO = edoApprox(12, intvToA4);
+    const diffTo12EDO = intvToA4.div(Interval(2).pow(closest12EDO,12)).toCents();
+    ret.tuningMeter = updnsNote(12, mod(closest12EDO+9,12)-9).join("/") + " "
+                      + (diffTo12EDO == 0 ? "±" : diffTo12EDO > 0 ? "+" : "-")
+                      + Math.abs(diffTo12EDO).toFixed(1) + "c";
     ret.intvToRef = intv;
     if (prefEDO) {
       let e2 = (intv['2'] || Fraction(0)).mul(prefEDO);
@@ -213,7 +223,7 @@ function parseCvt(str) {
     ret.ref = { hertz: refNote.hertz.valueOf()
               , intvToA4: refNote.intvToA4 };
     ret.symb = {};
-    const intvToA4 = intv.mul(refNote.intvToA4);
+
     let fjs = fjsNote(intvToA4);
     if (fjs) {
       ret.symb['FJS'] = fjs;

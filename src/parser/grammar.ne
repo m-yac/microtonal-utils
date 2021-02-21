@@ -77,8 +77,8 @@ intvMExpr2 ->
   | intvMExpr3                                          {% id %}
 intvMExpr3 ->
     posInt                                              {% d => Interval(d[0]) %}
-  | int           _ "\\" _ posInt                       {% d => ["!inEDO", parseInt(d[0]), d[4]] %}
-  | intvMEDOExpr3 _ "\\" _ posInt                       {% d => ["!inEDO", d[0], d[4]] %}
+  | int           _ "\\" _ posInt                       {% d => ["!inEDO", parseInt(d[0]), parseInt(d[4])] %}
+  | intvMEDOExpr3 _ "\\" _ posInt                       {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ intvMExpr1 _ ")"                              {% d => d[2] %}
 
 # ---------------------------------
@@ -92,7 +92,7 @@ noteMExpr1 ->
   | noteMExpr2                     {% id %}
 noteMExpr2 ->
     noteSymbol                     {% id %}
-  | noteMEDOExpr2 _ "\\" _ posInt  {% d => ["!inEDO", d[0], d[4]] %}
+  | noteMEDOExpr2 _ "\\" _ posInt  {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | decimal hertz                  {% d => ["div", d[0], ["!refHertz"]] %}
   | "(" _ noteMExpr1 _ ")"         {% d => d[2] %}
 
@@ -119,7 +119,7 @@ intvAExpr3 ->
   | intvAExpr4                                           {% id %}
 intvAExpr4 ->
     decimal "c"                                          {% d => ["!cents", d[0]] %}
-  | intvAEDOExpr3 _ "\\" _ posInt                        {% d => ["!inEDO", d[0], d[4]] %}
+  | intvAEDOExpr3 _ "\\" _ posInt                        {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ intvAExpr1 _ ")"                               {% d => d[2] %}
 
 # ---------------------------
@@ -133,7 +133,7 @@ noteAExpr1 ->
   | noteAExpr2                     {% id %}
 noteAExpr2 ->
     noteSymbol                     {% id %}
-  | noteAEDOExpr2 _ "\\" _ posInt  {% d => ["!inEDO", d[0], d[4]] %}
+  | noteAEDOExpr2 _ "\\" _ posInt  {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ noteAExpr1 _ ")"         {% d => d[2] %}
 
 # ----------------------------------------------
@@ -213,9 +213,9 @@ intvSExpr1 ->
   | intvSExpr2                                          {% id %}
 intvSExpr2 ->
     intvSymbol                                          {% id %}
-  | int        _ "\\" _ posInt                          {% d => ["!inEDO", parseInt(d[0]), d[4]] %}
-  | upsDnsIntv _ "\\" _ posInt                          {% d => ["!inEDO", d[0], d[4]] %}
-  | "TT"       _ "\\" _ posInt                          {% d => ["!edoTT"] %}
+  | int        _ "\\" _ posInt                          {% d => ["!inEDO", parseInt(d[0]), parseInt(d[4])] %}
+  | upsDnsIntv _ "\\" _ posInt                          {% d => ["!inEDO", d[0], parseInt(d[4])] %}
+  | "TT"       _ "\\" _ posInt                          {% d => ["!inEDO", ["!edoTT"], parseInt(d[4])] %}
   | "(" _ intvSExpr1 _ ")"                              {% d => d[2] %}
 
 # ------------------------
@@ -224,7 +224,7 @@ intvSExpr2 ->
 
 noteSExpr1 ->
     noteSymbol                  {% id %}
-  | upsDnsNote _ "\\" _ posInt  {% d => ["!inEDO", d[0], d[4]] %}
+  | upsDnsNote _ "\\" _ posInt  {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ noteSExpr1 _ ")"      {% d => d[2] %}
 
 # ------------------------------------------------------
@@ -358,7 +358,7 @@ upsDnsIntv ->
   # alternate notation for up/down perfect intervals
   | upsDns posInt
     {% (d,_,reject) => (redDeg(d[1]) == 4 || redDeg(d[1]) == 5) && d[0] != 0
-                       ? ["+", d[0], ["!edoPy", d[1]]] : reject %}
+                       ? ["+", d[0], ["!edoPy", parseIng(d[1])]] : reject %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
   | upsDns "~" posInt

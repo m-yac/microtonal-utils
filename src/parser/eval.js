@@ -49,7 +49,7 @@ function evalExpr(e, r, edo) {
         return { val: edo / 2 };
       }
       else {
-        throw edo + "-EDO does not have a tritone!";
+        throw edo + "-EDO does not have a tritone";
       }
     }
     if (e[0] == "!edoPy") { // `edo` should be defined
