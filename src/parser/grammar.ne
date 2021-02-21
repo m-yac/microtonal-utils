@@ -77,6 +77,8 @@ intvMExpr2 ->
   | intvMExpr3                                          {% id %}
 intvMExpr3 ->
     posInt                                              {% d => Interval(d[0]) %}
+  | int           _ "\\" _ posInt                       {% d => ["!inEDO", parseInt(d[0]), d[4]] %}
+  | intvMEDOExpr3 _ "\\" _ posInt                       {% d => ["!inEDO", d[0], d[4]] %}
   | "(" _ intvMExpr1 _ ")"                              {% d => d[2] %}
 
 # ---------------------------------
@@ -90,6 +92,7 @@ noteMExpr1 ->
   | noteMExpr2                     {% id %}
 noteMExpr2 ->
     noteSymbol                     {% id %}
+  | noteMEDOExpr2 _ "\\" _ posInt  {% d => ["!inEDO", d[0], d[4]] %}
   | decimal hertz                  {% d => ["div", d[0], ["!refHertz"]] %}
   | "(" _ noteMExpr1 _ ")"         {% d => d[2] %}
 
@@ -116,7 +119,7 @@ intvAExpr3 ->
   | intvAExpr4                                           {% id %}
 intvAExpr4 ->
     decimal "c"                                          {% d => ["!cents", d[0]] %}
-  | intvEDOExpr3 _ "\\" _ posInt                         {% d => ["!inEDO", d[0], d[4]] %}
+  | intvAEDOExpr3 _ "\\" _ posInt                        {% d => ["!inEDO", d[0], d[4]] %}
   | "(" _ intvAExpr1 _ ")"                               {% d => d[2] %}
 
 # ---------------------------
@@ -130,44 +133,73 @@ noteAExpr1 ->
   | noteAExpr2                     {% id %}
 noteAExpr2 ->
     noteSymbol                     {% id %}
-  | noteEDOExpr2 _ "\\" _ posInt   {% d => ["!inEDO", d[0], d[4]] %}
+  | noteAEDOExpr2 _ "\\" _ posInt  {% d => ["!inEDO", d[0], d[4]] %}
   | "(" _ noteAExpr1 _ ")"         {% d => d[2] %}
 
-# -------------------------------
-# EDO-step interval expressions
+# ----------------------------------------------
+# Multiplicative EDO-step interval expressions
+# @returns {Array}
+
+intvMEDOExpr1 ->
+    intvMEDOExpr1 _ "*" _ intvMEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | intvMEDOExpr1 _ "/" _ intvMEDOExpr2  {% d => ["-", d[0], d[4]] %}
+  | noteMEDOExpr1 _ "/" _ noteMEDOExpr2  {% d => ["-", d[0], d[4]] %}
+  | intvMEDOExpr2                        {% id %}
+intvMEDOExpr2 ->
+    intvMEDOExpr3 _ "^" _ intExpr1       {% d => ["*", d[0], d[4]] %}
+  | intvMEDOExpr3                        {% id %}
+intvMEDOExpr3 ->
+    upsDnsIntv                           {% id %}
+  | "TT"                                 {% d => ["!edoTT"] %}
+  | "(" _ intvMEDOExpr1 _ ")"            {% d => d[2] %}
+
+# ------------------------------------------
+# Multiplicative EDO-step note expressions
 # @returns {(integer|Array)}
 
-intvEDOExpr1 ->
-    intvEDOExpr1 _ "+" _ intvEDOExpr2  {% d => ["+", d[0], d[4]] %}
-  | intvEDOExpr1 _ "-" _ intvEDOExpr2  {% d => ["-", d[0], d[4]] %}
-  | noteEDOExpr1 _ "-" _ noteEDOExpr2  {% d => ["-", d[0], d[4]] %}
-  | intvEDOExpr2                       {% id %}
-intvEDOExpr2 ->
-    intvEDOExpr3 _ "x" _ intExpr1      {% d => ["*", d[0], d[4]] %}
-  | intExpr1 _ "x" _ intvEDOExpr3      {% d => ["*", d[0], d[4]] %}
-  | intvEDOExpr3                       {% id %}
-intvEDOExpr3 ->
-    "-" _ intvEDOExpr4                 {% d => ["-", 0, d[2]] %}
-  | intvEDOExpr4                       {% id %}
-intvEDOExpr4 ->
-    nonNegInt                          {% d => parseInt(d[0]) %}
-  | upsDnsIntv                         {% id %}
-  # special notation for a tritone
-  | "TT"                               {% d => ["!edoTT"] %}
-  | "(" _ intvEDOExpr1 _ ")"           {% d => d[2] %}
+noteMEDOExpr1 ->
+    noteMEDOExpr1 _ "*" _ intvMEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | intvMEDOExpr1 _ "*" _ noteMEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | noteMEDOExpr1 _ "/" _ intvMEDOExpr2  {% d => ["-", d[0], d[4]] %}
+  | noteMEDOExpr2                        {% id %}
+noteMEDOExpr2 ->
+    upsDnsNote                           {% id %}
+  | "(" _ noteMEDOExpr1 _ ")"            {% d => d[2] %}
 
-# ---------------------------
-# EDO-step note expressions
+# ----------------------------------------
+# Additive EDO-step interval expressions
 # @returns {(integer|Array)}
 
-noteEDOExpr1 ->
-    noteEDOExpr1 _ "+" _ intvEDOExpr2  {% d => ["+", d[0], d[4]] %}
-  | intvEDOExpr1 _ "+" _ noteEDOExpr2  {% d => ["+", d[0], d[4]] %}
-  | noteEDOExpr1 _ "-" _ intvEDOExpr2  {% d => ["-", d[0], d[4]] %}
-  | noteEDOExpr2                       {% id %}
-noteEDOExpr2 ->
-    upsDnsNote                         {% id %}
-  | "(" _ noteEDOExpr1 _ ")"           {% d => d[2] %}
+intvAEDOExpr1 ->
+    intvAEDOExpr1 _ "+" _ intvAEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | intvAEDOExpr1 _ "-" _ intvAEDOExpr2  {% d => ["-", d[0], d[4]] %}
+  | noteAEDOExpr1 _ "-" _ noteAEDOExpr2  {% d => ["-", d[0], d[4]] %}
+  | intvAEDOExpr2                        {% id %}
+intvAEDOExpr2 ->
+    intvAEDOExpr3 _ "x" _ intExpr1       {% d => ["*", d[0], d[4]] %}
+  | intExpr1 _ "x" _ intvAEDOExpr3       {% d => ["*", d[0], d[4]] %}
+  | intvAEDOExpr3                        {% id %}
+intvAEDOExpr3 ->
+    "-" _ intvAEDOExpr4                  {% d => ["-", 0, d[2]] %}
+  | intvAEDOExpr4                        {% id %}
+intvAEDOExpr4 ->
+    nonNegInt                            {% d => parseInt(d[0]) %}
+  | upsDnsIntv                           {% id %}
+  | "TT"                                 {% d => ["!edoTT"] %}
+  | "(" _ intvAEDOExpr1 _ ")"            {% d => d[2] %}
+
+# ------------------------------------
+# Additive EDO-step note expressions
+# @returns {(integer|Array)}
+
+noteAEDOExpr1 ->
+    noteAEDOExpr1 _ "+" _ intvAEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | intvAEDOExpr1 _ "+" _ noteAEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | noteAEDOExpr1 _ "-" _ intvAEDOExpr2  {% d => ["-", d[0], d[4]] %}
+  | noteAEDOExpr2                        {% id %}
+noteAEDOExpr2 ->
+    upsDnsNote                           {% id %}
+  | "(" _ noteAEDOExpr1 _ ")"            {% d => d[2] %}
 
 # -----------------------------
 # Interval symbol expressions
@@ -181,6 +213,9 @@ intvSExpr1 ->
   | intvSExpr2                                          {% id %}
 intvSExpr2 ->
     intvSymbol                                          {% id %}
+  | int        _ "\\" _ posInt                          {% d => ["!inEDO", parseInt(d[0]), d[4]] %}
+  | upsDnsIntv _ "\\" _ posInt                          {% d => ["!inEDO", d[0], d[4]] %}
+  | "TT"       _ "\\" _ posInt                          {% d => ["!edoTT"] %}
   | "(" _ intvSExpr1 _ ")"                              {% d => d[2] %}
 
 # ------------------------
@@ -188,8 +223,9 @@ intvSExpr2 ->
 # @returns {Interval}
 
 noteSExpr1 ->
-    noteSymbol              {% id %}
-  | "(" _ noteSExpr1 _ ")"  {% d => d[2] %}
+    noteSymbol                  {% id %}
+  | upsDnsNote _ "\\" _ posInt  {% d => ["!inEDO", d[0], d[4]] %}
+  | "(" _ noteSExpr1 _ ")"      {% d => d[2] %}
 
 # ------------------------------------------------------
 # Interval and note symbols
