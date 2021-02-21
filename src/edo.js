@@ -37,7 +37,7 @@ function edoPy(edo,a,b) {
   const g = Fraction(py.generator(i) * edoApprox(edo,3,2), 4);
   const v = py.octaves(i);
   if (g.d != 1) {
-    throw "neutral pythagorean interval not realized in this EDO";
+    throw "neutral pythagorean interval not realized in " + edo + "-EDO";
   }
   return g.s*g.n + v * edo;
 }

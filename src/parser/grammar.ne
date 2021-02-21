@@ -2,209 +2,202 @@
 
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
-const {pySymb, pyInterval, redDeg, octaveOfIntvToA4} = require('../pythagorean.js');
+const {pyInterval, redDeg, baseNoteIntvToA} = require('../pythagorean.js');
 const {fjsFactor, fjsParams, fjsnParams} = require('../fjs.js');
-const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
+const {edoPy} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
+const {evalExpr} = require('./eval.js');
 
 %}
 
 @builtin "whitespace.ne"
 
+# ------------------------------------------------------
+# Interval and note expressions
+# ------------------------------------------------------
+
 top1 ->
     _ top2 _
-    {% function (d) { const r = { intvToA4: Interval(1)
-                                , hertz: Interval(440) };
-                      return d[1](r).concat(r); } %}
+    {% function (d,_,reject) { let d1 = Object.assign({},d[1]);
+                               d1.refNote = helpers.defaultRefNote;
+                               return d1; } %}
   | _ top2 __ "where" __ pyNote _ "=" _ decimal hertz:? _
-    {% function (d) { const r = { intvToA4: d[5](Interval(1))
-                                , hertz: Interval(d[9]) };
-                      return d[1](r).concat(r); } %}
+    {% function (d,_,reject) { let d1 = Object.assign({},d[1]);
+                               d1.refNote = {};
+                               d1.refNote.intvToA4 = evalExpr(d[5], helpers.defaultRefNote).val;
+                               d1.refNote.hertz    = Interval(d[9]);
+                               return d1; } %}
   | _ top2 __ "where" __ pyNote _ "=" _ pyNote _ "\\" _ posInt _
-    {% function (d,_,reject) {
-         if (!d[5](Interval(1)).equals(d[9](Interval(1)))) { return reject; }
-         const s = edoPy(parseInt(d[13]),d[9](Interval(1)));
-         const r = { intvToA4: d[5](Interval(1))
-                   , hertz: Interval(2).pow(s,d[13]).mul(440) };
-         return d[1](r).concat(r); } %}
+    {% function (d,_,reject) { let d1 = Object.assign({},d[1]);
+                               const d5 = evalExpr(d[5], helpers.defaultRefNote).val;
+                               const d9 = evalExpr(d[9], helpers.defaultRefNote).val;
+                               const d13 = parseInt(d[13]);
+                               if (!d5 || !d5.equals(d9)) { return reject; }
+                               d1.refNote = {};
+                               d1.refNote.intvToA4 = d9;
+                               d1.refNote.hertz    = Interval(2).pow(edoPy(d13,d9),d13).mul(440);
+                               return d1; } %}
+
 top2 ->
-    topIntv  {% id %}
-  | topNote  {% id %}
+    intvSExpr1  {% d => ({type: ["interval", "symbol"], expr: d[0]}) %}
+  | intvMExpr1  {% d => ({type: ["interval", "multiplicative"], expr: d[0]}) %}
+  | intvAExpr1  {% d => ({type: ["interval", "additive"], expr: d[0]}) %}
+  | noteSExpr1  {% d => ({type: ["note", "symbol"], expr: d[0]}) %}
+  | noteMExpr1  {% d => ({type: ["note", "multiplicative"], expr: d[0]}) %}
+  | noteAExpr1  {% d => ({type: ["note", "additive"], expr: d[0]}) %}
 
-topIntv ->
-    intvSExpr1  {% d => _ => ["interval", true, d[0], null] %}
-  | intvMExpr1  {% d => r => ["interval", false, d[0](r), null] %}
-  | intvAExpr1  {% d => r => ["interval", false, d[0](r)[0], d[0](r)[1]] %}
 
-topNote ->
-    noteSExpr1  {% d => r => ["note", true, d[0](r.intvToA4), null] %}
-  | noteMExpr1  {% d => r => ["note", false, d[0](r), null] %}
-  | noteAExpr1  {% d => r => ["note", false, d[0](r)[0], d[0](r)[1]] %}
+# ------------------------------------------------------
+# Interval and note expressions
+# ------------------------------------------------------
 
+# ...
+# `["ident", a0, a1, ..., an]` gets evaluated to `a0.ident(a1,...,an)`
+# `["operator", a0, a1]` gets evaluated to `a0 operator a1` (e.g. "+")
+# `["!ident", a0, ..., an]` has some special handling - see semantics.js
 
 # -------------------------------------
 # Multiplicative interval expressions
-# type: {intvToA4: Interval, hertz: Interval} => Interval
+# @returns {(Interval|Array)}
 
 intvMExpr1 ->
-    intvMExpr1 _ "*" _ intvMExpr2                       {% d => r => d[0](r).mul(d[4](r)) %}
-  | intvMExpr1 _ "/" _ intvMExpr2                       {% d => r => d[0](r).div(d[4](r)) %}
-  | noteMExpr1 _ "/" _ noteMExpr2                       {% d => r => d[0](r).div(d[4](r)) %}
+    intvMExpr1 _ "*" _ intvMExpr2                       {% d => ["mul", d[0], d[4]] %}
+  | intvMExpr1 _ "/" _ intvMExpr2                       {% d => ["div", d[0], d[4]] %}
+  | noteMExpr1 _ "/" _ noteMExpr2                       {% d => ["div", d[0], d[4]] %}
   | intvMExpr2                                          {% id %}
 intvMExpr2 ->
-    intvMExpr3 _ "^" _ frcExpr3                         {% d => r => d[0](r).pow(d[4]) %}
-  | "sqrt" _ "(" _ intvMExpr1 _ ")"                     {% d => r => d[4](r).sqrt() %}
-  | "red"  _ "(" _ intvMExpr1 _ ")"                     {% d => r => d[4](r).red() %}
-  | "reb"  _ "(" _ intvMExpr1 _ ")"                     {% d => r => d[4](r).reb() %}
-  | "red"  _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => r => d[4](r).red(d[8](r)) %}
-  | "reb"  _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => r => d[4](r).reb(d[8](r)) %}
-  | intvSymbol                                          {% d => _ => d[0] %}
+    intvMExpr3 _ "^" _ frcExpr3                         {% d => ["pow", d[0], d[4]] %}
+  | "sqrt" _ "(" _ intvMExpr1 _ ")"                     {% d => ["sqrt", d[0]] %}
+  | "red"  _ "(" _ intvMExpr1 _ ")"                     {% d => ["red", d[4]] %}
+  | "reb"  _ "(" _ intvMExpr1 _ ")"                     {% d => ["reb", d[4]] %}
+  | "red"  _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
+  | "reb"  _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4], d[8]] %}
+  | "med"  _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["!med", d[4], d[8]] %}
+  | intvSymbol                                          {% id %}
   | intvMExpr3                                          {% id %}
 intvMExpr3 ->
-    posInt                                              {% d => _ => Interval(d[0]) %}
+    posInt                                              {% d => Interval(d[0]) %}
   | "(" _ intvMExpr1 _ ")"                              {% d => d[2] %}
 
 # ---------------------------------
 # Multiplicative note expressions
-# type: {intvToA4: Interval, hertz: Interval} => Interval
+# @returns {(Interval|Array)}
 
 noteMExpr1 ->
-    noteMExpr1 _ "*" _ intvMExpr2  {% d => r => d[0](r).mul(d[4](r)) %}
-  | intvMExpr1 _ "*" _ noteMExpr2  {% d => r => d[0](r).mul(d[4](r)) %}
-  | noteMExpr1 _ "/" _ intvMExpr2  {% d => r => d[0](r).div(d[4](r)) %}
+    noteMExpr1 _ "*" _ intvMExpr2  {% d => ["mul", d[0], d[4]] %}
+  | intvMExpr1 _ "*" _ noteMExpr2  {% d => ["mul", d[0], d[4]] %}
+  | noteMExpr1 _ "/" _ intvMExpr2  {% d => ["div", d[0], d[4]] %}
   | noteMExpr2                     {% id %}
 noteMExpr2 ->
-    noteSymbol                     {% d => r => d[0](r.intvToA4) %}
-  | decimal hertz                  {% d => r => Interval(d[0]).div(r.hertz) %}
+    noteSymbol                     {% id %}
+  | decimal hertz                  {% d => ["div", d[0], ["!refHertz"]] %}
   | "(" _ noteMExpr1 _ ")"         {% d => d[2] %}
 
 # -------------------------------
 # Additive interval expressions
-# type: {intvToA4: Interval, hertz: Interval} => Interval
+# @returns {(Interval|Array)}
 
 intvAExpr1 ->
-    intvAExpr1 _ "+" _ intvAExpr2                        {% d => r => [d[0](r)[0].mul(d[4](r)[0]), helpers.cbnEDOs(d[0](r)[1],d[4](r)[1])] %}
-  | intvAExpr1 _ "-" _ intvAExpr2                        {% d => r => [d[0](r)[0].div(d[4](r)[0]), helpers.cbnEDOs(d[0](r)[1],d[4](r)[1])] %}
-  | noteAExpr1 _ "-" _ noteAExpr2                        {% d => r => [d[0](r)[0].div(d[4](r)[0]), helpers.cbnEDOs(d[0](r)[1],d[4](r)[1])] %}
+    intvAExpr1 _ "+" _ intvAExpr2                        {% d => ["mul", d[0], d[4]] %}
+  | intvAExpr1 _ "-" _ intvAExpr2                        {% d => ["div", d[0], d[4]] %}
+  | noteAExpr1 _ "-" _ noteAExpr2                        {% d => ["div", d[0], d[4]] %}
   | intvAExpr2                                           {% id %}
 intvAExpr2 ->
-    intvAExpr3 _ "x" _ frcExpr3                          {% d => r => [d[0](r)[0].pow(d[4]), d[0](r)[1]] %}
-  | frcExpr3 _ "x" _ intvAExpr3                          {% d => r => [d[4](r)[0].pow(d[0]), d[4](r)[1]] %}
+    intvAExpr3 _ "x" _ frcExpr3                          {% d => ["pow", d[0], d[4]] %}
+  | frcExpr3 _ "x" _ intvAExpr3                          {% d => ["pow", d[4], d[0]] %}
   | intvAExpr3                                           {% id %}
 intvAExpr3 ->
-    "cents" _ "(" _ intvMExpr1 _ ")"                     {% d => r => [d[4](r), null] %}
-  | "red"   _ "(" _ intvAExpr1 _ ")"                     {% d => r => [d[4](r)[0].red(), d[4](r)[1]] %}
-  | "reb"   _ "(" _ intvAExpr1 _ ")"                     {% d => r => [d[4](r)[0].reb(), d[4](r)[1]] %}
-  | "red"   _ "(" _ intvAExpr1 _ "," _ intvMExpr1 _ ")"  {% d => r => [d[4](r)[0].red(d[8](r)), d[8](r).equals(2) ? d[4](r)[1] : null] %}
-  | "reb"   _ "(" _ intvAExpr1 _ "," _ intvMExpr1 _ ")"  {% d => r => [d[4](r)[0].reb(d[8](r)), d[8](r).equals(2) ? d[4](r)[1] : null] %}
-  | intvSymbol                                           {% d => _ => [d[0], null] %}
-  | decimal "c"
-    {% d => function () {
-         const d0 = Fraction(d[0]).div(1200);
-         const prefEDO = 48 % d0.d == 0 ? (24 % d0.d == 0 ? (12 % d0.d == 0 ? 12 : 24) : 48) : null;
-         return [Interval(2).pow(d0), prefEDO] } %}
-  | intvEDOExpr3 _ "\\" _ posInt
-    {% (d,_,reject) => function (r) {
-         const d0 = d[0]({intvToA4: r.intvToA4, edo: d[4]});
-         if (d0 == reject) { return reject; }
-         else { return [Interval(2).pow(d0).pow(1,d[4]), d[4]] } } %}
+    "cents" _ "(" _ intvMExpr1 _ ")"                     {% d => d[4] %}
+  | "red"   _ "(" _ intvAExpr1 _ ")"                     {% d => ["red", d[4]] %}
+  | "reb"   _ "(" _ intvAExpr1 _ ")"                     {% d => ["reb", d[4]] %}
+  | "red"   _ "(" _ intvAExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
+  | "reb"   _ "(" _ intvAExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4], d[8]] %}
+  | intvSymbol                                           {% id %}
+  | intvAExpr4                                           {% id %}
+intvAExpr4 ->
+    decimal "c"                                          {% d => ["!cents", d[0]] %}
+  | intvEDOExpr3 _ "\\" _ posInt                         {% d => ["!inEDO", d[0], d[4]] %}
   | "(" _ intvAExpr1 _ ")"                               {% d => d[2] %}
 
 # ---------------------------
 # Additive note expressions
-# type: {intvToA4: Interval, hertz: Interval} => Interval
+# @returns {(Interval|Array)}
 
 noteAExpr1 ->
-    noteAExpr1 _ "+" _ intvAExpr2  {% d => r => [d[0](r)[0].mul(d[4](r)[0]), helpers.cbnEDOs(d[0](r)[1],d[4](r)[1])] %}
-  | intvAExpr1 _ "+" _ noteAExpr2  {% d => r => [d[0](r)[0].mul(d[4](r)[0]), helpers.cbnEDOs(d[0](r)[1],d[4](r)[1])] %}
-  | noteAExpr1 _ "-" _ intvAExpr2  {% d => r => [d[0](r)[0].div(d[4](r)[0]), helpers.cbnEDOs(d[0](r)[1],d[4](r)[1])] %}
+    noteAExpr1 _ "+" _ intvAExpr2  {% d => ["mul", d[0], d[4]] %}
+  | intvAExpr1 _ "+" _ noteAExpr2  {% d => ["mul", d[0], d[4]] %}
+  | noteAExpr1 _ "-" _ intvAExpr2  {% d => ["div", d[0], d[4]] %}
   | noteAExpr2                     {% id %}
 noteAExpr2 ->
-    noteSymbol                     {% d => r => [d[0](r.intvToA4), null] %}
-  | noteEDOExpr2 _ "\\" _ posInt
-    {% (d,_,reject) => function (r) {
-         const d0 = d[0]({intvToA4: r.intvToA4, edo: d[4]});
-         if (d0 == reject) { return reject; }
-         else { return [Interval(2).pow(d0).pow(1,d[4]), d[4]] } } %}
+    noteSymbol                     {% id %}
+  | noteEDOExpr2 _ "\\" _ posInt   {% d => ["!inEDO", d[0], d[4]] %}
   | "(" _ noteAExpr1 _ ")"         {% d => d[2] %}
 
 # -------------------------------
 # EDO-step interval expressions
-# type: {intvToA4: Interval, edo: ?Integer} => Interval
+# @returns {(integer|Array)}
 
 intvEDOExpr1 ->
-    intvEDOExpr1 _ "+" _ intvEDOExpr2  {% d => r => d[0](r) + d[4](r) %}
-  | intvEDOExpr1 _ "-" _ intvEDOExpr2  {% d => r => d[0](r) - d[4](r) %}
-  | noteEDOExpr1 _ "-" _ noteEDOExpr2  {% d => r => d[0](r) - d[4](r) %}
+    intvEDOExpr1 _ "+" _ intvEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | intvEDOExpr1 _ "-" _ intvEDOExpr2  {% d => ["-", d[0], d[4]] %}
+  | noteEDOExpr1 _ "-" _ noteEDOExpr2  {% d => ["-", d[0], d[4]] %}
   | intvEDOExpr2                       {% id %}
 intvEDOExpr2 ->
-    intvEDOExpr3 _ "x" _ intExpr1      {% d => r => d[0](r) * d[4] %}
-  | intExpr1 _ "x" _ intvEDOExpr3      {% d => r => d[0] * d[4](r) %}
+    intvEDOExpr3 _ "x" _ intExpr1      {% d => ["*", d[0], d[4]] %}
+  | intExpr1 _ "x" _ intvEDOExpr3      {% d => ["*", d[0], d[4]] %}
   | intvEDOExpr3                       {% id %}
 intvEDOExpr3 ->
-    "-" _ intvEDOExpr4                 {% d => r => - d[2](r) %}
+    "-" _ intvEDOExpr4                 {% d => ["-", 0, d[2]] %}
   | intvEDOExpr4                       {% id %}
 intvEDOExpr4 ->
-    nonNegInt                          {% d => _ => parseInt(d[0]) %}
-  | upsDns pyIntv                      {% d => r => d[0] + edoPy(r.edo,d[1]) %}
-  | upsDns npyIntv
-    {% (d,_,reject) => r =>
-         !edoHasNeutrals(r.edo) ? reject : d[0] + edoPy(r.edo,d[1]) %}
-  | upsDns snpyIntv
-    {% (d,_,reject) => r =>
-         !edoHasSemiNeutrals(r.edo) ? reject : d[0] + edoPy(r.edo,d[1]) %}
-  # alternate notation for up/down perfect intervals
-  | upsDns posInt
-    {% (d,_,reject) => r =>
-         d[0] == 0 || !(redDeg(d[1]) == 4 || redDeg(d[1]) == 5) ? reject :
-           d[0] + edoPy(r.edo,pyInterval(d[1],0)) %}
-  # alternate notation for neutal intervals, semi-augmented fourths, and
-  # semi-diminished fifths
-  | upsDns "~" posInt
-    {% (d,_,reject) => r =>
-         !edoHasNeutrals(r.edo) || redDeg(d[2]) == 1 ? reject :
-           redDeg(d[2]) == 4 ? d[0] + edoPy(r.edo,pyInterval(d[2],1,2)) :
-           redDeg(d[2]) == 5 ? d[0] + edoPy(r.edo,pyInterval(d[2],-1,2)) :
-                               d[0] + edoPy(r.edo,pyInterval(d[2],0)) %}
-  # special notation for the tritone, if it exists
-  | "TT"
-    {% (d,_,reject) => r => r.edo % 2 == 0 ? r.edo/2 : reject %}
+    nonNegInt                          {% d => parseInt(d[0]) %}
+  | upsDnsIntv                         {% id %}
+  # special notation for a tritone
+  | "TT"                               {% d => ["!edoTT"] %}
   | "(" _ intvEDOExpr1 _ ")"           {% d => d[2] %}
-
-upsDns ->
-    null   {% d => 0 %}
-  | "^":+  {% d => d[0].length %}
-  | "v":+  {% d => - d[0].length %}
 
 # ---------------------------
 # EDO-step note expressions
-# type: {intvToA4: Interval, edo: ?Integer} => Interval
+# @returns {(integer|Array)}
 
 noteEDOExpr1 ->
-    noteEDOExpr1 _ "+" _ intvEDOExpr2  {% d => r => d[0](r) + d[4](r) %}
-  | intvEDOExpr1 _ "+" _ noteEDOExpr2  {% d => r => d[0](r) + d[4](r) %}
-  | noteEDOExpr1 _ "-" _ intvEDOExpr2  {% d => r => d[0](r) - d[4](r) %}
+    noteEDOExpr1 _ "+" _ intvEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | intvEDOExpr1 _ "+" _ noteEDOExpr2  {% d => ["+", d[0], d[4]] %}
+  | noteEDOExpr1 _ "-" _ intvEDOExpr2  {% d => ["-", d[0], d[4]] %}
   | noteEDOExpr2                       {% id %}
 noteEDOExpr2 ->
-    upsDns pyNote                      {% d => r => d[0] + edoPy(r.edo,d[1](r.intvToA4)) %}
-  | upsDns npyNote
-    {% (d,_,reject) => r =>
-         !edoHasNeutrals(r.edo) ? reject : d[0] + edoPy(r.edo,d[1](r.intvToA4)) %}
+    upsDnsNote                         {% id %}
   | "(" _ noteEDOExpr1 _ ")"           {% d => d[2] %}
 
 # -----------------------------
 # Interval symbol expressions
-# type: Interval
+# @returns {(Interval|Array)}
 
 intvSExpr1 ->
-    "red"  _ "(" _ intvSExpr1 _ ")"                     {% d => d[4].red() %}
-  | "reb"  _ "(" _ intvSExpr1 _ ")"                     {% d => d[4].reb() %}
-  | "red"  _ "(" _ intvSExpr1 _ "," _ intvMExpr1 _ ")"  {% d => d[4].red(d[8]) %}
-  | "reb"  _ "(" _ intvSExpr1 _ "," _ intvMExpr1 _ ")"  {% d => d[4].reb(d[8]) %}
+    "red"  _ "(" _ intvSExpr1 _ ")"                     {% d => ["red", d[4]] %}
+  | "reb"  _ "(" _ intvSExpr1 _ ")"                     {% d => ["reb", d[4]] %}
+  | "red"  _ "(" _ intvSExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
+  | "reb"  _ "(" _ intvSExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4], d[8]] %}
   | intvSExpr2                                          {% id %}
 intvSExpr2 ->
     intvSymbol                                          {% id %}
   | "(" _ intvSExpr1 _ ")"                              {% d => d[2] %}
+
+# ------------------------
+# Note symbol expresions
+# @returns {Interval}
+
+noteSExpr1 ->
+    noteSymbol              {% id %}
+  | "(" _ noteSExpr1 _ ")"  {% d => d[2] %}
+
+# ------------------------------------------------------
+# Interval and note symbols
+# ------------------------------------------------------
+
+# ------------------------------
+# Interval and note symbols
+# @returns {(Interval|Array)}
 
 intvSymbol ->
     fjsIntv   {% id %}
@@ -212,53 +205,13 @@ intvSymbol ->
   | snpyIntv  {% id %}
   | "TT"      {% _ => Interval(2).sqrt() %}
 
-# ------------------------
-# Note symbol expresions
-# type: Interval => Interval
-
-noteSExpr1 ->
-    noteSymbol              {% id %}
-  | "(" _ noteSExpr1 _ ")"  {% d => d[2] %}
-
 noteSymbol ->
     fjsNote  {% id %}
   | npyNote  {% id %}
 
-# -------------
-# FJS and FJS + Neutrals interval and note symbols
-# type: Interval and Interval => Interval
-
-fjsIntv ->
-    pyIntv                {% id %}
-  | fjsIntv "^" fjsAccs   {% d => d[0].mul(d[2](fjsParams)) %}
-  | fjsIntv "_" fjsAccs   {% d => d[0].div(d[2](fjsParams)) %}
-fjsnIntv ->
-    npyIntv               {% id %}
-  | fjsnIntv "^" fjsAccs  {% d => d[0].mul(d[2](fjsnParams)) %}
-  | fjsnIntv "_" fjsAccs  {% d => d[0].div(d[2](fjsnParams)) %}
-
-fjsNote ->
-    pyNote                {% id %}
-  | fjsNote "^" fjsAccs   {% d => refIntvToA4 => d[0](refIntvToA4).mul(d[2](fjsParams)) %}
-  | fjsNote "_" fjsAccs   {% d => refIntvToA4 => d[0](refIntvToA4).div(d[2](fjsParams)) %}
-fjsnNote ->
-    npyNote               {% id %}
-  | fjsnNote "^" fjsAccs  {% d => refIntvToA4 => d[0](refIntvToA4).mul(d[2](fjsnParams)) %}
-  | fjsnNote "_" fjsAccs  {% d => refIntvToA4 => d[0](refIntvToA4).div(d[2](fjsnParams)) %}
-
-fjsAccs ->
-    fjsAcc              {% d => params => fjsFactor(d[0], params) %}
-  | fjsAccs "," fjsAcc  {% d => params => d[0](params).mul(fjsFactor(d[2], params)) %}
-
-fjsAcc ->
-    posInt                        {% (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject) %}
-  | "sqrt(" fjsAcc ")"            {% d => d[1].sqrt() %}
-  | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
-  | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
-
 # ------------------------------
 # Pythagorean interval symbols
-# type: Interval
+# @returns {Interval}
 
 pyIntv ->
   # perfect intervals
@@ -294,18 +247,17 @@ pyDeg ->
 
 # --------------------------
 # Pythagorean note symbols
-# type: Interval => Interval
+# @returns {(Interval|Array)}
 
 genPyNote[NOTE,ACCS] ->
     $NOTE $ACCS int:?
-    {% d => function(refIntvToA4) {
+    {% function(d) {
          const d2 = d[2] ? parseInt(d[2]) : 4;
-         return helpers.baseNoteIntvToReference(d[0], refIntvToA4)
-                         .mul(d[1][0])
-                         .mul(Interval(2).pow(d2 - 4)); } %}
+         return ["mul", ["div", baseNoteIntvToA(d[0]), ["!refIntvToA4"]]
+                      , d[1][0].mul(Interval(2).pow(d2 - 4))]; } %}
 
 pyNote ->
-    "A"                             {% _ => refIntvToA4 => refIntvToA4.recip() %}
+    "A"                             {% _ => ["recip", ["!refIntvToA4"]] %}
   | genPyNote[[B-G], pyNoteNoAccs]  {% id %}
   | genPyNote[[A-G], pyNoteAccs]    {% id %}
 
@@ -326,6 +278,71 @@ npyNoteAccs ->
     {% d => pyInterval(1, 2*d[0].length + d[1].length + 0.5*d[2].length) %}
   | ("𝄳" | "d"):+ ("♭" | "b"):* "𝄫":*
     {% d => pyInterval(-1, 2*d[0].length + d[1].length + 0.5*d[2].length) %}
+
+# --------------------------------------------------
+# FJS and FJS + Neutrals interval and note symbols
+# @returns {(Interval|Array)}
+
+fjsIntv ->
+    pyIntv                {% id %}
+  | fjsIntv "^" fjsAccs   {% d => ["mul", d[0], d[2](fjsParams)] %}
+  | fjsIntv "_" fjsAccs   {% d => ["div", d[0], d[2](fjsParams)] %}
+fjsnIntv ->
+    npyIntv               {% id %}
+  | fjsnIntv "^" fjsAccs  {% d => ["mul", d[0], d[2](fjsnParams)] %}
+  | fjsnIntv "_" fjsAccs  {% d => ["div", d[0], d[2](fjsnParams)] %}
+
+fjsNote ->
+    pyNote                {% id %}
+  | fjsNote "^" fjsAccs   {% d => ["mul", d[0], d[2](fjsParams)] %}
+  | fjsNote "_" fjsAccs   {% d => ["div", d[0], d[2](fjsParams)] %}
+fjsnNote ->
+    npyNote               {% id %}
+  | fjsnNote "^" fjsAccs  {% d => ["mul", d[0], d[2](fjsnParams)] %}
+  | fjsnNote "_" fjsAccs  {% d => ["div", d[0], d[2](fjsnParams)] %}
+
+fjsAccs ->
+    fjsAcc              {% d => params => fjsFactor(d[0], params) %}
+  | fjsAccs "," fjsAcc  {% d => params => d[0](params).mul(fjsFactor(d[2], params)) %}
+
+fjsAcc ->
+    posInt                        {% (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject) %}
+  | "sqrt(" fjsAcc ")"            {% d => d[1].sqrt() %}
+  | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
+  | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
+
+# --------------------------------------------------
+# Ups-and-downs notation interval and note symbols
+# @returns {(Interval|Array)}
+
+upsDnsIntv ->
+    upsDns pyIntv    {% d => ["+", d[0], ["!edoPy", d[1]]] %}
+  | upsDns npyIntv   {% d => ["+", d[0], ["!edoPy", d[1]]] %}
+  | upsDns snpyIntv  {% d => ["+", d[0], ["!edoPy", d[1]]] %}
+  # alternate notation for up/down perfect intervals
+  | upsDns posInt
+    {% (d,_,reject) => (redDeg(d[1]) == 4 || redDeg(d[1]) == 5) && d[0] != 0
+                       ? ["+", d[0], ["!edoPy", d[1]]] : reject %}
+  # alternate notation for neutal intervals, semi-augmented fourths, and
+  # semi-diminished fifths
+  | upsDns "~" posInt
+    {% (d,_,reject) => redDeg(d[2]) == 1 ? reject :
+                       redDeg(d[2]) == 4 ? ["+", d[0], ["!edoPy", pyInterval(d[2],1,2)]] :
+                       redDeg(d[2]) == 5 ? ["+", d[0], ["!edoPy", pyInterval(d[2],-1,2)]] :
+                                           ["+", d[0], ["!edoPy", pyInterval(d[2],0)]] %}
+
+upsDnsNote ->
+  upsDns pyNote      {% d => ["+", d[0], ["!edoPy", d[1]]] %}
+| upsDns npyNote     {% d => ["+", d[0], ["!edoPy", d[1]]] %}
+
+upsDns ->
+  null   {% d => 0 %}
+| "^":+  {% d => d[0].length %}
+| "v":+  {% d => - d[0].length %}
+
+# ------------------------------------------------------
+# Terminals
+# ------------------------------------------------------
 
 # ------------------------------------------------------
 # Fractional expressions (positive, negative, or zero)

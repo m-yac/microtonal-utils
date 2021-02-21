@@ -189,6 +189,25 @@ Interval.prototype = {
   },
 
   /**
+   * Checks whether an interval has integer prime exponents, i.e. whether the
+   * interval can be expressed as a fraction
+   *
+   * e.g. `Interval(3,2).isFrac()` returns `true`
+   *
+   * e.g. `Interval(2).sqrt().isFrac()` returns `false`
+   *
+   * @returns {bool}
+   */
+  "isFrac": function() {
+    for (const i in keys(this)) {
+      if (this[i].d != 1) {
+        return false;
+      }
+    }
+    return true;
+  },
+
+  /**
    * Converts an interval with integer prime exponents, i.e. an interval which
    * can be expressed as a fraction, to a `Fraction`.
    *

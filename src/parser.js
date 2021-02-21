@@ -8,6 +8,7 @@ const ne = require('nearley');
 const Fraction = require('fraction.js');
 const Interval = require('./interval.js');
 const grammar = require('./parser/grammar.js');
+const {evalExpr} = require('./parser/eval.js');
 const {isPythagorean, pySymb, pyNote} = require('./pythagorean.js');
 const {fjsSymb, fjsNote, fjsnParams} = require('./fjs.js');
 const {edoPy, updnsSymb, updnsNote} = require('./edo.js');
@@ -34,26 +35,29 @@ function parse(str) {
   parser.feed(str);
   let results = parser.results;
 
+  for (let i = 0; i < results.length; i++) {
+    const res = evalExpr(results[i].expr, results[i].refNote);
+    results[i].val = res.val;
+    results[i].prefEDO = res.prefEDO;
+  }
+
   if (results.length == 0) {
     throw "No parse";
   }
-  if (results.some(d => d[0] == "interval" && d[1] == true)) {
-    results = results.filter(d => !(d[0] == "interval" && d[1] == false));
+  if (results.some(d => d.type[0] == "interval" && d.type[1] == "symbol")) {
+    results = results.filter(d => !(d.type[0] == "interval" && d.type[1] != "symbol"));
   }
-  if (results.some(d => d[0] == "note" && d[1] == true)) {
-    results = results.filter(d => !(d[0] == "note" && d[1] == false));
+  if (results.some(d => d.type[0] == "note" && d.type[1] == "symbol")) {
+    results = results.filter(d => !(d.type[0] == "note" && d.type[1] != "symbol"));
   }
   if (results.length > 1) {
     console.log("Parse was ambiguous! Full results:");
     console.dir(parser.results, { depth: null });
   }
-  if (results[0][2] == undefined) {
-    throw "Unknown parse error";
-  }
-  let ret = { type: results[0][0]
-            , intv: results[0][2]
-            , refNote: results[0][4]
-            , prefEDO: parseInt(results[0][3]) };
+  let ret = { type: results[0].type[0]
+            , intv: results[0].val
+            , refNote: results[0].refNote
+            , prefEDO: results[0].prefEDO };
 
   // If `intv` is an EDO step (i.e. a fractional power of two),
   if (Object.entries(ret.intv).length == (ret.intv['2'] != null)) {

@@ -5,6 +5,8 @@ const {pyInterval, isPerfectDeg, baseNoteIntvToA} = require('../pythagorean.js')
 const {fjsFactor} = require('../fjs.js');
 const {edoPy, edoHasNeutrals, edoHasSemiNeutrals} = require('../edo.js');
 
+const defaultRefNote = { intvToA4: Interval(1), hertz: Interval(440) };
+
 function perfPyInterval(d,o,reject) {
   return isPerfectDeg(d) ? pyInterval(d,o) : reject;
 }
@@ -33,6 +35,7 @@ function baseNoteIntvToReference(x,referenceNoteIntvToA4) {
   return baseNoteIntvToA(x).div(referenceNoteIntvToA4);
 }
 
+module['exports'].defaultRefNote = defaultRefNote;
 module['exports'].perfPyInterval = perfPyInterval;
 module['exports'].nonPerfPyInterval = nonPerfPyInterval;
 module['exports'].augOrDimPyInterval = augOrDimPyInterval;
