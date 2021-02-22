@@ -4,7 +4,7 @@
 #
 # This file generates a parser by running:
 # ```
-# nearleyc src/parser/grammar.ne -o src/parser/grammar.js
+# nearleyc lib/parser/grammar.ne -o lib/parser/grammar.js
 # ```
 #
 # You can then get nicely formatted output by passing your string to the `parse`
