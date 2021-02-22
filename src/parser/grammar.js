@@ -55,7 +55,7 @@ var grammar = {
     {"name": "intvMExpr1", "symbols": ["intvMExpr2"], "postprocess": id},
     {"name": "intvMExpr2", "symbols": ["intvMExpr3", "_", {"literal":"^"}, "_", "frcExpr3"], "postprocess": d => ["pow", d[0], d[4]]},
     {"name": "intvMExpr2$string$1", "symbols": [{"literal":"s"}, {"literal":"q"}, {"literal":"r"}, {"literal":"t"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "intvMExpr2", "symbols": ["intvMExpr2$string$1", "_", {"literal":"("}, "_", "intvMExpr1", "_", {"literal":")"}], "postprocess": d => ["sqrt", d[0]]},
+    {"name": "intvMExpr2", "symbols": ["intvMExpr2$string$1", "_", {"literal":"("}, "_", "intvMExpr1", "_", {"literal":")"}], "postprocess": d => ["sqrt", d[4]]},
     {"name": "intvMExpr2$string$2", "symbols": [{"literal":"r"}, {"literal":"e"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "intvMExpr2", "symbols": ["intvMExpr2$string$2", "_", {"literal":"("}, "_", "intvMExpr1", "_", {"literal":")"}], "postprocess": d => ["red", d[4]]},
     {"name": "intvMExpr2$string$3", "symbols": [{"literal":"r"}, {"literal":"e"}, {"literal":"b"}], "postprocess": function joiner(d) {return d.join('');}},

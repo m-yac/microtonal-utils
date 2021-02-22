@@ -93,7 +93,7 @@ intvMExpr1 ->
   | intvMExpr2                                         {% id %}
 intvMExpr2 ->
     intvMExpr3 _ "^" _ frcExpr3                        {% d => ["pow", d[0], d[4]] %}
-  | "sqrt" _ "(" _ intvMExpr1 _ ")"                    {% d => ["sqrt", d[0]] %}
+  | "sqrt" _ "(" _ intvMExpr1 _ ")"                    {% d => ["sqrt", d[4]] %}
   | "red" _ "(" _ intvMExpr1 _ ")"                     {% d => ["red", d[4]] %}
   | "reb" _ "(" _ intvMExpr1 _ ")"                     {% d => ["reb", d[4]] %}
   | "red" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
