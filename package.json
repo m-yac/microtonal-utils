@@ -4,7 +4,9 @@
   "description": "a library for calculating with microtonal intervals and notes",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify src/index.js -s microtonal_utils --debug | exorcist microtonal-utils.js.map > microtonal-utils.js",
+    "build:min": "browserify src/index.js -s microtonal_utils -g uglifyify --debug | exorcist microtonal-utils.min.js.map > microtonal-utils.min.js"
   },
   "keywords": [],
   "author": "Matthew Yacavone",
@@ -15,5 +17,8 @@
     "nearley": "^2.20.1",
     "number-to-words": "^1.2.4",
     "primes-and-factors": "^1.3.3"
+  },
+  "devDependencies": {
+    "uglifyify": "^5.0.2"
   }
 }
