@@ -913,7 +913,8 @@ module['exports'].fjsSymb = fjsSymb;
 module['exports'].fjsNote = fjsNote;
 
 },{"./interval.js":6,"./pythagorean.js":11,"fraction.js":12,"primes-and-factors":16}],5:[function(require,module,exports){
-// export everything
+// export everything from `lib/` as well as `Fraction` from fraction.js
+module['exports']['Fraction'] = require('fraction.js');
 module['exports']['Interval'] = require('./interval.js');
 Object.assign(module['exports'], require('./pythagorean.js'));
 Object.assign(module['exports'], require('./fjs.js'));
@@ -922,7 +923,7 @@ Object.assign(module['exports'], require('./approx.js'));
 Object.assign(module['exports'], require('./english.js'));
 Object.assign(module['exports'], require('./parser.js'));
 
-},{"./approx.js":1,"./edo.js":2,"./english.js":3,"./fjs.js":4,"./interval.js":6,"./parser.js":7,"./pythagorean.js":11}],6:[function(require,module,exports){
+},{"./approx.js":1,"./edo.js":2,"./english.js":3,"./fjs.js":4,"./interval.js":6,"./parser.js":7,"./pythagorean.js":11,"fraction.js":12}],6:[function(require,module,exports){
 /**
  * The interval datatype, based on `Fraction` from `fraction.js` on npm
  * @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
