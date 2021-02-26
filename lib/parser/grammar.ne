@@ -134,8 +134,8 @@ intvAExpr1 ->
   | noteAExpr1 _ "-" _ noteAExpr2                      {% d => ["div", d[0], d[4]] %}
   | intvAExpr2                                         {% id %}
 intvAExpr2 ->
-    intvAExpr3 _ "x" _ frcExpr3                        {% d => ["pow", d[0], d[4]] %}
-  | frcExpr3 _ "x" _ intvAExpr3                        {% d => ["pow", d[4], d[0]] %}
+    intvAExpr3 _ "x" _ frcExpr2                        {% d => ["pow", d[0], d[4]] %}
+  | frcExpr2 _ "x" _ intvAExpr3                        {% d => ["pow", d[4], d[0]] %}
   | intvAExpr3                                         {% id %}
 intvAExpr3 ->
     "cents" _ "(" _ intvMExpr1 _ ")"                   {% d => d[4] %}
