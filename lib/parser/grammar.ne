@@ -28,7 +28,7 @@
 
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
-const {pyInterval, pyRedDeg, baseNoteIntvToA} = require('../pythagorean.js');
+const {pyInterval, pyNote, pyRedDeg, baseNoteIntvToA} = require('../pythagorean.js');
 const {fjsFactor, fjsParams, nfjsParams} = require('../fjs.js');
 const {edoPy} = require('../edo.js');
 const helpers = require('./grammar-helpers.js');
@@ -44,25 +44,24 @@ const {evalExpr} = require('./eval.js');
 
 top1 ->
     _ top2 _
-    {% function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
-                               d1.refNote = helpers.defaultRefNote;
-                               return d1; } %}
+    {% function (d) { let d1 = Object.assign({},d[1]); // copy this!
+                      d1.refNote = helpers.defaultRefNote;
+                      return d1; } %}
   | _ top2 __ "where" __ pyNote _ "=" _ decimal hertz:? _
-    {% function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
-                               d1.refNote = {};
-                               d1.refNote.intvToA4 = evalExpr(d[5], helpers.defaultRefNote).val;
-                               d1.refNote.hertz    = Interval(d[9]);
-                               return d1; } %}
-  | _ top2 __ "where" __ pyNote _ "=" _ pyNote _ "\\" _ posInt _
-    {% function (d,_,reject) { let d1 = Object.assign({},d[1]); // copy this!
-                               const d5 = evalExpr(d[5], helpers.defaultRefNote).val;
-                               const d9 = evalExpr(d[9], helpers.defaultRefNote).val;
-                               const d13 = parseInt(d[13]);
-                               if (!d5 || !d5.equals(d9)) { return reject; }
-                               d1.refNote = {};
-                               d1.refNote.intvToA4 = d9;
-                               d1.refNote.hertz    = Interval(2).pow(edoPy(d13,d9),d13).mul(440);
-                               return d1; } %}
+    {% function (d) { let d1 = Object.assign({},d[1]); // copy this!
+                      d1.refNote = {};
+                      d1.refNote.intvToA4 = evalExpr(d[5], helpers.defaultRefNote).val;
+                      d1.refNote.hertz    = Interval(d[9]);
+                      return d1; } %}
+  | _ top2 __ "where" __ pyNote _ "=" _ eqPyNote _ "\\" _ posInt _
+    {% function (d) { let d1 = Object.assign({},d[1]); // copy this!
+                      const d5 = evalExpr(d[5], helpers.defaultRefNote).val;
+                      const d9 = d[9](d5);
+                      const d13 = parseInt(d[13]);
+                      d1.refNote = {};
+                      d1.refNote.intvToA4 = d9;
+                      d1.refNote.hertz    = Interval(2).pow(edoPy(d13,d9),d13).mul(440);
+                      return d1; } %}
 
 top2 ->
     intvSExpr1  {% d => ({type: ["interval", "symbol"], expr: d[0]}) %}
@@ -71,6 +70,14 @@ top2 ->
   | noteSExpr1  {% d => ({type: ["note", "symbol"], expr: d[0]}) %}
   | noteMExpr1  {% d => ({type: ["note", "multiplicative"], expr: d[0]}) %}
   | noteAExpr1  {% d => ({type: ["note", "additive"], expr: d[0]}) %}
+
+eqPyNote -> pyNote {% (d,loc,_) => function(ref) {
+    let d0 = evalExpr(d[0], helpers.defaultRefNote).val;
+    if (!ref || !ref.equals(d0)) {
+      throw new helpers.ParseError("expected " + pyNote(ref), loc);
+    }
+    return d0;
+  } %}
 
 
 # ------------------------------------------------------
@@ -287,10 +294,10 @@ noteSymbol ->
 
 pyIntv ->
   # perfect intervals
-    "P"  pyDeg {% (d,_,reject) => helpers.perfPyInterval(d[1],0,reject) %}
+    "P"  pyDeg {% (d,loc,_) => helpers.perfPyInterval(d[1],0,loc) %}
   # major and minor intervals
-  | "M"  pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(1,2),reject) %}
-  | "m"  pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(-1,2),reject) %}
+  | "M"  pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(1,2),"M",loc) %}
+  | "m"  pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(-1,2),"m",loc) %}
   # augmented and diminished intervals
   | "A":+ pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],d[0].length,1,reject) %}
   | "d":+ pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],-d[0].length,1,reject) %}
@@ -299,7 +306,7 @@ pyIntv ->
 
 npyIntv ->
   # neutral intervals
-    "n"i pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],0,reject) %}
+    "n"i pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],0,"n",loc) %}
   # semi-augmented and semi-diminished intervals
   | "sA" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],1,2,reject) %}
   | "sd" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],-1,2,reject) %}
@@ -308,8 +315,8 @@ npyIntv ->
 
 snpyIntv ->
   # semi-neutral intervals
-    "sM" pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(1,4),reject) %}
-  | "sm" pyDeg {% (d,_,reject) => helpers.nonPerfPyInterval(d[1],Fraction(-1,4),reject) %}
+    "sM" pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(1,4),"sM",loc) %}
+  | "sm" pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(-1,4),"sm",loc) %}
   | posInt "/4-A" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject) %}
   | posInt "/4-d" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject) %}
 
@@ -382,7 +389,7 @@ fjsAccs ->
   | fjsAccs "," fjsAcc  {% d => params => d[0](params).mul(fjsFactor(d[2], params)) %}
 
 fjsAcc ->
-    posInt                        {% (d,_,reject) => helpers.ensureNo2Or3(Interval(d[0]),reject) %}
+    posInt                        {% (d,loc,_) => helpers.ensureNo2Or3(Interval(d[0]),loc) %}
   | "sqrt(" fjsAcc ")"            {% d => d[1].sqrt() %}
   | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
   | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
