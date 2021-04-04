@@ -31,8 +31,9 @@ const Interval = require('../interval.js');
 const {pyInterval, pyNote, pyRedDeg, baseNoteIntvToA} = require('../pythagorean.js');
 const {fjsFactor, fjsParams, nfjsParams} = require('../fjs.js');
 const {edoPy} = require('../edo.js');
-const helpers = require('./grammar-helpers.js');
-const {evalExpr} = require('./eval.js');
+const {ParseError, evalExpr} = require('./eval.js');
+
+const defaultRefNote = { intvToA4: Interval(1), hertz: Interval(440) };
 
 %}
 
@@ -45,17 +46,17 @@ const {evalExpr} = require('./eval.js');
 top1 ->
     _ top2 _
     {% function (d) { let d1 = Object.assign({},d[1]); // copy this!
-                      d1.refNote = helpers.defaultRefNote;
+                      d1.refNote = defaultRefNote;
                       return d1; } %}
   | _ top2 __ "where" __ pyNote _ "=" _ decimal hertz:? _
     {% function (d) { let d1 = Object.assign({},d[1]); // copy this!
                       d1.refNote = {};
-                      d1.refNote.intvToA4 = evalExpr(d[5], helpers.defaultRefNote).val;
+                      d1.refNote.intvToA4 = evalExpr(d[5], defaultRefNote).val;
                       d1.refNote.hertz    = Interval(d[9]);
                       return d1; } %}
   | _ top2 __ "where" __ pyNote _ "=" _ eqPyNote _ "\\" _ posInt _
     {% function (d) { let d1 = Object.assign({},d[1]); // copy this!
-                      const d5 = evalExpr(d[5], helpers.defaultRefNote).val;
+                      const d5 = evalExpr(d[5], defaultRefNote).val;
                       const d9 = d[9](d5);
                       const d13 = parseInt(d[13]);
                       d1.refNote = {};
@@ -72,9 +73,9 @@ top2 ->
   | noteAExpr1  {% d => ({type: ["note", "additive"], expr: d[0]}) %}
 
 eqPyNote -> pyNote {% (d,loc,_) => function(ref) {
-    let d0 = evalExpr(d[0], helpers.defaultRefNote).val;
+    let d0 = evalExpr(d[0], defaultRefNote).val;
     if (!ref || !ref.equals(d0)) {
-      throw new helpers.ParseError("expected " + pyNote(ref), loc);
+      throw new ParseError("expected " + pyNote(ref), loc);
     }
     return d0;
   } %}
@@ -106,7 +107,7 @@ intvMExpr2 ->
   | "reb" _ "(" _ intvMExpr1 _ ")"                     {% d => ["reb", d[4]] %}
   | "red" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
   | "reb" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4], d[8]] %}
-  | "med" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["!med", d[4], d[8]] %}
+  | "med" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% (d,loc,_) => ["!med", d[4], d[8], loc] %}
   | "approx"  _ "(" _ intvMExpr1 _ "," _ posInt _ ")"  {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
   | intvSymbol                                         {% id %}
   | intvMExpr3                                         {% id %}
@@ -176,7 +177,7 @@ noteAExpr2 ->
 
 # ----------------------------------------------
 # Multiplicative EDO-step interval expressions
-# @returns {Array}
+# @returns {(integer|Array)}
 
 intvMEDOExpr1 ->
     intvMEDOExpr1 _ "*" _ intvMEDOExpr2  {% d => ["+", d[0], d[4]] %}
@@ -188,7 +189,7 @@ intvMEDOExpr2 ->
   | intvMEDOExpr3                        {% id %}
 intvMEDOExpr3 ->
     upsDnsIntv                           {% id %}
-  | "TT"                                 {% d => ["!edoTT"] %}
+  | "TT"                                 {% d => ["!edoTT", loc] %}
   | "(" _ intvMEDOExpr1 _ ")"            {% d => d[2] %}
 
 # ------------------------------------------
@@ -259,7 +260,7 @@ intvSExpr2 ->
 
 # ------------------------
 # Note symbol expresions
-# @returns {Interval}
+# @returns {(Interval|Array)}
 
 noteSExpr1 ->
     "approx"  _ "(" _ noteSExpr1 _ "," _ posInt _ ")"  {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
@@ -290,35 +291,35 @@ noteSymbol ->
 
 # ------------------------------
 # Pythagorean interval symbols
-# @returns {Interval}
+# @returns {(Interval|Array)}
 
 pyIntv ->
   # perfect intervals
-    "P"  pyDeg {% (d,loc,_) => helpers.perfPyInterval(d[1],0,loc) %}
+    "P"  pyDeg {% (d,loc,_) => ["!perfPyIntv", d[1], loc] %}
   # major and minor intervals
-  | "M"  pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(1,2),"M",loc) %}
-  | "m"  pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(-1,2),"m",loc) %}
+  | "M"  pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,2), "M", loc] %}
+  | "m"  pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,2), "m", loc] %}
   # augmented and diminished intervals
-  | "A":+ pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],d[0].length,1,reject) %}
-  | "d":+ pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],-d[0].length,1,reject) %}
-  | posInt "A" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],1,reject) %}
-  | posInt "d" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],1,reject) %}
+  | "A":+ pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], d[0].length, 1, loc] %}
+  | "d":+ pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -d[0].length, 1, loc] %}
+  | posInt "A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 1, loc] %}
+  | posInt "d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 1, loc] %}
 
 npyIntv ->
   # neutral intervals
-    "n"i pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],0,"n",loc) %}
+    "n"i pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], 0, "n", loc] %}
   # semi-augmented and semi-diminished intervals
-  | "sA" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],1,2,reject) %}
-  | "sd" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[1],-1,2,reject) %}
-  | posInt "/2-A" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],2,reject) %}
-  | posInt "/2-d" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],2,reject) %}
+  | "sA" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], 1, 2, loc] %}
+  | "sd" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -1, 2, loc] %}
+  | posInt "/2-A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 2, loc] %}
+  | posInt "/2-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 2, loc] %}
 
 snpyIntv ->
   # semi-neutral intervals
-    "sM" pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(1,4),"sM",loc) %}
-  | "sm" pyDeg {% (d,loc,_) => helpers.nonPerfPyInterval(d[1],Fraction(-1,4),"sm",loc) %}
-  | posInt "/4-A" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject) %}
-  | posInt "/4-d" pyDeg {% (d,_,reject) => helpers.augOrDimPyInterval(d[2],d[0],4,reject) %}
+    "sM" pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,4), "sM", loc] %}
+  | "sm" pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,4), "sm", loc] %}
+  | posInt "/4-A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 4, loc] %}
+  | posInt "/4-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 4, loc] %}
 
 pyDeg ->
     posInt      {% d => parseInt(d[0]) %}
@@ -385,11 +386,13 @@ nfjsNonNeutNote ->
   genFJSSymb[pyNote,nfjsNonNeutNote]  {% d => d[0](nfjsParams) %}
 
 fjsAccs ->
-    fjsAcc              {% d => params => fjsFactor(d[0], params) %}
-  | fjsAccs "," fjsAcc  {% d => params => d[0](params).mul(fjsFactor(d[2], params)) %}
+    fjsAccOk              {% d => params => ["!fjsFactor", d[0], params] %}
+  | fjsAccs "," fjsAccOk  {% d => params => ["mul", d[0](params), ["!fjsFactor", d[2], params]] %}
+
+fjsAccOk -> fjsAcc {% (d,loc,_) => ["!ensureNo2Or3", d[0], loc] %}
 
 fjsAcc ->
-    posInt                        {% (d,loc,_) => helpers.ensureNo2Or3(Interval(d[0]),loc) %}
+    posInt                        {% d => Interval(d[0]) %}
   | "sqrt(" fjsAcc ")"            {% d => d[1].sqrt() %}
   | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
   | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
@@ -399,24 +402,24 @@ fjsAcc ->
 # @returns {(Interval|Array)}
 
 upsDnsIntv ->
-    upsDns pyIntv    {% d => ["+", d[0], ["!edoPy", d[1]]] %}
-  | upsDns npyIntv   {% d => ["+", d[0], ["!edoPy", d[1]]] %}
-  | upsDns snpyIntv  {% d => ["+", d[0], ["!edoPy", d[1]]] %}
+    upsDns pyIntv    {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
+  | upsDns npyIntv   {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
+  | upsDns snpyIntv  {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
   # alternate notation for up/down perfect intervals
   | upsDns posInt
-    {% (d,_,reject) => (pyRedDeg(d[1]) == 4 || pyRedDeg(d[1]) == 5) && d[0] != 0
-                       ? ["+", d[0], ["!edoPy", parseIng(d[1])]] : reject %}
+    {% (d,loc,reject) => (pyRedDeg(d[1]) == 4 || pyRedDeg(d[1]) == 5) && d[0] != 0
+                         ? ["+", d[0], ["!edoPy", parseInt(d[1]), loc]] : reject %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
   | upsDns "~" posInt
-    {% (d,_,reject) => pyRedDeg(d[2]) == 1 ? reject :
-                       pyRedDeg(d[2]) == 4 ? ["+", d[0], ["!edoPy", pyInterval(d[2],1,2)]] :
-                       pyRedDeg(d[2]) == 5 ? ["+", d[0], ["!edoPy", pyInterval(d[2],-1,2)]] :
-                                           ["+", d[0], ["!edoPy", pyInterval(d[2],0)]] %}
+    {% (d,loc,reject) => pyRedDeg(d[2]) == 1 ? reject :
+                         pyRedDeg(d[2]) == 4 ? ["+", d[0], ["!edoPy", pyInterval(d[2],1,2), loc]] :
+                         pyRedDeg(d[2]) == 5 ? ["+", d[0], ["!edoPy", pyInterval(d[2],-1,2), loc]] :
+                                               ["+", d[0], ["!edoPy", pyInterval(d[2],0), loc]] %}
 
 upsDnsNote ->
-  upsDns pyNote      {% d => ["+", d[0], ["!edoPy", d[1]]] %}
-| upsDns npyNote     {% d => ["+", d[0], ["!edoPy", d[1]]] %}
+  upsDns pyNote      {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
+| upsDns npyNote     {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
 
 upsDns ->
   null   {% d => 0 %}
