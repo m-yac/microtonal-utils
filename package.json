@@ -5,8 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "browserify lib/index.js -s microtonal_utils --debug | exorcist dist/microtonal-utils.js.map > dist/microtonal-utils.js",
-    "build:min": "browserify lib/index.js -s microtonal_utils -g uglifyify --debug | exorcist dist/microtonal-utils.min.js.map > dist/microtonal-utils.min.js",
+    "build": "mkdir -p dist && browserify lib/index.js -s microtonal_utils --debug | exorcist dist/microtonal-utils.js.map > dist/microtonal-utils.js",
+    "build:min": "mkdir -p dist && browserify lib/index.js -s microtonal_utils -g uglifyify --debug | exorcist dist/microtonal-utils.min.js.map > dist/microtonal-utils.min.js",
     "build:all": "npm run build && npm run build:min"
   },
   "keywords": [],
