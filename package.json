@@ -13,6 +13,7 @@
   "author": "Matthew Yacavone",
   "license": "ISC",
   "dependencies": {
+    "big-integer": "^1.6.48",
     "fraction.js": "^4.0.13",
     "mathutils": "0.0.1",
     "nearley": "^2.20.1",
