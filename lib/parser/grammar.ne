@@ -303,7 +303,7 @@ pyIntv ->
   | "A":+ pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], d[0].length, 1, loc] %}
   | "d":+ pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -d[0].length, 1, loc] %}
   | posInt "A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 1, loc] %}
-  | posInt "d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 1, loc] %}
+  | posInt "d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -d[0], 1, loc] %}
 
 npyIntv ->
   # neutral intervals
@@ -312,14 +312,14 @@ npyIntv ->
   | "sA" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], 1, 2, loc] %}
   | "sd" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -1, 2, loc] %}
   | posInt "/2-A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 2, loc] %}
-  | posInt "/2-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 2, loc] %}
+  | posInt "/2-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -d[0], 2, loc] %}
 
 snpyIntv ->
   # semi-neutral intervals
     "sM" pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,4), "sM", loc] %}
   | "sm" pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,4), "sm", loc] %}
   | posInt "/4-A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 4, loc] %}
-  | posInt "/4-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 4, loc] %}
+  | posInt "/4-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -d[0], 4, loc] %}
 
 pyDeg ->
     posInt      {% d => parseInt(d[0]) %}
