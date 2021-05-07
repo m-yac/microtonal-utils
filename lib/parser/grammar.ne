@@ -130,7 +130,7 @@ noteMExpr2 ->
     "approx"  _ "(" _ noteMExpr1 _ "," _ posInt _ ")" {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
   | noteSymbol                                        {% id %}
   | noteMEDOExpr2 _ "\\" _ posInt                     {% d => ["!inEDO", d[0], parseInt(d[4])] %}
-  | decimal hertz                                     {% d => ["div", Interval(d[0]), ["!refHertz"]] %}
+  | decExpr3 hertz                                    {% d => ["div", Interval(d[0]), ["!refHertz"]] %}
   | "(" _ noteMExpr1 _ ")"                            {% d => d[2] %}
 
 # -------------------------------
@@ -156,7 +156,7 @@ intvAExpr3 ->
   | intvSymbol                                         {% id %}
   | intvAExpr4                                         {% id %}
 intvAExpr4 ->
-    decimal "c"                                        {% d => ["!cents", d[0]] %}
+    decExpr3 "c"                                       {% d => ["!cents", d[0]] %}
   | intvAEDOExpr3 _ "\\" _ posInt                      {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ intvAExpr1 _ ")"                             {% d => d[2] %}
 
@@ -472,6 +472,22 @@ intExpr4 ->
 intExpr5 ->
     nonNegInt                  {% d => parseInt(d[0]) %}
   | "(" _ intExpr1 _ ")"       {% d => d[2] %}
+
+# ------------------------------------------------------
+# Decimal expressions
+# type: Fraction
+
+decExpr1 ->
+    decExpr1 _ "+" _ decExpr2  {% d => d[0].add(d[4]) %}
+  | decExpr1 _ "-" _ decExpr2  {% d => d[0].sub(d[4]) %}
+  | decExpr2                   {% id %}
+decExpr2 ->
+    decExpr2 _ "*" _ decExpr3  {% d => d[0].mul(d[4]) %}
+  | decExpr2 _ "/" _ decExpr3  {% d => d[0].div(d[4])%}
+  | decExpr3                   {% id %}
+decExpr3 ->
+    decimal                    {% d => Fraction(d[0]) %}
+  | "(" _ decExpr1 _ ")"       {% d => d[2] %}
 
 # -----------
 # Terminals
