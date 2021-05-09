@@ -35,3 +35,47 @@ This repository also contains:
 - `parser.js`: a parser for arbitrary expressions involving notes, intervals, and the note/interval symbols mentioned above - used in [`xen-calc`](https://github.com/m-yac/xen-calc)
 - `approx.js`: functions for getting best rational and best EDO approximations of an interval
 - `english.js`: an experiment with programmatically assigning English names to arbitrary intervals
+
+## Testing
+
+This library includes an in-progress test suite of property-based tests, located in `/test`. The term "property-based" means that each test consists of some property (e.g. `Interval(2).pow(fr).toCents() == fr.mul(1200)`) which is then checked using many (usually 100) randomly generated values (e.g. random values for `fr`, such as `Fraction(99/38)`). Since each run of the test suite checks these properties with a totally new set of random values, the fact that the test suite consistently passes should give high confidence that these properties do hold in general.
+
+To run the test suite, use the command `npm run test` or `npm run test:all`. The latter also includes tests of the parser, which are often fairly slow. The output of `npm run test` should look like:
+```
+$ npm run test
+
+  Interval constructors and conversions
+    ✓ Interval(n).factors() is the prime factorization of n
+    ✓ Interval(a/b).factors() is the prime factorization of a/b
+    ✓ Interval(fr).toFrac() == fr
+    ✓ Interval(monzo).toMonzo() == monzo
+    ✓ Interval(2).pow(fr).toCents() == fr.mul(1200)
+
+  Interval and Fraction operations
+    ✓ mul: Interval(fr1).mul(fr2) == fr1.mul(fr2)
+    ✓ div: Interval(fr1).div(fr2) == fr1.div(fr2)
+    ✓ recip: Interval(fr).recip() == fr.inverse()
+    ✓ pow: Interval(fr).pow(n) == fr.pow(n)
+    ✓ equals: Interval(fr1).equals(f2) iff fr1.equals(fr2)
+    ✓ compare: Interval(fr1).compare(f2) iff fr1.compare(fr2)
+    ✓ valueOf: Interval(fr).valueOf() ~= fr.valueOf()
+
+  Other Interval operations
+    ✓ pow/mul: i.pow(n) == i.mul(i).mul(i) ... .mul(i)
+    ✓ pow/div: i.pow(-n) == i.div(i).div(i) ... .div(i)
+    ✓ pow: i.pow(fr).pow(fr.inverse()) == i
+    ✓ root/toNthRoot: Interval(fr).root(n).toNthRoot() == {k: fr, n: n}
+    ✓ root/valueOf: Interval(fr).root(n).valueOf() ~= Math.pow(fr, 1/n)
+    ✓ factorOut: i1 == i2.pow(i1.factorOut(i2)[0]).mul(i1.factorOut(i2)[1])
+
+  Pythagorean intervals
+    ✓ pyDegree(pyInterval(d,o/4)) == d (if d != -1)
+    ✓ pyOffset(pyInterval(d,o/4)) == o/4 (if d != -1)
+    ✓ pyInterval(d,o/4).recip() == pyInterval(-d,o/4)
+    ✓ pyZDegree(pyi1.mul(pyi2)) == pyZDegree(pyi1) + pyZDegree(pyi2)
+    ✓ pyInterval(±d,o) == pyInterval(±d,0).mul(pyA1.pow(±o))
+
+
+  23 passing (210ms)
+
+```
