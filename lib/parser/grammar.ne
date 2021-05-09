@@ -31,7 +31,7 @@ const Interval = require('../interval.js');
 const {pyInterval, pyNote, pyRedDeg, baseNoteIntvToA} = require('../pythagorean.js');
 const {fjsFactor, fjsParams, nfjsParams} = require('../fjs.js');
 const {edoPy} = require('../edo.js');
-const {ParseError, evalExpr} = require('./eval.js');
+const {ParseError, OtherError, evalExpr} = require('./eval.js');
 
 const defaultRefNote = { intvToA4: Interval(1), hertz: Interval(440) };
 
@@ -440,7 +440,11 @@ frcExpr1 ->
   | frcExpr2                   {% id %}
 frcExpr2 ->
     frcExpr2 _ "*" _ frcExpr3  {% d => d[0].mul(d[4]) %}
-  | frcExpr2 _ "/" _ frcExpr3  {% d => d[0].div(d[4])%}
+  | frcExpr2 _ "/" _ locFrcExpr3
+    {% function(d) { try { return d[0].div(d[4][0]); }
+                     catch(err) {
+                       throw new OtherError("Division by zero", d[4][1])
+                     } } %}
   | frcExpr3                   {% id %}
 frcExpr3 ->
     "-" _ frcExpr4             {% d => d[2].neg() %}
@@ -451,6 +455,8 @@ frcExpr4 ->
 frcExpr5 ->
     nonNegInt                  {% d => Fraction(d[0]) %}
   | "(" _ frcExpr1 _ ")"       {% d => d[2] %}
+
+locFrcExpr3 -> frcExpr3 {% (d,loc,_) => [d[0],loc] %}
 
 # ---------------------------------------------------
 # Integer expressions (positive, negative, or zero)
@@ -483,11 +489,17 @@ decExpr1 ->
   | decExpr2                   {% id %}
 decExpr2 ->
     decExpr2 _ "*" _ decExpr3  {% d => d[0].mul(d[4]) %}
-  | decExpr2 _ "/" _ decExpr3  {% d => d[0].div(d[4])%}
+  | decExpr2 _ "/" _ locDecExpr3
+    {% function(d) { try { return d[0].div(d[4][0]); }
+                     catch(err) {
+                       throw new OtherError("Division by zero", d[4][1])
+                     } } %}
   | decExpr3                   {% id %}
 decExpr3 ->
     decimal                    {% d => Fraction(d[0]) %}
   | "(" _ decExpr1 _ ")"       {% d => d[2] %}
+
+locDecExpr3 -> decExpr3 {% (d,loc,_) => [d[0],loc] %}
 
 # -----------
 # Terminals
