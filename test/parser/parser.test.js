@@ -3,10 +3,14 @@ const _ = require('lodash');
 const jsc = require("jsverify");
 const Fraction = require('fraction.js');
 const Interval = require('../../lib/interval.js');
-const {pySymb} = require('../../lib/pythagorean.js');
+const {pyInterval, pyDegree, pyOffset, pySymb} = require('../../lib/pythagorean.js');
 const {parseCvt} = require('../../lib/parser.js');
 
-const {nzPosFrac, intvFromNthRoot, pyIntv} = require('../arbitrary.js')
+const {nzPosFrac, intvFromNthRoot, degree, offset} = require('../arbitrary.js')
+
+const nonSemiNeutPyIntv =
+  jsc.pair(degree, offset).smap(([d,o]) => pyInterval(d,o/2),
+                                pyi => [pyDegree(pyi), pyOffset(pyi)]);
 
 // How many tests to run in this file
 const TESTS_TO_RUN = 20;
@@ -33,7 +37,7 @@ describe("Intervals and the parser", function () {
 
 describe("Pythagorean intervals and the parser", function () {
 
-  jscSlowProperty1("pyi == parseCvt(pySymb(pyi)).ratio", pyIntv, function (pyi) {
+  jscSlowProperty1("pyi == parseCvt(pySymb(pyi)).intv", nonSemiNeutPyIntv, function (pyi) {
     return pyi.equals(parseCvt(pySymb(pyi)).intv);
   });
 

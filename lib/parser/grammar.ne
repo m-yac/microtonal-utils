@@ -2,7 +2,7 @@
 # Grammar for interval and note expressions
 # @copyright 2021 Matthew Yacavone (matthew [at] yacavone [dot] net)
 #
-# This file generates a parser by running:
+# This file generates a parser by running `npm run nearley`, or:
 # ```
 # nearleyc lib/parser/grammar.ne -o lib/parser/grammar.js
 # ```
@@ -10,17 +10,15 @@
 # You can then get nicely formatted output by passing your string to the `parse`
 #  or `parseCvt` functions from `parser.js`.
 #
-# You can also get the raw output of this parser by doing the following:
+# You can also get the raw output of the parser by passing your string and the
+#  rule to start from (e.g. "top1") to the `parseFromRule` function from
+#  `parser.js`. Then to evaluate these results (i.e. convert the raw output
+#  into the Interval it represents), use `evalExpr` from `parser/eval.js`. For
+#  example, if you started from "top1":
 # ```
-# const ne = resquire('nearley');
-# const grammar = require('./parser/grammar.js');
-# parser.feed(str);
-# const result = parser.results[0];
-# ```
-# Then to evaluate these results (i.e. convert the raw output into the Interval
-#  it represents), do the following:
-# ```
+# const {parseFromRule} = require('./parser.js');
 # const {evalExpr} = require('./parser/eval.js');
+# const result = parseFromRule(str, "top1")[0];
 # const resultIntv = evalExpr(result[0].expr, result[0].refNote).val;
 # ```
 
@@ -29,11 +27,9 @@
 const Fraction = require('fraction.js');
 const Interval = require('../interval.js');
 const {pyInterval, pyNote, pyRedDeg, baseNoteIntvToA} = require('../pythagorean.js');
-const {fjsFactor, fjsParams, nfjsParams} = require('../fjs.js');
+const {fjsFactor, fjsSpec, nfjsSpec} = require('../fjs.js');
 const {edoPy} = require('../edo.js');
-const {ParseError, OtherError, evalExpr} = require('./eval.js');
-
-const defaultRefNote = { intvToA4: Interval(1), hertz: Interval(440) };
+const {ParseError, OtherError, defaultRefNote, evalExpr} = require('./eval.js');
 
 %}
 
@@ -277,21 +273,23 @@ noteSExpr1 ->
 # @returns {(Interval|Array)}
 
 intvSymbol ->
-    fjsIntv                        {% id %}
-  | nfjsNeutIntv                   {% id %}
+    anyPyIntv                      {% id %}
+  | strictFJSLikeIntv              {% id %}
+  | "FJS" _ "(" _ fjsIntv _ ")"    {% d => d[4] %}
   | "NFJS" _ "(" _ nfjsIntv _ ")"  {% d => d[4] %}
-  | snpyIntv                       {% id %}
   | "TT"                           {% _ => Interval(2).sqrt() %}
 
 noteSymbol ->
-    fjsNote                        {% id %}
-  | nfjsNeutNote                   {% id %}
+    anyPyNote                      {% id %}
+  | strictFJSLikeNote              {% id %}
+  | "FJS" _ "(" _ fjsNote _ ")"    {% d => d[4] %}
   | "NFJS" _ "(" _ nfjsNote _ ")"  {% d => d[4] %}
-  | npyNote                        {% id %}
 
 # ------------------------------
 # Pythagorean interval symbols
 # @returns {(Interval|Array)}
+
+anyPyIntv -> pyIntv {% id %} | npyIntv {% id %} | snpyIntv {% id %}
 
 pyIntv ->
   # perfect intervals
@@ -336,6 +334,8 @@ genPyNote[NOTE,ACCS] ->
          return ["mul", ["div", baseNoteIntvToA(d[0][0]), ["!refIntvToA4"]]
                       , d[1][0].mul(Interval(2).pow(d2 - 4))]; } %}
 
+anyPyNote -> pyNote {% id %} | npyNote {% id %}
+
 pyNote ->
     "A"                             {% _ => ["recip", ["!refIntvToA4"]] %}
   | genPyNote[[B-G], pyNoteNoAccs]  {% id %}
@@ -360,42 +360,98 @@ npyNoteAccs ->
     {% d => pyInterval(-1, 2*d[0].length + d[1].length + 0.5*d[2].length) %}
 
 # -----------------------------------------------
-# FJS and Neutral FJS interval and note symbols
+# FJS-like interval and note symbols
 # @returns {(Interval|Array)}
 
-genFJSSymb[BASE,REC] ->
-    $BASE             {% d => _ => d[0][0] %}
-  | $REC "^" fjsAccs  {% d => params => ["mul", d[0][0], d[2](params)] %}
-  | $REC "_" fjsAccs  {% d => params => ["div", d[0][0], d[2](params)] %}
+fjsAccs[REC] ->
+    $REC "^" fjsAccList  {% d => spec => ["mul", d[0][0](spec), d[2](spec)] %}
+  | $REC "_" fjsAccList  {% d => spec => ["div", d[0][0](spec), d[2](spec)] %}
 
-fjsIntv -> genFJSSymb[pyIntv,fjsIntv]  {% d => d[0](fjsParams) %}
-fjsNote -> genFJSSymb[pyNote,fjsNote]  {% d => d[0](fjsParams) %}
+# FJS interval and note symbols
+fjsIntv -> fjsNonNeutIntv  {% d => d[0](fjsSpec) %}
+fjsNote -> fjsNonNeutNote  {% d => d[0](fjsSpec) %}
 
-# be warned that these (specifically nfjsNonNeutIntv and nfjsNonNeutNote) will
-#  give different answers than the above on the same input!
-nfjsIntv -> nfjsNeutIntv {% id %} | nfjsNonNeutIntv {% id %}
-nfjsNote -> nfjsNeutNote {% id %} | nfjsNonNeutNote {% id %}
+fjsNonNeutIntv ->
+    pyIntv                   {% d => _ => d[0] %}
+  | fjsAccs[fjsNonNeutIntv]  {% id %}
+fjsNonNeutNote ->
+    pyNote                   {% d => _ => d[0] %}
+  | fjsAccs[fjsNonNeutNote]  {% id %}
+
+# Neutral FJS interval and note symbols
+# (be warned that these, specifically nfjsNonNeutIntv and nfjsNonNeutNote, will
+#  give different answers than the above on the same input!)
+nfjsIntv ->
+    nfjsNeutIntv     {% d => d[0](nfjsSpec) %}
+  | nfjsNonNeutIntv  {% d => d[0](nfjsSpec) %}
+nfjsNote ->
+    nfjsNeutNote     {% d => d[0](nfjsSpec) %}
+  | nfjsNonNeutNote  {% d => d[0](nfjsSpec) %}
 
 nfjsNeutIntv ->
-  genFJSSymb[npyIntv,nfjsNeutIntv]    {% d => d[0](nfjsParams) %}
+    npyIntv                   {% d => _ => d[0] %}
+  | fjsAccs[nfjsNeutIntv]     {% id %}
 nfjsNonNeutIntv ->
-  genFJSSymb[pyIntv,nfjsNonNeutIntv]  {% d => d[0](nfjsParams) %}
+    pyIntv                    {% d => _ => d[0] %}
+  | fjsAccs[nfjsNonNeutIntv]  {% id %}
 nfjsNeutNote ->
-  genFJSSymb[npyNote,nfjsNeutNote]    {% d => d[0](nfjsParams) %}
+    npyNote                   {% d => _ => d[0] %}
+  | fjsAccs[nfjsNeutNote]     {% id %}
 nfjsNonNeutNote ->
-  genFJSSymb[pyNote,nfjsNonNeutNote]  {% d => d[0](nfjsParams) %}
+    pyNote                    {% d => _ => d[0] %}
+  | fjsAccs[nfjsNonNeutNote]  {% id %}
 
-fjsAccs ->
-    fjsAccOk              {% d => params => ["!fjsFactor", d[0], params] %}
-  | fjsAccs "," fjsAccOk  {% d => params => ["mul", d[0](params), ["!fjsFactor", d[2], params]] %}
+# General FJS-like interval and note symbols
+# - these use whatever FJS-like specs are passed to `eval`, which may be or may
+#   not be the same as the above)
+# - these may error in the case of un-accented neutral/semi-neutral Pythagorean
+#   intervals depending on whether the specs passed to `eval` support them
+fjsLikeIntv ->
+    fjsLikeSemiNeutIntv  {% (d,loc,_) => ["!fjsSNPy", d[0], loc] %}
+  | fjsLikeNeutIntv      {% (d,loc,_) => ["!fjsNPy", d[0], loc] %}
+  | fjsLikeNonNeutIntv   {% (d,loc,_) => ["!fjsPy", d[0], loc] %}
+fjsLikeNote ->
+    fjsLikeNeutNote      {% (d,loc,_) => ["!fjsNPy", d[0], loc] %}
+  | fjsLikeNonNeutNote   {% (d,loc,_) => ["!fjsPy", d[0], loc] %}
 
-fjsAccOk -> fjsAcc {% (d,loc,_) => ["!ensureNo2Or3", d[0], loc] %}
+# General FJS-like symbols with at least one accidental
+strictFJSLikeIntv ->
+    fjsAccs[fjsLikeSemiNeutIntv]  {% (d,loc,_) => ["!fjsSNPy", d[0], loc] %}
+  | fjsAccs[fjsLikeNeutIntv]      {% (d,loc,_) => ["!fjsNPy", d[0], loc] %}
+  | fjsAccs[fjsLikeNonNeutIntv]   {% (d,loc,_) => ["!fjsPy", d[0], loc] %}
+strictFJSLikeNote ->
+    fjsAccs[fjsLikeNeutNote]      {% (d,loc,_) => ["!fjsNPy", d[0], loc] %}
+  | fjsAccs[fjsLikeNonNeutNote]   {% (d,loc,_) => ["!fjsPy", d[0], loc] %}
 
-fjsAcc ->
-    posInt                        {% d => Interval(d[0]) %}
-  | "sqrt(" fjsAcc ")"            {% d => d[1].sqrt() %}
-  | "root" posInt "(" fjsAcc ")"  {% d => d[3].root(d[1]) %}
-  | "(" fjsAcc "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
+fjsLikeSemiNeutIntv ->
+    snpyIntv                      {% d => _ => d[0] %}
+  | fjsAccs[fjsLikeSemiNeutIntv]  {% id %}
+fjsLikeNeutIntv ->
+    npyIntv                       {% d => _ => d[0] %}
+  | fjsAccs[fjsLikeNeutIntv]      {% id %}
+fjsLikeNonNeutIntv ->
+    pyIntv                        {% d => _ => d[0] %}
+  | fjsAccs[fjsLikeNonNeutIntv]   {% id %}
+fjsLikeNeutNote ->
+    npyNote                       {% d => _ => d[0] %}
+  | fjsAccs[fjsLikeNeutNote]      {% id %}
+fjsLikeNonNeutNote ->
+    pyNote                        {% d => _ => d[0] %}
+  | fjsAccs[fjsLikeNonNeutNote]   {% id %}
+
+# FJS accidentals
+
+fjsAccList ->
+    fjsAcc                 {% d => spec => ["!fjsFactor", d[0], spec] %}
+  | fjsAccList "," fjsAcc  {% d => spec => ["mul", d[0](spec), ["!fjsFactor", d[2], spec]] %}
+
+fjsAcc -> fjsAccExpr {% (d,loc,_) => ["!ensureNo2Or3", d[0], loc] %}
+
+fjsAccExpr ->
+    posInt                            {% d => Interval(d[0]) %}
+  | "sqrt(" fjsAccExpr ")"            {% d => d[1].sqrt() %}
+  | "root" posInt "(" fjsAccExpr ")"  {% d => d[3].root(d[1]) %}
+  | "(" fjsAccExpr "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
 
 # --------------------------------------------------
 # Ups-and-downs notation interval and note symbols

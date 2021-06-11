@@ -4,6 +4,7 @@
   "description": "a library for calculating with microtonal intervals and notes",
   "main": "lib/index.js",
   "scripts": {
+    "nearley": "npx nearleyc lib/parser/grammar.ne -o lib/parser/grammar.js",
     "test": "npx mocha test/*.test.js",
     "test:parser": "npx mocha test/parser/*.test.js",
     "test:all": "npm run test && npm run test:parser",

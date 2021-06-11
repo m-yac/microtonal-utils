@@ -5,7 +5,6 @@ const pf = require('primes-and-factors');
 const Fraction = require('fraction.js');
 const BigFraction = require('fraction.js/bigfraction.js');
 const Interval = require('../lib/interval.js');
-const {parseCvt} = require('../lib/parser.js');
 
 const {nzPosInt, frac, nzPosFrac, monzo, intv, intvFromNthRoot} = require('./arbitrary.js')
 
