@@ -6,7 +6,8 @@ const Fraction = require('fraction.js');
 const BigFraction = require('fraction.js/bigfraction.js');
 const Interval = require('../lib/interval.js');
 
-const {nzPosInt, frac, nzPosFrac, monzo, intv, intvFromNthRoot} = require('./arbitrary.js')
+const {posInt, nzPosInt, frac, nzPosFrac,
+       monzo, intv, intvFromFrac, intvFromNthRoot} = require('./arbitrary.js')
 
 function removeTrailingZeros(arr) {
   while (arr[arr.length - 1] == 0) {
@@ -129,6 +130,29 @@ describe("Other Interval operations", function() {
   jsc.property("factorOut: i1 == i2.pow(i1.factorOut(i2)[0]).mul(i1.factorOut(i2)[1])", intv, intv, function(i1,i2) {
     const [n, j] = i1.factorOut(i2);
     return i1.equals(i2.pow(n).mul(j));
+  });
+
+  jsc.property("isPrimeLimit: i.inPrimeLimit(k) for all k >= i.primeLimit()", intv, posInt, function(i,k) {
+    return i.inPrimeLimit(i.primeLimit() + k);
+  });
+
+  jsc.property("isPrimeLimit: !i.inPrimeLimit(k) for all k < i.primeLimit()", intv, nzPosInt, function(i,k) {
+    return !i.inPrimeLimit(i.primeLimit() - k);
+  });
+
+  jsc.property("isOddLimit: Interval(fr).inOddLimit(k) for all k >= Interval(fr).oddLimit()", intvFromFrac, posInt, function(i,k) {
+    return i.inOddLimit(i.oddLimit() + k);
+  });
+
+  jsc.property("isOddLimit: !Interval(fr).inOddLimit(k) for k < Interval(fr).oddLimit()", intvFromFrac, nzPosInt, function(i,k) {
+    return !i.inOddLimit(i.oddLimit() - k);
+  });
+
+  jsc.property("oddLimit: Interval(odd,even).oddLimit() == Interval(even,odd).oddLimit() == odd", posInt, nzPosInt, function(a,b) {
+    // `o,e` are a relatively prime pair where `o` is odd and `e` is even
+    const r = Fraction(2*a+1,2*b);
+    const [o,e] = [r.n,r.d];
+    return Interval(o,e).oddLimit() == o && Interval(e,o).oddLimit() == o;
   });
 
 });
