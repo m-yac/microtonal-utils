@@ -277,6 +277,7 @@ intvSymbol ->
   | strictFJSLikeIntv              {% id %}
   | "FJS" _ "(" _ fjsIntv _ ")"    {% d => d[4] %}
   | "NFJS" _ "(" _ nfjsIntv _ ")"  {% d => d[4] %}
+  | colorIntv                      {% id %}
   | "TT"                           {% _ => Interval(2).sqrt() %}
 
 noteSymbol ->
@@ -284,6 +285,7 @@ noteSymbol ->
   | strictFJSLikeNote              {% id %}
   | "FJS" _ "(" _ fjsNote _ ")"    {% d => d[4] %}
   | "NFJS" _ "(" _ nfjsNote _ ")"  {% d => d[4] %}
+  | colorNote                      {% id %}
 
 # ------------------------------
 # Pythagorean interval symbols
@@ -474,13 +476,132 @@ upsDnsIntv ->
                                                ["+", d[0], ["!edoPy", pyInterval(d[2],0), loc]] %}
 
 upsDnsNote ->
-  upsDns pyNote      {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
-| upsDns npyNote     {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
+    upsDns pyNote      {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
+  | upsDns npyNote     {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
 
 upsDns ->
-  null   {% d => 0 %}
-| "^":+  {% d => d[0].length %}
-| "v":+  {% d => - d[0].length %}
+    null   {% d => 0 %}
+  | "^":+  {% d => d[0].length %}
+  | "v":+  {% d => -d[0].length %}
+
+# --------------------------------------------------
+# Color notation interval and note symbols
+# @returns {(Interval|Array)}
+
+colorIntv -> aclrIntv {% id %} | clrIntv {% id %}
+colorNote -> aclrNote {% id %} | clrNote {% id %}
+
+# abbreviated color notation intervals and notes
+aclrIntv ->
+    "c":* aclrM aclrP clrDeg
+    {% (d,loc) => ["!clrIntv", d[0].length, d[1], d[2], d[3], loc] %}
+aclrNote ->
+    aclrP pyNote
+    {% (d,loc) => ["!clrNote", d[0], d[1], loc] %}
+
+# abbreviated color notation magnitudes
+aclrM ->
+    null   {% d => 0 %}
+  | "L":+  {% d => d[0].length %}
+  | "s":+  {% d => -d[0].length %}
+
+# abbreviated color prefixes
+aclrP ->
+    "w"       {% d => [] %}
+  | aclrPP:+  {% d => d[0] %}
+
+# abbreviated color prime prefixes
+aclrPP ->
+    "y"           {% d => Interval(5).pow(d[0].length) %}
+  | "g"           {% d => Interval(5).pow(-d[0].length) %}
+  | "z"           {% d => Interval(7).pow(d[0].length) %}
+  | "r"           {% d => Interval(7).pow(-d[0].length) %}
+  | posInt "o":+  {% (d,loc,_) => ["!aclrPP", d[0], d[1].length, loc] %}
+  | posInt "u":+  {% (d,loc,_) => ["!aclrPP", d[0], -d[1].length, loc] %}
+
+# color notation intervals and notes
+clrIntv ->
+    clrCos clrM clrP clrDeg
+    {% (d,loc) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
+clrNote ->
+    clrP pyNote
+    {% (d,loc) => ["!clrNote", d[0], d[1], loc] %}
+
+# color notation "co"s
+clrCos ->
+    null             {% d => 0 %}
+  | "co"             {% d => 1 %}
+  | "co" "co":+ "-"  {% d => 1 + d[1].length %}
+  | clrMPs "co-"     {% d => d[0] %}
+
+# color notation magnitudes
+# N.B. this is more permissive than the hyphen grammar in:
+# https://en.xen.wiki/w/Color_notation/Temperament_Names
+clrM ->
+    null               {% d => 0 %}
+  | "la":+ "-":?       {% d => d[0].length %}
+  | clrMPs "la" "-":?  {% d => d[0] %}
+  | "sa":+ "-":?       {% d => -d[0].length %}
+  | clrMPs "sa" "-":?  {% d => ["-", 0, d[0]] %}
+
+# color prefixes
+clrP ->
+    "wa"    {% d => [] %}
+  | "ilo"   {% d => [Interval(11)] %}
+  | "iso"   {% d => [Interval(17)] %}
+  | "ino"   {% d => [Interval(19)] %}
+  | "inu"   {% d => [Interval(1,19)] %}
+  | clrPPs  {% d => d[0] %}
+
+# color prime prefixes
+clrPPs ->
+    clrMPs clrPP              {% d => [["pow", d[1], d[0]]] %}
+  |        clrPP              {% d => [d[0]] %}
+  | clrMPs clrPP "-a" clrPPs  {% d => [["pow", d[1], d[0]]].concat(d[3]) %}
+  |        clrPP      clrPPs  {% d => [d[0]].concat(d[1]) %}
+clrPP ->
+    "yo"                      {% d => Interval(5) %}
+  | "gu"                      {% d => Interval(1,5) %}
+  | "zo"                      {% d => Interval(7) %}
+  | "ru"                      {% d => Interval(1,7) %}
+  | "lo"                      {% d => Interval(11) %}
+  | "lu"                      {% d => Interval(1,11) %}
+  | clrGenPP "o"              {% d => d[0] %}
+  | clrGenPP "u"              {% d => ["recip", d[0]] %}
+
+# color notation degrees
+clrDeg ->
+    posInt      {% d => d[0] %}
+  | "-" posInt  {% d => -d[1] %}
+
+# color notation multi prefixes
+clrMPs ->
+    clrMP:+       {% (d,loc,_) => ["!clrMPs", d[0], loc] %}
+clrMP ->
+    "bi"          {% d => 2 %}
+  | "tri"         {% d => 3 %}
+  | "quad"        {% d => 4 %}
+  | "quin"        {% d => 5 %}
+  | "sep"         {% d => 7 %}
+  | "le"          {% d => 11 %}
+  | clrGenPP "e"  {% d => ["valueOf", d[0]] %}
+
+# color notation general prime prefixes (13 <= p <= 67)
+clrGenPP ->
+    clrTens clrOnes  {% (d,loc,_) => ["!clrGenPP", d[0] + d[1], loc] %}
+
+clrTens ->
+    null   {% d => 10 %}
+  | "twe"  {% d => 20 %}
+  | "thi"  {% d => 30 %}
+  | "fo"   {% d => 40 %}
+  | "fi"   {% d => 50 %}
+  | "si"   {% d => 60 %}
+clrOnes ->
+    "w"   {% d => 1 %}
+  | "th"  {% d => 3 %}
+  | "s"   {% d => 7 %}
+  | "n"   {% d => 9 %}
 
 # ------------------------------------------------------
 # Terminals

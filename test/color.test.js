@@ -19,14 +19,14 @@ describe("Color notation", function() {
   it("colorSymb(63,40,{verbosity:1}) == zogu 6th", function () {
     return colorSymb(63,40) == "zogu 6th";
   });
-  it("colorFromSymb(-1, [0,0,-2], 2) == 2048/2025", function () {
-    return colorFromSymb(-1, [0,0,-2], 2).equals(2048,2025);
+  it("colorFromSymb(0, -1, [0,0,-2], 2) == 2048/2025", function () {
+    return colorFromSymb(0, -1, [0,0,-2], 2).equals(2048,2025);
   });
 
   // Example that breaks the second formula of:
   // https://en.xen.wiki/w/Color_notation#Converting_a_Ratio_to%2Ffrom_a_Color_Name
-  it("colorFromSymb(0, 5, 1) == 80/81", function () {
-    return colorFromSymb(0, 5, 1).equals(80,81);
+  it("colorFromSymb(0, 0, 5, 1) == 80/81", function () {
+    return colorFromSymb(0, 0, 5, 1).equals(80,81);
   });
 
   // Two examples from:
