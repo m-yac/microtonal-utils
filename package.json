@@ -5,8 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "nearley": "npx nearleyc lib/parser/grammar.ne -o lib/parser/grammar.js",
-    "test": "npx mocha test/*.test.js",
-    "test:parser": "npx mocha test/parser/*.test.js",
+    "test": "npx mocha --require mocha-suppress-logs test/*.test.js",
+    "test:parser": "npx mocha --require mocha-suppress-logs test/parser/*.test.js",
     "test:all": "npm run test && npm run test:parser",
     "build": "mkdir -p dist && npx browserify lib/index.js -s microtonal_utils --debug | npx exorcist dist/microtonal-utils.js.map > dist/microtonal-utils.js",
     "build:min": "mkdir -p dist && npx browserify lib/index.js -s microtonal_utils | npx uglifyjs > dist/microtonal-utils.min.js",
@@ -29,6 +29,7 @@
     "jsverify": "^0.8.4",
     "lodash": "^4.17.21",
     "mocha": "^8.3.2",
+    "mocha-suppress-logs": "^0.3.1",
     "uglify-js": "^3.13.5"
   }
 }

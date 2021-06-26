@@ -7,7 +7,8 @@ const BigFraction = require('fraction.js/bigfraction.js');
 const Interval = require('../lib/interval.js');
 const {pyInterval, pyZDegree, pyDegree, pyOffset, pyA1} = require('../lib/pythagorean.js');
 
-const {degree, offset, pyIntv} = require('./arbitrary.js')
+const {degree, offset, pyIntv} = require('./arbitrary.js');
+require('./interval.test.js'); // only run these tests after interval.test.js
 
 describe("Pythagorean intervals", function() {
 
