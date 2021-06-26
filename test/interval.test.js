@@ -37,16 +37,16 @@ describe("Interval constructors and conversions", function() {
 
   jsc.property("Interval(n).factors() is the prime factorization of n", nzPosInt, function(n) {
     const fact = pf.getPrimeExponentObject(n);
-    const fracFact = _.mapValues(fact, k => Fraction(k));
-    return _.isEqual(Interval(n).factors(), Object.entries(fracFact));
+    const fracFact = Object.entries(fact).map(([p,e]) => [parseInt(p), Fraction(e)]);
+    return _.isEqual(Interval(n).factors(), fracFact);
   });
 
   jsc.property("Interval(a/b).factors() is the prime factorization of a/b", nzPosFrac, function(fr) {
     const fact = _.mergeWith(pf.getPrimeExponentObject(fr.n),
                              pf.getPrimeExponentObject(fr.d),
                              (nk, dk) => (nk || 0) - (dk || 0));
-    const fracFact = _.mapValues(fact, k => Fraction(k));
-    return _.isEqual(Interval(fr).factors(), Object.entries(fracFact));
+    const fracFact = Object.entries(fact).map(([p,e]) => [parseInt(p), Fraction(e)]);
+    return _.isEqual(Interval(fr).factors(), fracFact);
   });
 
   jsc.property("Interval(fr).toFrac() == fr", nzPosFrac, function(fr) {
