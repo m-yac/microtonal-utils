@@ -494,10 +494,10 @@ colorNote -> aclrNote {% id %} | clrNote {% id %}
 # abbreviated color notation intervals and notes
 aclrIntv ->
     "c":* aclrM aclrP clrDeg
-    {% (d,loc) => ["!clrIntv", d[0].length, d[1], d[2], d[3], loc] %}
+    {% (d,loc,_) => ["!clrIntv", d[0].length, d[1], d[2], d[3], loc] %}
 aclrNote ->
     aclrP pyNote
-    {% (d,loc) => ["!clrNote", d[0], d[1], loc] %}
+    {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
 
 # abbreviated color notation magnitudes
 aclrM ->
@@ -512,12 +512,12 @@ aclrP ->
 
 # abbreviated color prime prefixes
 aclrPP ->
-    "y"           {% d => Interval(5).pow(d[0].length) %}
-  | "g"           {% d => Interval(5).pow(-d[0].length) %}
-  | "z"           {% d => Interval(7).pow(d[0].length) %}
-  | "r"           {% d => Interval(7).pow(-d[0].length) %}
-  | posInt "o":+  {% (d,loc,_) => ["!aclrPP", d[0], d[1].length, loc] %}
-  | posInt "u":+  {% (d,loc,_) => ["!aclrPP", d[0], -d[1].length, loc] %}
+    "y"           {% d => Interval(5) %}
+  | "g"           {% d => Interval(1,5) %}
+  | "z"           {% d => Interval(7) %}
+  | "r"           {% d => Interval(1,7) %}
+  | posInt "o":+  {% (d,loc,_) => ["!aclrPP", parseInt(d[0]), d[1].length, loc] %}
+  | posInt "u":+  {% (d,loc,_) => ["!aclrPP", parseInt(d[0]), -d[1].length, loc] %}
 
 # color notation intervals and notes
 clrIntv ->
@@ -546,12 +546,13 @@ clrM ->
 
 # color prefixes
 clrP ->
-    "wa"    {% d => [] %}
-  | "ilo"   {% d => [Interval(11)] %}
-  | "iso"   {% d => [Interval(17)] %}
-  | "ino"   {% d => [Interval(19)] %}
-  | "inu"   {% d => [Interval(1,19)] %}
-  | clrPPs  {% d => d[0] %}
+    "wa"           {% d => [] %}
+  | "ilo"          {% d => [Interval(11)] %}
+  | "iso"          {% d => [Interval(17)] %}
+  | "ino"          {% d => [Interval(19)] %}
+  | "inu"          {% d => [Interval(1,19)] %}
+  | clrMPs clrPPs  {% d => d[1].map(i => ["pow", i, d[0]]) %}
+  |        clrPPs  {% d => d[0] %}
 
 # color prime prefixes
 clrPPs ->
