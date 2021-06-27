@@ -278,6 +278,7 @@ intvSymbol ->
   | "FJS" _ "(" _ fjsIntv _ ")"    {% d => d[4] %}
   | "NFJS" _ "(" _ nfjsIntv _ ")"  {% d => d[4] %}
   | colorIntv                      {% id %}
+  | monzo                          {% id %}
   | "TT"                           {% _ => Interval(2).sqrt() %}
 
 noteSymbol ->
@@ -286,6 +287,13 @@ noteSymbol ->
   | "FJS" _ "(" _ fjsNote _ ")"    {% d => d[4] %}
   | "NFJS" _ "(" _ nfjsNote _ ")"  {% d => d[4] %}
   | colorNote                      {% id %}
+
+monzo ->
+    [\[\|] monzoElts [\]>]      {% d => Interval(d[1]) %}
+monzoElts ->
+    _                           {% d => [] %}
+  | _ intExpr1 _                {% d => [d[1]] %}
+  | _ intExpr1 _ "," monzoElts  {% d => [d[1]].concat(d[4]) %}
 
 # ------------------------------
 # Pythagorean interval symbols
