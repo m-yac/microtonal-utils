@@ -67,6 +67,11 @@ $ npm run test
     ✓ root/toNthRoot: Interval(fr).root(n).toNthRoot() == {k: fr, n: n}
     ✓ root/valueOf: Interval(fr).root(n).valueOf() ~= Math.pow(fr, 1/n)
     ✓ factorOut: i1 == i2.pow(i1.factorOut(i2)[0]).mul(i1.factorOut(i2)[1])
+    ✓ isPrimeLimit: i.inPrimeLimit(k) for all k >= i.primeLimit()
+    ✓ isPrimeLimit: !i.inPrimeLimit(k) for all k < i.primeLimit()
+    ✓ isOddLimit: Interval(fr).inOddLimit(k) for all k >= Interval(fr).oddLimit()
+    ✓ isOddLimit: !Interval(fr).inOddLimit(k) for k < Interval(fr).oddLimit()
+    ✓ oddLimit: Interval(odd,even).oddLimit() == Interval(even,odd).oddLimit() == odd
 
   Pythagorean intervals
     ✓ pyDegree(pyInterval(d,o/4)) == d (if d != -1)
@@ -75,7 +80,14 @@ $ npm run test
     ✓ pyZDegree(pyi1.mul(pyi2)) == pyZDegree(pyi1) + pyZDegree(pyi2)
     ✓ pyInterval(±d,o) == pyInterval(±d,0).mul(pyA1.pow(±o))
 
+  Color notation
+    ✓ colorSymb(63,40) == zg6
+    ✓ colorSymb(63,40,{verbosity:1}) == zogu 6th
+    ✓ colorFromSymb(0, -1, [0,0,-2], 2) == 2048/2025
+    ✓ colorFromSymb(0, 0, 5, 1) == 80/81
+    ✓ colorTemperament(135,128) == layobi
+    ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
-  23 passing (210ms)
+  34 passing (233ms)
 
 ```
