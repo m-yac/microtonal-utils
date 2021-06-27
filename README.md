@@ -32,7 +32,8 @@ This repository also contains:
 - `pythagorean.js`: functions for constructing and getting properties of Pythagorean intervals, as well as functions for formatting Pythagorean interval and note symbols
 - `edo.js`: functions for approximating intervals in equal temperaments, as well as functions for formatting EDO-step and ups-and-downs notation interval and note symbols
 - `fjs.js`: functions related to the Functional Just System (FJS) and systems like it, in particular, containing functions for formatting FJS interval and note symbols
-- `parser.js`: a parser for arbitrary expressions involving notes, intervals, and the note/interval symbols mentioned above - used in [`xen-calc`](https://github.com/m-yac/xen-calc)
+- `color.js`: functions for formatting color notation for intervals, notes, and temperaments
+- `parser.js`: a parser for arbitrary expressions involving notes, intervals, and the all note/interval symbols mentioned above (used in [`xen-calc`](https://github.com/m-yac/xen-calc)) as well as inverses of all the formatting functions mentioned above
 - `approx.js`: functions for getting best rational and best EDO approximations of an interval
 - `english.js`: an experiment with programmatically assigning English names to arbitrary intervals
 
