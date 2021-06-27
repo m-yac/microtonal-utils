@@ -289,7 +289,7 @@ noteSymbol ->
   | colorNote                      {% id %}
 
 monzo ->
-    [\[\|] monzoElts [\]>]      {% d => Interval(d[1]) %}
+    [\[\|] monzoElts [\]>⟩]     {% d => Interval(d[1]) %}
 monzoElts ->
     _                           {% d => [] %}
   | _ intExpr1 _                {% d => [d[1]] %}
