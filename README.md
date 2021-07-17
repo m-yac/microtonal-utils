@@ -7,9 +7,9 @@ The main datatype of this library is `Interval`, located in `lib/interval.js`. I
 Like [`fraction.js`](https://github.com/infusion/Fraction.js/), you can perform calculations using `Intervals` without losing any precision. For example, notice that the representations of `5/4 * 4\12 / 1\12` and `5/4 * 3\12` are identical:
 ```javascript
 > Interval(5,4).mul(Interval(2).pow(4,12)).div(Interval(2).pow(1,12))
-{ '2': { s: -1n, n: 7n, d: 4n }, '5': { s: 1n, n: 1n, d: 1n } }
+{ _fact: { '2': { s: -1n, n: 7n, d: 4n }, '5': { s: 1n, n: 1n, d: 1n } } }
 > Interval(5,4).mul(Interval(2).pow(3,12))
-{ '2': { s: -1n, n: 7n, d: 4n }, '5': { s: 1n, n: 1n, d: 1n } }
+{ _fact: { '2': { s: -1n, n: 7n, d: 4n }, '5': { s: 1n, n: 1n, d: 1n } } }
 ```
 This is because both have the factorization `2^(-7/4) * 5^1`. Trying to do this same calculation with javascript's number type, we get imprecision:
 ```javascript
@@ -92,6 +92,6 @@ $ npm run test
     ✓ colorTemperament(135,128) == layobi
     ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
-  37 passing (191ms)
+  37 passing (181ms)
 
 ```
