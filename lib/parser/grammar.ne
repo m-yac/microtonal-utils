@@ -564,19 +564,27 @@ clrP ->
 
 # color prime prefixes
 clrPPs ->
-    clrMPs clrPP              {% d => [["pow", d[1], d[0]]] %}
-  |        clrPP              {% d => [d[0]] %}
-  | clrMPs clrPP "-a" clrPPs  {% d => [["pow", d[1], d[0]]].concat(d[3]) %}
-  |        clrPP      clrPPs  {% d => [d[0]].concat(d[1]) %}
+    clrPPsMid1 clrPPsEnd    {% d => d[0].concat(d[1]) %}
+  | clrPPsEnd               {% id %}
+clrPPsEnd ->
+    clrPP                   {% d => [d[0]] %}
+  | clrPP clrPPsEnd         {% d => [d[0]].concat(d[1]) %}
+  | clrMPs clrPPsEnd        {% d => d[1].map(i => ["pow", i, d[0]]) %}
+clrPPsMid1 ->
+    clrPPsMid1 clrPPsMid2   {% d => d[0].concat(d[1]) %}
+  | clrPPsMid2              {% id %}
+clrPPsMid2 ->
+    clrPP                   {% d => [d[0]] %}
+  | clrMPs clrPPsMid1 "-a"  {% d => d[1].map(i => ["pow", i, d[0]]) %}
 clrPP ->
-    "yo"                      {% d => Interval(5) %}
-  | "gu"                      {% d => Interval(1,5) %}
-  | "zo"                      {% d => Interval(7) %}
-  | "ru"                      {% d => Interval(1,7) %}
-  | "lo"                      {% d => Interval(11) %}
-  | "lu"                      {% d => Interval(1,11) %}
-  | clrGenPP "o"              {% d => d[0] %}
-  | clrGenPP "u"              {% d => ["recip", d[0]] %}
+    "yo"                     {% d => Interval(5) %}
+  | "gu"                     {% d => Interval(1,5) %}
+  | "zo"                     {% d => Interval(7) %}
+  | "ru"                     {% d => Interval(1,7) %}
+  | "lo"                     {% d => Interval(11) %}
+  | "lu"                     {% d => Interval(1,11) %}
+  | clrGenPP "o"             {% d => d[0] %}
+  | clrGenPP "u"             {% d => ["recip", d[0]] %}
 
 # color notation degrees
 clrDeg ->
