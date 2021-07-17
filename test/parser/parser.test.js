@@ -15,7 +15,7 @@ const nonSemiNeutPyIntv =
 
 // How many tests to run in this file
 const VSLOW_TESTS_TO_RUN = 20;
-const SLOW_TESTS_TO_RUN = 50;
+const SLOW_TESTS_TO_RUN = 100;
 
 // Versions of `jsc.property` that run less than 100 times
 function jscVerySlowProperty1(name, arg, fn) {
@@ -55,6 +55,15 @@ describe("Color notation intervals and the parser", function () {
 
   jscSlowProperty1("fr == parseCvt(colorSymb(fr)).ratio", nzPosFrac, function (fr) {
     return fr.equals(parseCvt(colorSymb(fr)).ratio);
+  });
+
+  jscSlowProperty1("fr == parseCvt(colorSymb(fr, {verbosity:1})).ratio", nzPosFrac, function (fr) {
+    let i = Interval(fr);
+    // Remove all factors higher than 67
+    for (const [p,e] of i.factors()) {
+      if (p > 67) { i = i.mul(Interval(p).pow(e.neg())); }
+    }
+    return i.equals(parseCvt(colorSymb(i, {verbosity:1})).intv);
   });
 
 });

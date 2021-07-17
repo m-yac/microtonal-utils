@@ -531,6 +531,8 @@ aclrPP ->
 clrIntv ->
     clrCos clrM clrP clrDeg
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
+  | clrCos clrM clrP __ "-":? ordinal
+    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], (d[4] ? -1 : 1) * parseInt(d[5]), loc] %}
 clrNote ->
     clrP pyNote
     {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
@@ -554,17 +556,16 @@ clrM ->
 
 # color prefixes
 clrP ->
-    "wa"           {% d => [] %}
-  | "ilo"          {% d => [Interval(11)] %}
-  | "iso"          {% d => [Interval(17)] %}
-  | "ino"          {% d => [Interval(19)] %}
-  | "inu"          {% d => [Interval(1,19)] %}
-  | clrMPs clrPPs  {% d => d[1].map(i => ["pow", i, d[0]]) %}
-  |        clrPPs  {% d => d[0] %}
+    "wa"    {% d => [] %}
+  | "ilo"   {% d => [Interval(11)] %}
+  | "iso"   {% d => [Interval(17)] %}
+  | "ino"   {% d => [Interval(19)] %}
+  | "inu"   {% d => [Interval(1,19)] %}
+  | clrPPs  {% id %}
 
 # color prime prefixes
 clrPPs ->
-    clrPPsMid1 clrPPsEnd    {% d => d[0].concat(d[1]) %}
+    clrPPsMid1:? clrPPsMid3 clrPPsEnd {% d => (d[0] || []).concat(d[1]).concat(d[2]) %}
   | clrPPsEnd               {% id %}
 clrPPsEnd ->
     clrPP                   {% d => [d[0]] %}
@@ -575,7 +576,9 @@ clrPPsMid1 ->
   | clrPPsMid2              {% id %}
 clrPPsMid2 ->
     clrPP                   {% d => [d[0]] %}
-  | clrMPs clrPPsMid1 "-a"  {% d => d[1].map(i => ["pow", i, d[0]]) %}
+  | clrPPsMid3              {% id %}
+clrPPsMid3 ->
+    clrMPs clrPPsMid1 "-a"  {% d => d[1].map(i => ["pow", i, d[0]]) %}
 clrPP ->
     "yo"                     {% d => Interval(5) %}
   | "gu"                     {% d => Interval(1,5) %}
@@ -713,3 +716,23 @@ decimal -> "-":? [0-9]:+ ("." [0-9]:* ("(" [0-9]:+ ")"):?):?
                                : "") %}
 
 hertz -> "hz" | "Hz"
+
+# From: https://en.wikipedia.org/wiki/English_numerals#Ordinal_numbers
+# - If the tens digit of a number is 1, then "th" is written after the number
+# - If the tens digit is not equal to 1, then the following table could be used:
+#   | If the units digit is:            | 0  | 1  | 2  | 3  | 4-9 |
+#   | This is written after the number: | th | st | nd | rd | th  |
+ordinal ->
+    "1st"                            {% d => "1" %}
+  | "2nd"                            {% d => "2" %}
+  | "3rd"                            {% d => "3" %}
+  | [4-9] "th"                       {% d => d[0] %}
+  | posInt:? "1" [0-9] "th"          {% d => (d[0] || "") + "1" + d[2] %}
+  | posInt:? [2-9] ordinalOnesDigit  {% d => (d[0] || "") + d[1] + d[2] %}
+  | posInt "0" ordinalOnesDigit      {% d => d[0] + "0" + d[2] %}
+ordinalOnesDigit ->
+    "0th"       {% d => "0" %}
+  | "1st"       {% d => "1" %}
+  | "2nd"       {% d => "2" %}
+  | "3rd"       {% d => "3" %}
+  | [4-9] "th"  {% d => d[0] %}
