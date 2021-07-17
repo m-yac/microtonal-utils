@@ -16,22 +16,32 @@ function removeTrailingZeros(arr) {
   return arr;
 }
 
+// Ensure that two numbers are approximately equal relative to their size
 // From: https://floating-point-gui.de/errors/comparison/
 function nearly_equal(a, b, epsilon = 1e-15) {
   const MIN_NORMAL = 2.225e-308;
   const diff = Math.abs(a - b);
 
+  let ret;
   if (a == b) {
     return true;
   }
   else if (a == 0 || b == 0 || diff < MIN_NORMAL) {
-    return diff < (epsilon * MIN_NORMAL);
+    ret = diff < (epsilon * MIN_NORMAL);
   }
   else {
     const denom = Math.min(Math.abs(a) + Math.abs(b), Number.MAX_VALUE);
-    return diff / denom < epsilon;
+    ret = diff / denom < epsilon;
   }
+  if (!ret) { console.log("Not approximately equal: " + a + ", " + b); }
+  return ret;
 }
+
+// An arbitrary interval which has a finite value and is not 1
+const intvForLog = jsc.suchthat(intv, function (i) {
+  const i_val = i.valueOf();
+  return !i.equals(1) && isFinite(i_val) && i_val > 0;
+});
 
 describe("Interval constructors and conversions", function() {
 
@@ -130,6 +140,23 @@ describe("Other Interval operations", function() {
   jsc.property("factorOut: i1 == i2.pow(i1.factorOut(i2)[0]).mul(i1.factorOut(i2)[1])", intv, intv, function(i1,i2) {
     const [n, j] = i1.factorOut(i2);
     return i1.equals(i2.pow(n).mul(j));
+  });
+
+  jsc.property("pow/valueOf_log: i.pow(fr).valueOf_log(i) == fr.valueOf()", intvForLog, frac, function(i,fr) {
+    if (i.pow(fr).valueOf_log(i) != fr.valueOf()) {
+      console.log(i, fr, i.pow(fr).valueOf_log(i), fr.valueOf());
+    }
+    return i.pow(fr).valueOf_log(i) == fr.valueOf();
+  });
+
+  jsc.property("valueOf_log: i1.valueOf_log(i2) ~= Math.log(i1) / Math.log(i2)", intv, intvForLog, function(i1, i2) {
+    const x = Math.log(i1.valueOf()) / Math.log(i2.valueOf());
+    return !isFinite(x) || nearly_equal(i1.valueOf_log(i2), x, 1e-5);
+  });
+
+  jsc.property("toCents: i.toCents() ~= 1200 * Math.log2(i)", intv, function(i) {
+    const x = Math.log2(i.valueOf());
+    return !isFinite(x) || nearly_equal(i.toCents(), 1200 * x, 1e-5);
   });
 
   jsc.property("isPrimeLimit: i.inPrimeLimit(k) for all k >= i.primeLimit()", intv, posInt, function(i,k) {

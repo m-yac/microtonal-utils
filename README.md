@@ -68,6 +68,9 @@ $ npm run test
     ✓ root/toNthRoot: Interval(fr).root(n).toNthRoot() == {k: fr, n: n}
     ✓ root/valueOf: Interval(fr).root(n).valueOf() ~= Math.pow(fr, 1/n)
     ✓ factorOut: i1 == i2.pow(i1.factorOut(i2)[0]).mul(i1.factorOut(i2)[1])
+    ✓ pow/valueOf_log: i.pow(fr).valueOf_log(i) == fr.valueOf()
+    ✓ valueOf_log: i1.valueOf_log(i2) ~= Math.log(i1) / Math.log(i2)
+    ✓ toCents: i.toCents() ~= 1200 * Math.log2(i)
     ✓ isPrimeLimit: i.inPrimeLimit(k) for all k >= i.primeLimit()
     ✓ isPrimeLimit: !i.inPrimeLimit(k) for all k < i.primeLimit()
     ✓ isOddLimit: Interval(fr).inOddLimit(k) for all k >= Interval(fr).oddLimit()
@@ -89,6 +92,6 @@ $ npm run test
     ✓ colorTemperament(135,128) == layobi
     ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
-  34 passing (233ms)
+  37 passing (191ms)
 
 ```
