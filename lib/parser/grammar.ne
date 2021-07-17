@@ -185,7 +185,7 @@ intvMEDOExpr2 ->
   | intvMEDOExpr3                        {% id %}
 intvMEDOExpr3 ->
     upsDnsIntv                           {% id %}
-  | "TT"                                 {% d => ["!edoTT", loc] %}
+  | "TT"                                 {% (d,loc,_) => ["!edoTT", loc] %}
   | "(" _ intvMEDOExpr1 _ ")"            {% d => d[2] %}
 
 # ------------------------------------------
@@ -530,10 +530,10 @@ aclrPP ->
 # color notation intervals and notes
 clrIntv ->
     clrCos clrM clrP clrDeg
-    {% (d,loc) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
+    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
 clrNote ->
     clrP pyNote
-    {% (d,loc) => ["!clrNote", d[0], d[1], loc] %}
+    {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
 
 # color notation "co"s
 clrCos ->
