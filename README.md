@@ -77,6 +77,20 @@ $ npm run test
     ✓ isOddLimit: !Interval(fr).inOddLimit(k) for k < Interval(fr).oddLimit()
     ✓ oddLimit: Interval(odd,even).oddLimit() == Interval(even,odd).oddLimit() == odd
 
+  Best approximations
+    ✓ regression: bestRationalApproxsByNo2sHeight({2: 400/1200})
+    ✓ regression: bestRationalApproxsByNo2sHeight({2: 400/1200}, {primeLimit: 13})
+    ✓ regression: bestRationalApproxsByNo2sHeight({2: 300/1200}, {numIterations: 3})
+    ✓ regression: bestRationalApproxsByNo2sHeight({2: 300/1200}, {primeLimit: 13, numIterations: 2})
+    ✓ regression: bestRationalApproxsByNo2sHeight({2: 600/1200})
+    ✓ regression: bestRationalApproxsByNo2sHeight({2: 600/1200}, {primeLimit: 13, oddLimit: 81})
+    ✓ regression: bestRationalApproxsByHeight({2: 400/1200}, {primeLimit: 19})
+    ✓ regression: bestRationalApproxsByHeight({2: 300/1200}, {primeLimit: 13})
+    ✓ regression: bestRationalApproxsByHeight({2: 600/1200}, {primeLimit: 13, oddLimit: 81})
+    ✓ regression: bestRationalApproxsByDiff({2: 350/1200}, {oddLimit: 9})
+    ✓ regression: bestEDOApproxsByEDO(5,4)
+    ✓ regression: bestEDOApproxsByDiff(5,4)
+
   Pythagorean intervals
     ✓ pyDegree(pyInterval(d,o/4)) == d (if d != -1)
     ✓ pyOffset(pyInterval(d,o/4)) == o/4 (if d != -1)
@@ -92,6 +106,6 @@ $ npm run test
     ✓ colorTemperament(135,128) == layobi
     ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
-  37 passing (181ms)
+  49 passing (293ms)
 
 ```
