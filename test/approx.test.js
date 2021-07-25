@@ -36,6 +36,11 @@ const regression_tests = [{
     opts: { primeLimit: 13, oddLimit: 81 },
     expect: [ Fraction(11,8), Fraction(16,11), Fraction(7,5), Fraction(10,7), Fraction(45,32), Fraction(64,45) ]
   }, {
+    fn: "bestRationalApproxsByNo2sHeight",
+    input_ratio: Fraction(81,64),
+    opts: { primeLimit: 13, oddLimit: 81 },
+    expect: [ Fraction(5,4), Fraction(32,25), Fraction(14,11), Fraction(81,64) ]
+  }, {
     fn: "bestRationalApproxsByHeight",
     input: Interval(2).pow(400,1200),
     opts: { primeLimit: 19 },
@@ -51,6 +56,11 @@ const regression_tests = [{
     opts: { primeLimit: 13, oddLimit: 81 },
     expect: [ Fraction(7,5), Fraction(10,7), Fraction(45,32), Fraction(55,39) ]
   }, {
+    fn: "bestRationalApproxsByHeight",
+    input_ratio: Fraction(81,64),
+    opts: { primeLimit: 19 },
+    expect: [ Fraction(5,4), Fraction(14,11), Fraction(19,15) ]
+  }, {
     fn: "bestRationalApproxsByDiff",
     input: Interval(2).pow(350,1200),
     opts: { oddLimit: 9 },
@@ -59,6 +69,10 @@ const regression_tests = [{
     fn: "bestEDOApproxsByEDO",
     input_ratio: Fraction(5,4),
     expect: [ [ [ 2, 6 ], [ 3, 9 ], [ 4, 12 ], [ 5, 15 ] ], [ [ 5, 16 ] ], [ [ 6, 19 ] ], [ [ 7, 22 ] ], [ [ 8, 25 ] ], [ [ 9, 28 ], [ 18, 56 ] ], [ [ 19, 59 ] ] ]
+  }, {
+    fn: "bestEDOApproxsByEDO",
+    input: Interval(2).pow(1,12),
+    expect: [ [ [ 1, 8 ] ], [ [ 1, 9 ] ], [ [ 1, 10 ] ], [ [ 1, 11 ] ], [ [ 1, 12 ], [ 2, 24 ], [ 3, 36 ], [ 4, 48 ], [ 5, 60 ] ] ]
   }, {
     fn: "bestEDOApproxsByDiff",
     input_ratio: Fraction(5,4),

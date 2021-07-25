@@ -84,11 +84,14 @@ $ npm run test
     ✓ regression: bestRationalApproxsByNo2sHeight({2: 300/1200}, {primeLimit: 13, numIterations: 2})
     ✓ regression: bestRationalApproxsByNo2sHeight({2: 600/1200})
     ✓ regression: bestRationalApproxsByNo2sHeight({2: 600/1200}, {primeLimit: 13, oddLimit: 81})
+    ✓ regression: bestRationalApproxsByNo2sHeight(81,64, {primeLimit: 13, oddLimit: 81})
     ✓ regression: bestRationalApproxsByHeight({2: 400/1200}, {primeLimit: 19})
     ✓ regression: bestRationalApproxsByHeight({2: 300/1200}, {primeLimit: 13})
     ✓ regression: bestRationalApproxsByHeight({2: 600/1200}, {primeLimit: 13, oddLimit: 81})
+    ✓ regression: bestRationalApproxsByHeight(81,64, {primeLimit: 19})
     ✓ regression: bestRationalApproxsByDiff({2: 350/1200}, {oddLimit: 9})
     ✓ regression: bestEDOApproxsByEDO(5,4)
+    ✓ regression: bestEDOApproxsByEDO({2: 100/1200})
     ✓ regression: bestEDOApproxsByDiff(5,4)
 
   Pythagorean intervals
@@ -106,6 +109,6 @@ $ npm run test
     ✓ colorTemperament(135,128) == layobi
     ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
-  49 passing (293ms)
+  52 passing (328ms)
 
 ```
