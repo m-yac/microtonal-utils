@@ -540,6 +540,10 @@ clrIntv ->
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
   | clrCos clrM clrP __ "-":? ordinal
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], (d[4] ? -1 : 1) * parseInt(d[5]), loc] %}
+  | clrCos clrM clrP __ "unison"
+    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], 1, loc] %}
+  | clrCos clrM clrP __ "octave"
+    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], 8, loc] %}
 clrNote ->
     clrP pyNote
     {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
