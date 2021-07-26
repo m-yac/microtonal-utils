@@ -1,5 +1,7 @@
 # microtonal-utils
 
+[![Run on repl.it](https://repl.it/badge/github/m-yac/microtonal-utils)](https://repl.it/github/m-yac/microtonal-utils}&ref=button)
+
 A javascript library for doing precise calculations involving microtonal intervals and notes, inspired by [`fraction.js`](https://github.com/infusion/Fraction.js/).
 
 The main datatype of this library is `Interval`, located in `lib/interval.js`. Internally, intervals are stored as prime factorizations with fractional exponents, which allows for both justly tuned intervals (e.g. `5/4` which can be written as `2^(-2) * 5^1`) and intervals in equal temperaments (e.g. `4\12` which can be written as `2^(4/12)`) to be represented by the same datatype.
@@ -55,7 +57,10 @@ After building, to use this library in an interactive REPL run:
 ```
 $ npm run repl
 ```
-Everything exported in the `lib` folder is made accessible. For example, you could type:
+Or visit https://repl.it/@m_yac/microtonal-utils and click "Run".
+
+Everything exported in the `lib` directory is made accessible. Here's an
+example of an interactive session:
 ```javascript
 > Interval(5,4).toCents()
 386.3137138648344
@@ -83,7 +88,7 @@ at `dist/microtonal-utils.js`. Copy that as well as `microtonal-utils.js.map`
 into your project and simply include the former as you would any other
 javascript file. All the functions of the library are included under
 `microtonal_utils` (e.g. `microtonal_utils.parseCvt`). A minified version of
-this file can also be found in `dist/`.
+this file can also be found at `dist/microtonal-utils.min.js`.
 
 
 ## Testing
