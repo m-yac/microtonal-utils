@@ -4,6 +4,8 @@
 
 A javascript library for doing precise calculations involving microtonal intervals and notes, inspired by [`fraction.js`](https://github.com/infusion/Fraction.js/).
 
+Interact with this code live at: [yacavone.net/microtonal-utils](https://www.yacavone.net/microtonal-utils).
+
 The main datatype of this library is `Interval`, located in `lib/interval.js`. Internally, intervals are stored as prime factorizations with fractional exponents, which allows for both justly tuned intervals (e.g. `5/4` which can be written as `2^(-2) * 5^1`) and intervals in equal temperaments (e.g. `4\12` which can be written as `2^(4/12)`) to be represented by the same datatype.
 
 Like [`fraction.js`](https://github.com/infusion/Fraction.js/), you can perform calculations using `Intervals` without losing any precision. For example, notice that the representations of `5/4 * 4\12 / 1\12` and `5/4 * 3\12` are identical:
@@ -57,7 +59,7 @@ After building, to use this library in an interactive REPL run:
 ```
 $ npm run repl
 ```
-Or visit https://repl.it/@m_yac/microtonal-utils and click "Run".
+You can also visit [yacavone.net/microtonal-utils](https://www.yacavone.net/microtonal-utils) or [repl.it/@m_yac/microtonal-utils](https://repl.it/@m_yac/microtonal-utils) to run the REPL in your web browser.
 
 Everything exported in the `lib` directory is made accessible. Here's an
 example of an interactive session:
