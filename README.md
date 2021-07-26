@@ -1,6 +1,6 @@
 # microtonal-utils
 
-[![Run on repl.it](https://repl.it/badge/github/m-yac/microtonal-utils)](https://repl.it/github/m-yac/microtonal-utils}&ref=button)
+[![Run on repl.it](https://repl.it/badge/github/m-yac/microtonal-utils)](https://repl.it/@m_yac/microtonal-utils)
 
 A javascript library for doing precise calculations involving microtonal intervals and notes, inspired by [`fraction.js`](https://github.com/infusion/Fraction.js/).
 
@@ -62,9 +62,9 @@ Or visit https://repl.it/@m_yac/microtonal-utils and click "Run".
 Everything exported in the `lib` directory is made accessible. Here's an
 example of an interactive session:
 ```javascript
-> Interval(5,4).toCents()
+> Interval([-2,0,1]).toCents()
 386.3137138648344
-> colorTemperament(32805/32768)
+> colorTemperament(32805,32768)
 'layo'
 > updnsSymb(22, edoApprox(22, parsePySymb("M3")))
 [ 'vM3' ]
