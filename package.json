@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "nearley": "npx nearleyc lib/parser/grammar.ne -o lib/parser/grammar.js",
+    "repl": "npx node -i -e \"$(< ./repl.js)\"",
     "test": "npx mocha --require mocha-suppress-logs test/*.test.js",
     "test:parser": "npx mocha --require mocha-suppress-logs test/parser/*.test.js",
     "test:all": "npm run test && npm run test:parser",

@@ -26,20 +26,69 @@ Another example of where using `Interval` is more precise, and more convenient, 
 400.00000000000006
 ```
 
-See the JSDoc comments above the functions in `fraction.js` for more examples.
+See the JSDoc comments above the functions in `interval.js` for more examples.
 
 This repository also contains:
 - `pythagorean.js`: functions for constructing and getting properties of Pythagorean intervals, as well as functions for formatting Pythagorean interval and note symbols
 - `edo.js`: functions for approximating intervals in equal temperaments, as well as functions for formatting EDO-step and ups-and-downs notation interval and note symbols
-- `fjs.js`: functions related to the Functional Just System (FJS) and systems like it, in particular, containing functions for formatting FJS interval and note symbols
+- `fjs.js`: functions related to the Functional Just System (FJS) and systems like it, in particular, functions for formatting FJS interval and note symbols
 - `color.js`: functions for formatting color notation for intervals, notes, and temperaments
 - `parser.js`: a parser for arbitrary expressions involving notes, intervals, and the all note/interval symbols mentioned above (used in [`xen-calc`](https://github.com/m-yac/xen-calc)) as well as inverses of all the formatting functions mentioned above
 - `approx.js`: functions for getting best rational and best EDO approximations of an interval
 - `english.js`: an experiment with programmatically assigning English names to arbitrary intervals
 
+## Building
+
+To build this library, run:
+```
+$ npm install
+```
+
+If you've changed `grammar.ne`, run the following to update `grammar.js`:
+```
+$ npm run nearley
+```
+
+## Using
+
+After building, to use this library in an interactive REPL run:
+```
+$ npm run repl
+```
+Everything exported in the `lib` folder is made accessible. For example, you could type:
+```javascript
+> Interval(5,4).toCents()
+386.3137138648344
+> colorTemperament(32805/32768)
+'layo'
+> updnsSymb(22, edoApprox(22, parsePySymb("M3")))
+[ 'vM3' ]
+> parseCvt("sqrt(3/2)")
+{
+  type: 'interval',
+  cents: 350.97750043269366,
+  intv: { _fact: { '2': [Object], '3': [Object] } },
+  ref: { hertz: 440, intvToA4: { _fact: {} } },
+  symb: { NFJS: 'n3' },
+  english: [ 'Pythagorean neutral third' ]
+}
+```
+
+To use this library as part of a website, run:
+```
+$ npm run build:all
+```
+A single-file ("browserified") version of the entire library can then be found
+at `dist/microtonal-utils.js`. Copy that as well as `microtonal-utils.js.map`
+into your project and simply include the former as you would any other
+javascript file. All the functions of the library are included under
+`microtonal_utils` (e.g. `microtonal_utils.parseCvt`). A minified version of
+this file can also be found in `dist/`.
+
+
 ## Testing
 
-This library includes an in-progress test suite of property-based tests, located in `/test`. The term "property-based" means that each test consists of some property (e.g. `Interval(2).pow(fr).toCents() == fr.mul(1200)`) which is then checked using many (usually 100) randomly generated values (e.g. random values for `fr`, such as `Fraction(99/38)`). Since each run of the test suite checks these properties with a totally new set of random values, the fact that the test suite consistently passes should give high confidence that these properties do hold in general.
+This library includes a test suite of property-based tests, located in `/test`. The term "property-based" means that each test consists of some property (e.g. `Interval(2).pow(fr).toCents() == fr.mul(1200)`) which is then checked using many (usually 100) randomly generated values (e.g. a randomly generated value for `fr` would be `Fraction(99/38)`). Since each run of the test suite checks these properties with a totally new set of random values, the fact that the test suite consistently passes should give high confidence that these properties do hold in general. There are also a few regression tests, which are not property-based.
 
 To run the test suite, use the command `npm run test` or `npm run test:all`. The latter also includes tests of the parser, which are often fairly slow. The output of `npm run test` should look like:
 ```
