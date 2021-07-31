@@ -55,11 +55,11 @@ $ npm run nearley
 
 ## Using
 
-After building, to use this library in an interactive REPL run:
+After building on your local machine, to use this library in an interactive REPL run:
 ```
 $ npm run repl
 ```
-You can also visit [yacavone.net/microtonal-utils](https://www.yacavone.net/microtonal-utils) or [repl.it/@m_yac/microtonal-utils](https://repl.it/@m_yac/microtonal-utils) to run the REPL in your web browser.
+You can also visit [yacavone.net/microtonal-utils](https://www.yacavone.net/microtonal-utils) or [repl.it/@m_yac/microtonal-utils](https://repl.it/@m_yac/microtonal-utils) instead to run the REPL directly in your web browser.
 
 Everything exported in the `lib` directory is made accessible. Here's an
 example of an interactive session:
