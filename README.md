@@ -38,6 +38,7 @@ This repository also contains:
 - `fjs.js`: functions related to the Functional Just System (FJS) and systems like it, in particular, functions for formatting FJS interval and note symbols
 - `color.js`: functions for formatting color notation for intervals, notes, and temperaments
 - `parser.js`: a parser for arbitrary expressions involving notes, intervals, and the all note/interval symbols mentioned above (used in [`xen-calc`](https://github.com/m-yac/xen-calc)) as well as inverses of all the formatting functions mentioned above
+- `sets.js`: generators for sets of intervals, e.g. all intervals in an odd limit, all intervals less than some Tenney height
 - `approx.js`: functions for getting best rational and best EDO approximations of an interval
 - `english.js`: an experiment with programmatically assigning English names to arbitrary intervals
 
@@ -145,7 +146,8 @@ $ npm run test
     ✓ regression: bestRationalApproxsByHeight({2: 300/1200}, {primeLimit: 13})
     ✓ regression: bestRationalApproxsByHeight({2: 600/1200}, {primeLimit: 13, oddLimit: 81})
     ✓ regression: bestRationalApproxsByHeight(81,64, {primeLimit: 19})
-    ✓ regression: bestRationalApproxsByDiff({2: 350/1200}, {oddLimit: 9})
+    ✓ regression: bestRationalApproxsByDenom({2: 350/1200})
+    ✓ regression: bestRationalApproxsByDiff({2: 350/1200}, {oddLimit: 9, cutoff: {2: 1/2}})
     ✓ regression: bestEDOApproxsByEDO(5,4)
     ✓ regression: bestEDOApproxsByEDO({2: 100/1200})
     ✓ regression: bestEDOApproxsByDiff(5,4)
@@ -165,6 +167,6 @@ $ npm run test
     ✓ colorTemperament(135,128) == layobi
     ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
-  52 passing (328ms)
+  53 passing (344ms)
 
 ```

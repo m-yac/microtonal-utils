@@ -61,9 +61,13 @@ const regression_tests = [{
     opts: { primeLimit: 19 },
     expect: [ Fraction(5,4), Fraction(14,11), Fraction(19,15) ]
   }, {
+    fn: "bestRationalApproxsByDenom",
+    input: Interval(2).pow(350,1200),
+    expect: [ Fraction(5,4), Fraction(6,5), Fraction(11,9), Fraction(38,31), Fraction(49,40), Fraction(60,49), Fraction(71,58) ]
+  }, {
     fn: "bestRationalApproxsByDiff",
     input: Interval(2).pow(350,1200),
-    opts: { oddLimit: 9 },
+    opts: { oddLimit: 9, cutoff: Interval(2).sqrt() },
     expect: [ Fraction(6,5), Fraction(5,4), Fraction(7,6), Fraction(9,7), Fraction(8,7), Fraction(9,8), Fraction(4,3), Fraction(10,9), Fraction(7,5), Fraction(10,7), Fraction(1,1), Fraction(3,2), Fraction(14,9), Fraction(8,5), Fraction(9,10), Fraction(5,3), Fraction(8,9), Fraction(7,8), Fraction(12,7) ]
   }, {
     fn: "bestEDOApproxsByEDO",
@@ -100,11 +104,8 @@ describe("Best approximations", function () {
         input_str = "{2: " + input.expOf(2).mul(1200).valueOf() + "/1200}"
       }
       else {
-        let factor_strs = [];
-        for (const [p,e] of input.factors()) {
-          factor_strs.push(p + ": " + e.toFraction());
-        }
-        input_str = "{" + factor_strs.join(", ") + "}";
+        input_str = "{" + input.factors().map(([p,e]) => p + ": " + e.toFraction())
+                                         .join(", ") + "}";
       }
     }
 
@@ -113,7 +114,12 @@ describe("Best approximations", function () {
       let opts_strs = [];
       for (const k in test.opts) {
         opts[k] = test.opts[k];
-        opts_strs.push(k + ": " + JSON.stringify(test.opts[k]));
+        let str = JSON.stringify(test.opts[k]);
+        if (test.opts[k] instanceof Interval) {
+          str = "{" + test.opts[k].factors().map(([p,e]) => p + ": " + e.toFraction())
+                                            .join(", ") + "}";
+        }
+        opts_strs.push(k + ": " + str);
       }
       opts_str = ", {" + opts_strs.join(", ") + "}"
     }
