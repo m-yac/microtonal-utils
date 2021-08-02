@@ -550,10 +550,9 @@ clrNote ->
 
 # color notation "co"s
 clrCos ->
-    null             {% d => 0 %}
-  | "co"             {% d => 1 %}
-  | "co" "co":+ "-"  {% d => 1 + d[1].length %}
-  | clrMPs "co-"     {% d => d[0] %}
+    null               {% d => 0 %}
+  | "co":+ "-":?       {% d => d[0].length %}
+  | clrMPs "co" "-":?  {% d => d[0] %}
 
 # color notation magnitudes
 # N.B. this is more permissive than the hyphen grammar in:

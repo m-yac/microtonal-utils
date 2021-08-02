@@ -98,9 +98,9 @@ this file can also be found at `dist/microtonal-utils.min.js`.
 
 This library includes a test suite of property-based tests, located in `/test`. The term "property-based" means that each test consists of some property (e.g. `Interval(2).pow(fr).toCents() == fr.mul(1200)`) which is then checked using many (usually 100) randomly generated values (e.g. a randomly generated value for `fr` would be `Fraction(99/38)`). Since each run of the test suite checks these properties with a totally new set of random values, the fact that the test suite consistently passes should give high confidence that these properties do hold in general. There are also a few regression tests, which are not property-based.
 
-To run the test suite, use the command `npm run test` or `npm run test:all`. The latter also includes tests of the parser, which are often fairly slow. The output of `npm run test` should look like:
+To run the test suite, use the command `npm run test` or `npm run test:all`. The latter also includes tests of the parser, which are often fairly slow. The output of `npm run test:all` should look like:
 ```
-$ npm run test
+$ npm run test:all
 
   Interval constructors and conversions
     ✓ Interval(n).factors() is the prime factorization of n
@@ -168,5 +168,19 @@ $ npm run test
     ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
   53 passing (344ms)
+
+
+  Intervals and the parser
+    ✓ toNthRootString: i == parseCvt(i.toNthRootString()).intv (347ms)
+    ✓ fr1.mul(fr2) == parseCvt(`${fr1} * ${fr2}`).ratio (353ms)
+
+  Pythagorean intervals and the parser
+    ✓ pyi == parseCvt(pySymb(pyi)).intv (412ms)
+
+  Color notation intervals and the parser
+    ✓ fr == parseCvt(colorSymb(fr)).ratio (1060ms)
+    ✓ fr == parseCvt(colorSymb(fr, {verbosity:1})).ratio (728ms)
+
+  5 passing (3s)
 
 ```

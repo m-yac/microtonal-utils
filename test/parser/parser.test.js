@@ -59,10 +59,11 @@ describe("Color notation intervals and the parser", function () {
 
   jscSlowProperty1("fr == parseCvt(colorSymb(fr, {verbosity:1})).ratio", nzPosFrac, function (fr) {
     let i = Interval(fr);
-    // Remove all factors higher than 67
+    // remove all multiples of primes higher than 67
     for (const [p,e] of i.factors()) {
       if (p > 67) { i = i.mul(Interval(p).pow(e.neg())); }
     }
+    console.log("Input w/out primes > 67: " + i.toNthRootString());
     return i.equals(parseCvt(colorSymb(i, {verbosity:1})).intv);
   });
 
