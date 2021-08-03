@@ -626,7 +626,7 @@ clrPosDeg ->
   | __ clrOrdinalDeg         {% d => d[1] %}
 clrOrdinalDeg ->
     "1sn"                    {% d => 1 %}
-  | posInt "ve"              {% (d,loc,_) => ["!ordinalOctave", d[0], loc] %}
+  | "8ve"                    {% d => 8 %}
   | ordinal                  {% d => parseInt(d[0]) %}
 
 # color notation multi prefixes
