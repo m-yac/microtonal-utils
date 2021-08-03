@@ -508,7 +508,7 @@ colorNote -> aclrNote {% id %} | clrNote {% id %}
 
 # abbreviated color notation intervals and notes
 aclrIntv ->
-    "c":* aclrM aclrP clrDeg
+    "c":* aclrM aclrP aclrDeg
     {% (d,loc,_) => ["!clrIntv", d[0].length, d[1], d[2], d[3], loc] %}
 aclrNote ->
     aclrP pyNote
@@ -534,16 +534,17 @@ aclrPP ->
   | posInt "o":+  {% (d,loc,_) => ["!aclrPP", parseInt(d[0]), d[1].length, loc] %}
   | posInt "u":+  {% (d,loc,_) => ["!aclrPP", parseInt(d[0]), -d[1].length, loc] %}
 
+# color notation numeral degrees
+aclrDeg ->
+    posInt      {% d => parseInt(d[0]) %}
+  | "-" posInt  {% d => - parseInt(d[1]) %}
+
 # color notation intervals and notes
 clrIntv ->
-    clrCos clrM clrP clrDeg
+    clrCos clrM clrP aclrDeg
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
-  | clrCos clrM clrP __ "-":? ordinal
-    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], (d[4] ? -1 : 1) * parseInt(d[5]), loc] %}
-  | clrCos clrM clrP __ "unison"
-    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], 1, loc] %}
-  | clrCos clrM clrP __ "octave"
-    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], 8, loc] %}
+  | clrCos clrM clrP clrDeg
+    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
 clrNote ->
     clrP pyNote
     {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
@@ -599,10 +600,19 @@ clrPP ->
   | clrGenPP "o"             {% d => d[0] %}
   | clrGenPP "u"             {% d => ["recip", d[0]] %}
 
-# color notation degrees
+# color notation non-abbreviated degrees
 clrDeg ->
-    posInt      {% d => d[0] %}
-  | "-" posInt  {% d => -d[1] %}
+    __ "negative" clrPosDeg  {% d => ["*", -1, d[2]] %}
+  | __ "-" clrOrdinalDeg     {% d => ["*", -1, d[2]] %}
+  | clrPosDeg                {% id %}
+clrPosDeg ->
+    __ "unison"              {% d => 1 %}
+  | __ "octave"              {% d => 8 %}
+  | __ clrOrdinalDeg         {% d => d[1] %}
+clrOrdinalDeg ->
+    "1sn"                    {% d => 1 %}
+  | posInt "ve"              {% (d,loc,_) => ["!ordinalOctave", d[0], loc] %}
+  | ordinal                  {% d => parseInt(d[0]) %}
 
 # color notation multi prefixes
 clrMPs ->
