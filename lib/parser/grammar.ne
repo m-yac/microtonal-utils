@@ -508,22 +508,37 @@ colorNote -> aclrNote {% id %} | clrNote {% id %}
 
 # abbreviated color notation intervals and notes
 aclrIntv ->
-    "c":* aclrM aclrP aclrDeg
-    {% (d,loc,_) => ["!clrIntv", d[0].length, d[1], d[2], d[3], loc] %}
+    aclrCos aclrM aclrP aclrDeg
+    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
 aclrNote ->
     aclrP pyNote
     {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
 
+# abbreviated color notation "co"s
+aclrCos ->
+    null              {% d => 0 %}
+  | "c":+             {% d => d[0].length %}
+  | "c^" [1-9]        {% d => parseInt(d[1]) %}
+  | "c^(" posInt ")"  {% d => parseInt(d[1]) %}
+
 # abbreviated color notation magnitudes
 aclrM ->
-    null   {% d => 0 %}
-  | "L":+  {% d => d[0].length %}
-  | "s":+  {% d => -d[0].length %}
+    null              {% d => 0 %}
+  | "L":+             {% d => d[0].length %}
+  | "L^" [1-9]        {% d => parseInt(d[1]) %}
+  | "L^(" posInt ")"  {% d => parseInt(d[1]) %}
+  | "s":+             {% d => -d[0].length %}
+  | "s^" [1-9]        {% d => -parseInt(d[1]) %}
+  | "s^(" posInt ")"  {% d => -parseInt(d[1]) %}
 
 # abbreviated color prefixes
 aclrP ->
-    "w"       {% d => [] %}
-  | aclrPP:+  {% d => d[0] %}
+    "w"        {% d => [] %}
+  | aclrPP1:+  {% d => d[0].flat(1) %}
+aclrPP1 ->
+    aclrPP                  {% d => [d[0]] %}
+  | aclrPP "^" [1-9]        {% d => Array(parseInt(d[2])).fill(d[0]) %}
+  | aclrPP "^(" posInt ")"  {% d => Array(parseInt(d[2])).fill(d[0]) %}
 
 # abbreviated color prime prefixes
 aclrPP ->
