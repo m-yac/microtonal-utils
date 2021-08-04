@@ -6,8 +6,8 @@
   "scripts": {
     "nearley": "npx nearleyc lib/parser/grammar.ne -o lib/parser/grammar.js",
     "repl": "npx node -i -e \"$(< ./repl.js)\"",
-    "test": "npx mocha --require mocha-suppress-logs test/*.test.js",
-    "test:parser": "npx mocha --require mocha-suppress-logs test/parser/*.test.js",
+    "test": "npx mocha --timeout 5000 --require mocha-suppress-logs test/*.test.js",
+    "test:parser": "npx mocha --timeout 5000 --require mocha-suppress-logs test/parser/*.test.js",
     "test:all": "npm run test && npm run test:parser",
     "build": "mkdir -p dist && npx browserify lib/index.js -s microtonal_utils --debug | npx exorcist dist/microtonal-utils.js.map > dist/microtonal-utils.js",
     "build:min": "mkdir -p dist && npx browserify lib/index.js -s microtonal_utils | npx uglifyjs > dist/microtonal-utils.min.js",
