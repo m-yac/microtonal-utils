@@ -90,6 +90,21 @@ eqPyNote -> pyNote {% (d,loc,_) => function(ref) {
 # Multiplicative interval expressions
 # @returns {(Interval|Array)}
 
+intvFns[REC] ->
+    "red" _ "(" _ $REC _ ")"                     {% d => ["red", d[4][0]] %}
+  | "reb" _ "(" _ $REC _ ")"                     {% d => ["reb", d[4][0]] %}
+  | "red" _ "(" _ $REC _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4][0], d[8]] %}
+  | "reb" _ "(" _ $REC _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4][0], d[8]] %}
+  | "approx"  _ "(" _ $REC _ "," _ posInt _ ")"  {% d => ["!edoApprox", d[4][0], parseInt(d[8])] %}
+  | isoUp  _ "(" _ $REC _ ")"                    {% d => ["isoUp", d[4][0]] %}
+  | isoDn  _ "(" _ $REC _ ")"                    {% d => ["isoDown", d[4][0]] %}
+  | isoMid _ "(" _ $REC _ ")"                    {% d => ["isoMid", d[4][0]] %}
+  | isoUp  _ "(" _ $REC _ "," _ $REC _ ")"       {% d => ["isoUp", d[8][0], d[4][0]] %}
+  | isoDn  _ "(" _ $REC _ "," _ $REC _ ")"       {% d => ["isoDown", d[8][0], d[4][0]] %}
+  | isoMid _ "(" _ $REC _ "," _ $REC _ ")"       {% d => ["isoMid", d[8][0], d[4][0]] %}
+  | "iso" _ "(" _ $REC _ "," _ frcExpr1 _ ")"    {% d => ["iso", d[4][0], Interval(1), d[8]] %}
+  | "iso" _ "(" _ $REC _ "," _ $REC _ "," _ frcExpr1 _ ")"  {% d => ["iso", d[8][0], d[4][0], d[12]] %}
+
 intvMExpr1 ->
     intvMExpr1 _ "*" _ intvMExpr2                      {% d => ["mul", d[0], d[4]] %}
   | intvMExpr1 _ "/" _ intvMExpr2                      {% d => ["div", d[0], d[4]] %}
@@ -99,12 +114,9 @@ intvMExpr2 ->
     intvMExpr3 _ "^" _ frcExpr3                        {% d => ["pow", d[0], d[4]] %}
   | "sqrt" _ "(" _ intvMExpr1 _ ")"                    {% d => ["sqrt", d[4]] %}
   | "root" posInt _ "(" _ intvMExpr1 _ ")"             {% d => ["root", d[5], d[1]] %}
-  | "red" _ "(" _ intvMExpr1 _ ")"                     {% d => ["red", d[4]] %}
-  | "reb" _ "(" _ intvMExpr1 _ ")"                     {% d => ["reb", d[4]] %}
-  | "red" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
-  | "reb" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4], d[8]] %}
   | "med" _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"  {% (d,loc,_) => ["!med", d[4], d[8], loc] %}
-  | "approx"  _ "(" _ intvMExpr1 _ "," _ posInt _ ")"  {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
+  | nmed _ "(" _ intvMExpr1 _ "," _ intvMExpr1 _ ")"   {% (d,loc,_) => ["!nobleMed", d[4], d[8], d[0], loc] %}
+  | intvFns[intvMExpr1]                                {% id %}
   | intvSymbol                                         {% id %}
   | intvMExpr3                                         {% id %}
 intvMExpr3 ->
@@ -112,6 +124,11 @@ intvMExpr3 ->
   | int           _ "\\" _ posInt                      {% d => ["!inEDO", parseInt(d[0]), parseInt(d[4])] %}
   | intvMEDOExpr3 _ "\\" _ posInt                      {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ intvMExpr1 _ ")"                             {% d => d[2] %}
+
+isoUp -> "isoup" | "isoUp"
+isoDn -> "isodn" | "isoDn" | "isoDown"
+isoMid -> "isomid" | "isoMid"
+nmed -> "nmed" | "nMed" | "nobleMed" | "NobleMed"
 
 # ---------------------------------
 # Multiplicative note expressions
@@ -144,11 +161,7 @@ intvAExpr2 ->
   | intvAExpr3                                         {% id %}
 intvAExpr3 ->
     "cents" _ "(" _ intvMExpr1 _ ")"                   {% d => d[4] %}
-  | "red" _ "(" _ intvAExpr1 _ ")"                     {% d => ["red", d[4]] %}
-  | "reb" _ "(" _ intvAExpr1 _ ")"                     {% d => ["reb", d[4]] %}
-  | "red" _ "(" _ intvAExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
-  | "reb" _ "(" _ intvAExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4], d[8]] %}
-  | "approx"  _ "(" _ intvAExpr1 _ "," _ posInt _ ")"  {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
+  | intvFns[intvAExpr1]                                {% id %}
   | intvSymbol                                         {% id %}
   | intvAExpr4                                         {% id %}
 intvAExpr4 ->
@@ -241,11 +254,7 @@ noteAEDOExpr2 ->
 # @returns {(Interval|Array)}
 
 intvSExpr1 ->
-    "red"  _ "(" _ intvSExpr1 _ ")"                     {% d => ["red", d[4]] %}
-  | "reb"  _ "(" _ intvSExpr1 _ ")"                     {% d => ["reb", d[4]] %}
-  | "red"  _ "(" _ intvSExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["red", d[4], d[8]] %}
-  | "reb"  _ "(" _ intvSExpr1 _ "," _ intvMExpr1 _ ")"  {% d => ["reb", d[4], d[8]] %}
-  | "approx"  _ "(" _ intvSExpr1 _ "," _ posInt _ ")"   {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
+    intvFns[intvSExpr1]                                 {% id %}
   | intvSExpr2                                          {% id %}
 intvSExpr2 ->
     intvSymbol                                          {% id %}
