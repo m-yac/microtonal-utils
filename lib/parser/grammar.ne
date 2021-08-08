@@ -126,7 +126,7 @@ noteMExpr2 ->
     "approx"  _ "(" _ noteMExpr1 _ "," _ posInt _ ")" {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
   | noteSymbol                                        {% id %}
   | noteMEDOExpr2 _ "\\" _ posInt                     {% d => ["!inEDO", d[0], parseInt(d[4])] %}
-  | decExpr3 hertz                                    {% d => ["div", Interval(d[0]), ["!refHertz"]] %}
+  | decExpr3 hertz                                    {% (d,loc,_) => ["!hertz", d[0], ["!refHertz"], loc] %}
   | "(" _ noteMExpr1 _ ")"                            {% d => d[2] %}
 
 # -------------------------------
@@ -731,6 +731,9 @@ decExpr2 ->
                      } } %}
   | decExpr3                   {% id %}
 decExpr3 ->
+    "-" _ decExpr4             {% d => d[2].neg() %}
+  | decExpr4                   {% id %}
+decExpr4 ->
     decimal                    {% d => Fraction(d[0]) %}
   | "(" _ decExpr1 _ ")"       {% d => d[2] %}
 
@@ -746,12 +749,11 @@ nonNegInt -> "0" {% _ => "0" %} | posInt {% id %}
 
 int -> "-":? nonNegInt {% d => (d[0] || "") + d[1] %}
 
-decimal -> "-":? [0-9]:+ ("." [0-9]:* ("(" [0-9]:+ ")"):?):?
-  {% d => (d[0] || "") + d[1].join("")
-                       + (d[2] ? "." + d[2][1].join("")
-                                     + (d[2][2] ? "("+d[2][2][1].join("")+")"
-                                                : "")
-                               : "") %}
+decimal -> [0-9]:+ ("." [0-9]:* ("(" [0-9]:+ ")"):?):?
+  {% d => d[0].join("") + (d[1] ? "." + d[1][1].join("")
+                                      + (d[1][2] ? "("+d[1][2][1].join("")+")"
+                                                 : "")
+                                : "") %}
 
 hertz -> "hz" | "Hz"
 
