@@ -280,6 +280,9 @@ intvSymbol ->
   | colorIntv                      {% id %}
   | monzo                          {% id %}
   | "TT"                           {% _ => Interval(2).sqrt() %}
+  | phi                            {% _ => Interval.phi %}
+
+phi -> "phi" | "φ" | "ϕ"
 
 noteSymbol ->
     anyPyNote                      {% id %}
