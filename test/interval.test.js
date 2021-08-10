@@ -149,14 +149,19 @@ describe("Other Interval operations", function() {
     return i.pow(fr).valueOf_log(i) == fr.valueOf();
   });
 
-  jsc.property("valueOf_log: i1.valueOf_log(i2) ~= Math.log(i1) / Math.log(i2)", intv, intvForLog, function(i1, i2) {
-    const x = Math.log(i1.valueOf()) / Math.log(i2.valueOf());
-    return !isFinite(x) || nearly_equal(i1.valueOf_log(i2), x, 1e-4);
+  jsc.property("valueOf_log: i.valueOf_log() ~= Math.log2(i)", intv, function(i) {
+    const x = Math.log2(i.valueOf());
+    return !isFinite(x) || nearly_equal(i.valueOf_log(), x, 1e-5);
   });
 
-  jsc.property("toCents: i.toCents() ~= 1200 * Math.log2(i)", intv, function(i) {
-    const x = Math.log2(i.valueOf());
-    return !isFinite(x) || nearly_equal(i.toCents(), 1200 * x, 1e-4);
+  jsc.property("valueOf_log: i1.valueOf_log(i2) ~= i1.valueOf_log() / i2.valueOf_log()", intv, intvForLog, function(i1, i2) {
+    const x = i1.valueOf_log() / i2.valueOf_log();
+    return !isFinite(x) || nearly_equal(i1.valueOf_log(i2), x, 1e-10);
+  });
+
+  jsc.property("toCents: i.toCents() ~= 1200 * i.valueOf_log()", intv, function(i) {
+    const x = i.valueOf_log();
+    return !isFinite(x) || nearly_equal(i.toCents(), 1200 * x, 1e-10);
   });
 
   jsc.property("isPrimeLimit: i.inPrimeLimit(k) for all k >= i.primeLimit()", intv, posInt, function(i,k) {
