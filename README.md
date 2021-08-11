@@ -134,6 +134,7 @@ $ npm run test:all
     ✓ isOddLimit: Interval(fr).inOddLimit(k) for all k >= Interval(fr).oddLimit()
     ✓ isOddLimit: !Interval(fr).inOddLimit(k) for k < Interval(fr).oddLimit()
     ✓ oddLimit: Interval(odd,even).oddLimit() == Interval(even,odd).oddLimit() == odd
+    ✓ iso1: i.iso1(fr1).iso1(fr2) == i.iso1(fr1.mul(fr2)) (58ms)
 
   Best approximations
     ✓ regression: bestRationalApproxsByNo2sHeight({2: 400/1200})
@@ -145,7 +146,7 @@ $ npm run test:all
     ✓ regression: bestRationalApproxsByNo2sHeight(81,64, {primeLimit: 13, oddLimit: 81})
     ✓ regression: bestRationalApproxsByHeight({2: 400/1200}, {primeLimit: 19})
     ✓ regression: bestRationalApproxsByHeight({2: 300/1200}, {primeLimit: 13})
-    ✓ regression: bestRationalApproxsByHeight({2: 600/1200}, {primeLimit: 13, oddLimit: 81})
+    ✓ regression: bestRationalApproxsByHeight({2: 600/1200}, {primeLimit: 13, oddLimit: 81}) (38ms)
     ✓ regression: bestRationalApproxsByHeight(81,64, {primeLimit: 19})
     ✓ regression: bestRationalApproxsByDenom({2: 350/1200})
     ✓ regression: bestRationalApproxsByDiff({2: 350/1200}, {oddLimit: 9, cutoff: {2: 1/2}})
@@ -168,7 +169,7 @@ $ npm run test:all
     ✓ colorTemperament(135,128) == layobi
     ✓ colorTemperament([24,-21,4]) == sasa-quadyo
 
-  54 passing (394ms)
+  55 passing (448ms)
 
 
   Intervals and the parser

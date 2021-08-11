@@ -6,7 +6,7 @@ const Fraction = require('fraction.js');
 const BigFraction = require('fraction.js/bigfraction.js');
 const Interval = require('../lib/interval.js');
 
-const {posInt, nzPosInt, frac, nzPosFrac,
+const {posInt, nzPosInt, frac, smallFrac, nzPosFrac,
        monzo, intv, intvFromFrac, intvFromNthRoot} = require('./arbitrary.js')
 
 function removeTrailingZeros(arr) {
@@ -156,12 +156,12 @@ describe("Other Interval operations", function() {
 
   jsc.property("valueOf_log: i1.valueOf_log(i2) ~= i1.valueOf_log() / i2.valueOf_log()", intv, intvForLog, function(i1, i2) {
     const x = i1.valueOf_log() / i2.valueOf_log();
-    return !isFinite(x) || nearly_equal(i1.valueOf_log(i2), x, 1e-10);
+    return !isFinite(x) || nearly_equal(i1.valueOf_log(i2), x, 1e-5);
   });
 
   jsc.property("toCents: i.toCents() ~= 1200 * i.valueOf_log()", intv, function(i) {
     const x = i.valueOf_log();
-    return !isFinite(x) || nearly_equal(i.toCents(), 1200 * x, 1e-10);
+    return !isFinite(x) || nearly_equal(i.toCents(), 1200 * x, 1e-5);
   });
 
   jsc.property("isPrimeLimit: i.inPrimeLimit(k) for all k >= i.primeLimit()", intv, posInt, function(i,k) {
@@ -185,6 +185,12 @@ describe("Other Interval operations", function() {
     const r = Fraction(2*a+1,2*b);
     const [o,e] = [r.n,r.d];
     return Interval(o,e).oddLimit() == o && Interval(e,o).oddLimit() == o;
+  });
+
+  jsc.property("iso1: i.iso1(fr1).iso1(fr2) == i.iso1(fr1.mul(fr2))", jsc.suchthat(intvFromNthRoot, i => !i.isFrac()), smallFrac, smallFrac, function(i,fr1,fr2) {
+    try {
+      return i.iso1(fr1).iso1(fr2).equals(i.iso1(fr1.mul(fr2)));
+    } catch (_) { return true; }
   });
 
 });

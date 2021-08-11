@@ -1,18 +1,34 @@
 
 const jsc = require("jsverify");
 const Fraction = require('fraction.js');
+const BigFraction = require('fraction.js/bigfraction.js');
 const Interval = require('../lib/interval.js');
 const {pyInterval, pyDegree, pyOffset} = require('../lib/pythagorean.js');
 
-BigInt.prototype.toJSON = function() { return this.toString(); };
+Fraction.prototype.toJSON = function() {
+  return `{ s: ${this.s}, n: ${this.n}, d: ${this.d} }`;
+};
+BigInt.prototype.toJSON = function() { return this + 'n'; };
+BigFraction.prototype.toJSON = function() {
+  return `{ s: ${this.s}n, n: ${this.n}n, d: ${this.d}n }`;
+};
+Interval.prototype.toJSON = function() {
+  return "{ _fact: { " + this.factorsBig().map(([p,e]) => p + ": " + e.toJSON())
+                                          .join(", ") + " } }";
+};
 
 const int      = jsc.oneof(jsc.integer(-65535, 65535), jsc.integer(-63,63));
 const posInt   = jsc.oneof(jsc.integer(0, 65535), jsc.integer(0,63));
-const nzPosInt = jsc.suchthat(posInt, n => n != 0);
+const nzPosInt = jsc.oneof(jsc.integer(1, 65535), jsc.integer(1,63));
 
 // An aribitrary Fraction is made up of an arbitrary integer and an arbitrary
 // non-zero and positive integer
 const frac = jsc.pair(int, nzPosInt).smap(Fraction, fr => [fr.s*fr.n, fr.d]);
+
+// An arbitrary small Fraction is made up of an arbitrary integer with absolute
+// value less than 20 and an arbitrary non-zero and positive integer less than 20
+const smallFrac = jsc.pair(jsc.integer(-20,20), jsc.integer(1,20))
+                     .smap(Fraction, fr => [fr.s*fr.n, fr.d])
 
 // An arbitrary non-zero and positive Fraction is made up of two arbitrary
 // non-zero and positive integers
@@ -50,6 +66,7 @@ module.exports.int               = int;
 module.exports.posInt            = posInt;
 module.exports.nzPosInt          = nzPosInt;
 module.exports.frac              = frac;
+module.exports.smallFrac         = smallFrac;
 module.exports.nzPosFrac         = nzPosFrac;
 module.exports.intMonzo          = intMonzo;
 module.exports.fracMonzo         = fracMonzo;
