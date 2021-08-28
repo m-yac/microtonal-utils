@@ -583,8 +583,8 @@ clrIntv ->
   | clrCos clrM clrP clrDeg
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
 clrNote ->
-    clrP pyNote
-    {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
+    clrP __ pyNote
+    {% (d,loc,_) => ["!clrNote", d[0], d[2], loc] %}
 
 # color notation "co"s
 clrCos ->
