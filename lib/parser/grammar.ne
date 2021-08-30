@@ -525,7 +525,11 @@ upsDns ->
 # Color notation interval and note symbols
 # @returns {(Interval|Array)}
 
-colorIntv -> aclrIntv {% id %} | clrIntv {% id %}
+colorIntv ->
+    aclrIntv         {% id %}
+  | clrDesc aclrIntv {% d => ["recip", d[1]] %}
+  | clrIntv          {% id %}
+  | clrDesc clrIntv  {% d => ["recip", d[1]] %}
 colorNote -> aclrNote {% id %} | clrNote {% id %}
 
 # abbreviated color notation intervals and notes
@@ -679,6 +683,8 @@ clrOnes ->
   | "th"  {% d => 3 %}
   | "s"   {% d => 7 %}
   | "n"   {% d => 9 %}
+
+clrDesc -> "desc." __ | "descending" __
 
 # ------------------------------------------------------
 # Terminals
