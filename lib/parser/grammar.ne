@@ -581,34 +581,30 @@ aclrDeg ->
   | "-" posInt  {% d => - parseInt(d[1]) %}
 
 # color notation intervals and notes
+# N.B. we are much more permissive with hyphens than the grammar in:
+# https://en.xen.wiki/w/Color_notation/Temperament_Names
 clrIntv ->
-    clrCos clrM clrP aclrDeg
+    clrCos clrM clrP clrDeg
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
-  | clrCos clrM clrP clrDeg
-    {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
-  | clrDesc clrCos clrM clrP aclrDeg
-    {% (d,loc,_) => ["recip", ["!clrIntv", d[1], d[2], d[3], d[4], loc]] %}
   | clrDesc clrCos clrM clrP clrDeg
     {% (d,loc,_) => ["recip", ["!clrIntv", d[1], d[2], d[3], d[4], loc]] %}
 clrNote ->
-    clrP __ pyNote
+    clrP _ pyNote
     {% (d,loc,_) => ["!clrNote", d[0], d[2], loc] %}
 
 # color notation "co"s
 clrCos ->
-    null               {% d => 0 %}
-  | "co":+ "-":?       {% d => d[0].length %}
-  | clrMPs "co" "-":?  {% d => d[0] %}
+    null                      {% d => 0 %}
+  | "co" "-":? clrCos         {% d => ["+", d[2], 1] %}
+  | clrMPs "co" "-":? clrCos  {% d => ["+", d[3], d[0]] %}
 
 # color notation magnitudes
-# N.B. this is more permissive than the hyphen grammar in:
-# https://en.xen.wiki/w/Color_notation/Temperament_Names
 clrM ->
-    null               {% d => 0 %}
-  | "la":+ "-":?       {% d => d[0].length %}
-  | clrMPs "la" "-":?  {% d => d[0] %}
-  | "sa":+ "-":?       {% d => -d[0].length %}
-  | clrMPs "sa" "-":?  {% d => ["-", 0, d[0]] %}
+    null                    {% d => 0 %}
+  | "la" "-":? clrM         {% d => ["+", d[2], 1] %}
+  | clrMPs "la" "-":? clrM  {% d => ["+", d[3], d[0]] %}
+  | "sa" "-":? clrM         {% d => ["-", d[2], 1] %}
+  | clrMPs "sa" "-":? clrM  {% d => ["-", d[3], d[0]] %}
 
 # color prefixes
 clrP ->
@@ -621,43 +617,48 @@ clrP ->
 
 # color prime prefixes
 clrPPs ->
-    clrPPsMid1:? clrPPsMid3 clrPPsEnd {% d => (d[0] || []).concat(d[1]).concat(d[2]) %}
-  | clrPPsEnd               {% id %}
+    clrPPsMid1:? clrPPsMid3 clrPPsEnd  {% d => (d[0] || []).concat(d[1]).concat(d[2]) %}
+  | clrPPsEnd                          {% id %}
 clrPPsEnd ->
-    clrPP                   {% d => [d[0]] %}
-  | clrPP clrPPsEnd         {% d => [d[0]].concat(d[1]) %}
-  | clrMPs clrPPsEnd        {% d => d[1].map(i => ["pow", i, d[0]]) %}
+    clrPP                              {% d => [d[0]] %}
+  | clrPP clrPPsEnd                    {% d => [d[0]].concat(d[1]) %}
+  | clrMPs clrPPsEnd "-a":?            {% d => d[1].map(i => ["pow", i, d[0]]) %}
 clrPPsMid1 ->
-    clrPPsMid1 clrPPsMid2   {% d => d[0].concat(d[1]) %}
-  | clrPPsMid2              {% id %}
+    clrPPsMid1 clrPPsMid2              {% d => d[0].concat(d[1]) %}
+  | clrPPsMid2                         {% id %}
 clrPPsMid2 ->
-    clrPP                   {% d => [d[0]] %}
-  | clrPPsMid3              {% id %}
+    clrPP                              {% d => [d[0]] %}
+  | clrPPsMid3                         {% id %}
 clrPPsMid3 ->
-    clrMPs clrPPsMid1 "-a"  {% d => d[1].map(i => ["pow", i, d[0]]) %}
+    clrMPs clrPPsMid1 "-" "a":?        {% d => d[1].map(i => ["pow", i, d[0]]) %}
 clrPP ->
-    "yo"                     {% d => Interval(5) %}
-  | "gu"                     {% d => Interval(1,5) %}
-  | "zo"                     {% d => Interval(7) %}
-  | "ru"                     {% d => Interval(1,7) %}
-  | "lo"                     {% d => Interval(11) %}
-  | "lu"                     {% d => Interval(1,11) %}
-  | clrGenPP "o"             {% d => d[0] %}
-  | clrGenPP "u"             {% d => ["recip", d[0]] %}
+    "yo"                               {% d => Interval(5) %}
+  | "gu"                               {% d => Interval(1,5) %}
+  | "zo"                               {% d => Interval(7) %}
+  | "ru"                               {% d => Interval(1,7) %}
+  | "lo"                               {% d => Interval(11) %}
+  | "lu"                               {% d => Interval(1,11) %}
+  | clrGenPP "o"                       {% d => d[0] %}
+  | clrGenPP "u"                       {% d => ["recip", d[0]] %}
 
 # color notation non-abbreviated degrees
 clrDeg ->
-    __ "negative" clrPosDeg  {% d => ["*", -1, d[2]] %}
-  | __ "-" clrOrdinalDeg     {% d => ["*", -1, d[2]] %}
-  | clrPosDeg                {% id %}
+    __ "negative" __ clrPosDeg  {% d => ["*", -1, d[3]] %}
+  | _ "-" _ clrOrdinalDeg       {% d => ["*", -1, d[3]] %}
+  | __ clrWordDeg               {% d => d[1] %}
+  | _ clrOrdinalDeg             {% d => d[1] %}
+  | _ posInt                    {% d => parseInt(d[1]) %}
+  | _ "-" _ posInt              {% d => - parseInt(d[3]) %}
 clrPosDeg ->
-    __ "unison"              {% d => 1 %}
-  | __ "octave"              {% d => 8 %}
-  | __ clrOrdinalDeg         {% d => d[1] %}
+    clrWordDeg                  {% id %}
+  | clrOrdinalDeg               {% id %}
+clrWordDeg ->
+    "unison"                    {% d => 1 %}
+  | "octave"                    {% d => 8 %}
 clrOrdinalDeg ->
-    "1sn"                    {% d => 1 %}
-  | "8ve"                    {% d => 8 %}
-  | ordinal                  {% d => parseInt(d[0]) %}
+    "1sn"                       {% d => 1 %}
+  | "8ve"                       {% d => 8 %}
+  | ordinal                     {% d => parseInt(d[0]) %}
 
 # color notation multi prefixes
 clrMPs ->
