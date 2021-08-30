@@ -268,6 +268,7 @@ intvSExpr ->
   | intvSymbol                  {% id %}
   | intvEDOSymb                 {% id %}
   | posInt _ "/" _ posInt       {% d => [Interval(d[0],d[4]), "ratio"] %}
+  | decExpr3 "c"                {% d => [["!cents", d[0]], "cents"] %}
   | "(" _ intvSExpr _ ")"       {% d => d[2] %}
 
 intvSExpr0 -> intvSExpr {% d => d[0][0] %}
@@ -285,6 +286,7 @@ noteSExpr ->
     "approx"  _ "(" _ noteSExpr _ "," _ posInt _ ")"  {% d => [["!edoApprox", d[4][0], parseInt(d[8])], "function call"] %}
   | noteSymbol                                        {% id %}
   | upsDnsNote _ "\\" _ posInt                        {% d => [["!inEDO", d[0], parseInt(d[4])], "ups-and-downs"] %}
+  | decExpr3 hertz                                    {% (d,loc,_) => [["!hertz", d[0], ["!refHertz"], loc], "hertz"] %}
   | "(" _ noteSExpr _ ")"                             {% d => d[2] %}
 
 # ------------------------------------------------------
