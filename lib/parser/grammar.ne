@@ -61,10 +61,10 @@ top1 ->
                       return d1; } %}
 
 top2 ->
-    intvSExpr1  {% d => ({type: ["interval", "symbol"], expr: d[0]}) %}
+    intvSExpr   {% d => ({type: ["interval", "symbol"], expr: d[0][0], symbolType: d[0][1]}) %}
   | intvMExpr0  {% d => ({type: ["interval", "multiplicative"], expr: d[0]}) %}
   | intvAExpr1  {% d => ({type: ["interval", "additive"], expr: d[0]}) %}
-  | noteSExpr1  {% d => ({type: ["note", "symbol"], expr: d[0]}) %}
+  | noteSExpr   {% d => ({type: ["note", "symbol"], expr: d[0][0], symbolType: d[0][1]}) %}
   | noteMExpr1  {% d => ({type: ["note", "multiplicative"], expr: d[0]}) %}
   | noteAExpr1  {% d => ({type: ["note", "additive"], expr: d[0]}) %}
 
@@ -127,7 +127,7 @@ intvMExpr2 ->
   | "med" _ "(" _ intvMExpr0 _ "," _ intvMExpr0 _ ")"  {% (d,loc,_) => ["!med", d[4], d[8], loc] %}
   | nmed _ "(" _ intvMExpr0 _ "," _ intvMExpr0 _ ")"   {% (d,loc,_) => ["!nobleMed", d[4], d[8], d[0], loc] %}
   | intvFns[intvMExpr0]                                {% id %}
-  | intvSymbol                                         {% id %}
+  | intvSymbol                                         {% d => d[0][0] %}
   | intvMExpr3                                         {% id %}
 intvMExpr3 ->
     posInt                                             {% d => Interval(d[0]) %}
@@ -151,7 +151,7 @@ noteMExpr1 ->
   | noteMExpr2                                        {% id %}
 noteMExpr2 ->
     "approx"  _ "(" _ noteMExpr1 _ "," _ posInt _ ")" {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
-  | noteSymbol                                        {% id %}
+  | noteSymbol                                        {% d => d[0][0] %}
   | noteMEDOExpr2 _ "\\" _ posInt                     {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | decExpr3 hertz                                    {% (d,loc,_) => ["!hertz", d[0], ["!refHertz"], loc] %}
   | "(" _ noteMExpr1 _ ")"                            {% d => d[2] %}
@@ -172,7 +172,7 @@ intvAExpr2 ->
 intvAExpr3 ->
     "cents" _ "(" _ intvMExpr0 _ ")"                   {% d => d[4] %}
   | intvFns[intvAExpr1]                                {% id %}
-  | intvSymbol                                         {% id %}
+  | intvSymbol                                         {% d => d[0][0] %}
   | intvAExpr4                                         {% id %}
 intvAExpr4 ->
     decExpr3 "c"                                       {% d => ["!cents", d[0]] %}
@@ -190,7 +190,7 @@ noteAExpr1 ->
   | noteAExpr2                                        {% id %}
 noteAExpr2 ->
     "approx"  _ "(" _ noteAExpr1 _ "," _ posInt _ ")" {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
-  | noteSymbol                                        {% id %}
+  | noteSymbol                                        {% d => d[0][0] %}
   | noteAEDOExpr2 _ "\\" _ posInt                     {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ noteAExpr1 _ ")"                            {% d => d[2] %}
 
@@ -263,25 +263,29 @@ noteAEDOExpr2 ->
 # Interval symbol expressions
 # @returns {(Interval|Array)}
 
-intvSExpr1 ->
-    intvFns[intvSExpr1]                                 {% id %}
-  | intvSExpr2                                          {% id %}
-intvSExpr2 ->
-    intvSymbol                                          {% id %}
-  | int        _ "\\" _ posInt                          {% d => ["!inEDO", parseInt(d[0]), parseInt(d[4])] %}
-  | upsDnsIntv _ "\\" _ posInt                          {% d => ["!inEDO", d[0], parseInt(d[4])] %}
-  | "TT"       _ "\\" _ posInt                          {% d => ["!inEDO", ["!edoTT"], parseInt(d[4])] %}
-  | "(" _ intvSExpr1 _ ")"                              {% d => d[2] %}
+intvSExpr ->
+    intvFns[intvSExpr0]         {% d => [d[0], "function call"] %}
+  | intvSymbol                  {% id %}
+  | intvEDOSymb                 {% id %}
+  | posInt _ "/" _ posInt       {% d => [Interval(d[0],d[4]), "ratio"] %}
+  | "(" _ intvSExpr _ ")"       {% d => d[2] %}
+
+intvSExpr0 -> intvSExpr {% d => d[0][0] %}
+
+intvEDOSymb ->
+    int        _ "\\" _ posInt  {% d => [["!inEDO", parseInt(d[0]), parseInt(d[4])], "EDO step"] %}
+  | upsDnsIntv _ "\\" _ posInt  {% d => [["!inEDO", d[0], parseInt(d[4])], "ups-and-downs"] %}
+  | "TT"       _ "\\" _ posInt  {% d => [["!inEDO", ["!edoTT"], parseInt(d[4])], "EDO TT"] %}
 
 # ------------------------
 # Note symbol expresions
 # @returns {(Interval|Array)}
 
-noteSExpr1 ->
-    "approx"  _ "(" _ noteSExpr1 _ "," _ posInt _ ")"  {% d => ["!edoApprox", d[4], parseInt(d[8])] %}
-  | noteSymbol                                         {% id %}
-  | upsDnsNote _ "\\" _ posInt                         {% d => ["!inEDO", d[0], parseInt(d[4])] %}
-  | "(" _ noteSExpr1 _ ")"                             {% d => d[2] %}
+noteSExpr ->
+    "approx"  _ "(" _ noteSExpr _ "," _ posInt _ ")"  {% d => [["!edoApprox", d[4][0], parseInt(d[8])], "function call"] %}
+  | noteSymbol                                        {% id %}
+  | upsDnsNote _ "\\" _ posInt                        {% d => [["!inEDO", d[0], parseInt(d[4])], "ups-and-downs"] %}
+  | "(" _ noteSExpr _ ")"                             {% d => d[2] %}
 
 # ------------------------------------------------------
 # Interval and note symbols
@@ -292,23 +296,28 @@ noteSExpr1 ->
 # @returns {(Interval|Array)}
 
 intvSymbol ->
-    anyPyIntv                      {% id %}
-  | strictFJSLikeIntv              {% id %}
-  | "FJS" _ "(" _ fjsIntv _ ")"    {% d => d[4] %}
-  | "NFJS" _ "(" _ nfjsIntv _ ")"  {% d => d[4] %}
-  | colorIntv                      {% id %}
-  | monzo                          {% id %}
-  | "TT"                           {% _ => Interval(2).sqrt() %}
-  | phi                            {% _ => Interval.phi %}
+    pyIntv                         {% d => [d[0], "Pythagorean"] %}
+  | npyIntv                        {% d => [d[0], "neutral Pythagorean"] %}
+  | snpyIntv                       {% d => [d[0], "semi-neutral Pythagorean"] %}
+  | strictFJSLikeIntv              {% d => [d[0], "FJS-like"] %}
+  | "FJS" _ "(" _ fjsIntv _ ")"    {% d => [d[4], "NFJS"] %}
+  | "NFJS" _ "(" _ nfjsIntv _ ")"  {% d => [d[4], "FJS"] %}
+  | aclrIntv                       {% d => [d[0], "color"] %}
+  | clrIntv                        {% d => [d[0], "color (verbose)"] %}
+  | monzo                          {% d => [d[0], "monzo"] %}
+  | "TT"                           {% _ => [Interval(2).sqrt(), "TT"] %}
+  | phi                            {% _ => [Interval.phi, "phi"] %}
 
 phi -> "phi" | "φ" | "ϕ"
 
 noteSymbol ->
-    anyPyNote                      {% id %}
-  | strictFJSLikeNote              {% id %}
-  | "FJS" _ "(" _ fjsNote _ ")"    {% d => d[4] %}
-  | "NFJS" _ "(" _ nfjsNote _ ")"  {% d => d[4] %}
-  | colorNote                      {% id %}
+    pyNote                         {% d => [d[0], "Pythagorean"] %}
+  | npyNote                        {% d => [d[0], "neutral Pythagorean"] %}
+  | strictFJSLikeNote              {% d => [d[0], "FJS-like"] %}
+  | "FJS" _ "(" _ fjsNote _ ")"    {% d => [d[4], "NFJS"] %}
+  | "NFJS" _ "(" _ nfjsNote _ ")"  {% d => [d[4], "FJS"] %}
+  | aclrNote                       {% d => [d[0], "color"] %}
+  | clrNote                        {% d => [d[0], "color (verbose)"] %}
 
 monzo ->
     [\[\|] monzoElts [\]>⟩]           {% d => Interval(d[1]) %}
@@ -327,8 +336,6 @@ monzoEltsSpaces ->
 # ------------------------------
 # Pythagorean interval symbols
 # @returns {(Interval|Array)}
-
-anyPyIntv -> pyIntv {% id %} | npyIntv {% id %} | snpyIntv {% id %}
 
 pyIntv ->
   # perfect intervals
@@ -372,8 +379,6 @@ genPyNote[NOTE,ACCS] ->
          const d2 = d[2] ? parseInt(d[2]) : 4;
          return ["mul", ["div", baseNoteIntvToA(d[0][0]), ["!refIntvToA4"]]
                       , d[1][0].mul(Interval(2).pow(d2 - 4))]; } %}
-
-anyPyNote -> pyNote {% id %} | npyNote {% id %}
 
 pyNote ->
     "A"                             {% _ => ["recip", ["!refIntvToA4"]] %}
@@ -525,17 +530,12 @@ upsDns ->
 # Color notation interval and note symbols
 # @returns {(Interval|Array)}
 
-colorIntv ->
-    aclrIntv         {% id %}
-  | clrDesc aclrIntv {% d => ["recip", d[1]] %}
-  | clrIntv          {% id %}
-  | clrDesc clrIntv  {% d => ["recip", d[1]] %}
-colorNote -> aclrNote {% id %} | clrNote {% id %}
-
 # abbreviated color notation intervals and notes
 aclrIntv ->
     aclrCos aclrM aclrP aclrDeg
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
+  | clrDesc aclrCos aclrM aclrP aclrDeg
+    {% (d,loc,_) => ["recip", ["!clrIntv", d[1], d[2], d[3], d[4], loc]] %}
 aclrNote ->
     aclrP pyNote
     {% (d,loc,_) => ["!clrNote", d[0], d[1], loc] %}
@@ -586,6 +586,10 @@ clrIntv ->
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
   | clrCos clrM clrP clrDeg
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
+  | clrDesc clrCos clrM clrP aclrDeg
+    {% (d,loc,_) => ["recip", ["!clrIntv", d[1], d[2], d[3], d[4], loc]] %}
+  | clrDesc clrCos clrM clrP clrDeg
+    {% (d,loc,_) => ["recip", ["!clrIntv", d[1], d[2], d[3], d[4], loc]] %}
 clrNote ->
     clrP __ pyNote
     {% (d,loc,_) => ["!clrNote", d[0], d[2], loc] %}
