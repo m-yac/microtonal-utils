@@ -173,18 +173,22 @@ $ npm run test:all
 
 
   Intervals and the parser
-    ✓ toNthRootString: i == parseCvt(i.toNthRootString()).intv (310ms)
-    ✓ fr1.mul(fr2) == parseCvt(`${fr1} * ${fr2}`).ratio (395ms)
+    ✓ toNthRootString: i == parseCvt(i.toNthRootString()).intv (281ms)
+    ✓ fr1.mul(fr2) == parseCvt(`${fr1} * ${fr2}`).ratio (385ms)
 
   Pythagorean intervals and the parser
-    ✓ pyi == parseCvt(pySymb(pyi)).intv (490ms)
+    ✓ pyi == parseCvt(pySymb(pyi)).intv (425ms)
 
   Color notation intervals and the parser
-    ✓ fr == parseCvt(colorSymb(fr)).ratio (1209ms)
-    ✓ fr == parseCvt(colorSymb(fr, {useExps:1})).ratio (1202ms)
-    ✓ fr == parseCvt(colorSymb(fr, {verbosity:1})).ratio (879ms)
+    ✓ fr == parseCvt(colorSymb(fr)).ratio (1062ms)
+    ✓ fr == parseCvt(colorSymb(fr, {useExps:1})).ratio (1052ms)
+    ✓ fr == parseCvt(colorSymb(fr, {verbosity:1})).ratio (827ms)
+
+  Ups-and-downs intervals and the parser
+    ✓ [n,edo] == parseCvt(updnsSymb(edo,n)[0]+'\\'+edo).edoSteps (811ms)
+    ✓ [n,edo] == parseCvt(updnsSymb(edo,n,{verbosity:1})[0]+'\\'+edo).edoSteps (700ms)
 
 
-  6 passing (4s)
+  8 passing (6s)
 
 ```

@@ -123,7 +123,7 @@ intvMExpr1 ->
 intvMExpr2 ->
     intvMExpr3 _ "^" _ frcExpr3                        {% d => ["pow", d[0], d[4]] %}
   | "sqrt" _ "(" _ intvMExpr0 _ ")"                    {% d => ["sqrt", d[4]] %}
-  | "root" posInt _ "(" _ intvMExpr0 _ ")"             {% d => ["root", d[5], d[1]] %}
+  | "root" posInt _ "(" _ intvMExpr0 _ ")"             {% d => ["root", d[5], parseInt(d[1])] %}
   | "med" _ "(" _ intvMExpr0 _ "," _ intvMExpr0 _ ")"  {% (d,loc,_) => ["!med", d[4], d[8], loc] %}
   | nmed _ "(" _ intvMExpr0 _ "," _ intvMExpr0 _ ")"   {% (d,loc,_) => ["!nobleMed", d[4], d[8], d[0], loc] %}
   | intvFns[intvMExpr0]                                {% id %}
@@ -274,9 +274,10 @@ intvSExpr ->
 intvSExpr0 -> intvSExpr {% d => d[0][0] %}
 
 intvEDOSymb ->
-    int        _ "\\" _ posInt  {% d => [["!inEDO", parseInt(d[0]), parseInt(d[4])], "EDO step"] %}
-  | upsDnsIntv _ "\\" _ posInt  {% d => [["!inEDO", d[0], parseInt(d[4])], "ups-and-downs"] %}
-  | "TT"       _ "\\" _ posInt  {% d => [["!inEDO", ["!edoTT"], parseInt(d[4])], "EDO TT"] %}
+    int           _ "\\" _ posInt  {% d => [["!inEDO", parseInt(d[0]), parseInt(d[4])], "EDO step"] %}
+  | upsDnsIntvAbD _ "\\" _ posInt  {% d => [["!inEDO", d[0], parseInt(d[4])], "ups-and-downs"] %}
+  | upsDnsIntvVbD _ "\\" _ posInt  {% d => [["!inEDO", d[0], parseInt(d[4])], "ups-and-downs (verbose)"] %}
+  | "TT"          _ "\\" _ posInt  {% d => [["!inEDO", ["!edoTT"], parseInt(d[4])], "EDO TT"] %}
 
 # ------------------------
 # Note symbol expresions
@@ -298,9 +299,12 @@ noteSExpr ->
 # @returns {(Interval|Array)}
 
 intvSymbol ->
-    pyIntv                         {% d => [d[0], "Pythagorean"] %}
-  | npyIntv                        {% d => [d[0], "neutral Pythagorean"] %}
-  | snpyIntv                       {% d => [d[0], "semi-neutral Pythagorean"] %}
+    pyIntvD                        {% d => [d[0], "Pythagorean"] %}
+  | npyIntvD                       {% d => [d[0], "neutral Pythagorean"] %}
+  | snpyIntvD                      {% d => [d[0], "semi-neutral Pythagorean"] %}
+  | pyIntvVbD                      {% d => [d[0], "Pythagorean (verbose)"] %}
+  | npyIntvVbD                     {% d => [d[0], "neutral Pythagorean (verbose)"] %}
+  | snpyIntvVbD                    {% d => [d[0], "semi-neutral Pythagorean (verbose)"] %}
   | strictFJSLikeIntv              {% d => [d[0], "FJS-like"] %}
   | "FJS" _ "(" _ fjsIntv _ ")"    {% d => [d[4], "NFJS"] %}
   | "NFJS" _ "(" _ nfjsIntv _ ")"  {% d => [d[4], "FJS"] %}
@@ -339,41 +343,111 @@ monzoEltsSpaces ->
 # Pythagorean interval symbols
 # @returns {(Interval|Array)}
 
+anyPyIntv ->
+    pyIntvD      {% id %}
+  | npyIntvD     {% id %}
+  | snpyIntvD    {% id %}
+  | pyIntvVbD    {% id %}
+  | npyIntvVbD   {% id %}
+  | snpyIntvVbD  {% id %}
+
+pyIntvD ->
+    pyIntv       {% id %}
+  | desc pyIntv  {% d => ["recip", d[1]] %}
+
+npyIntvD ->
+    npyIntv       {% id %}
+  | desc npyIntv  {% d => ["recip", d[1]] %}
+
+snpyIntvD ->
+    snpyIntv       {% id %}
+  | desc snpyIntv  {% d => ["recip", d[1]] %}
+
 pyIntv ->
   # perfect intervals
-    "P"  pyDeg {% (d,loc,_) => ["!perfPyIntv", d[1], loc] %}
+    "P" degV0 {% (d,loc,_) => ["!perfPyIntv", d[1], loc] %}
   # major and minor intervals
-  | "M"  pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,2), "M", loc] %}
-  | "m"  pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,2), "m", loc] %}
+  | "M" degV0 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,2), "M", loc] %}
+  | "m" degV0 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,2), "m", loc] %}
   # augmented and diminished intervals
-  | "A":+ pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], d[0].length, 1, loc] %}
-  | "d":+ pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -d[0].length, 1, loc] %}
-  | posInt "A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 1, loc] %}
-  | posInt "d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -d[0], 1, loc] %}
+  | "A":+ degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[1], d[0].length, 1, loc] %}
+  | "d":+ degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -d[0].length, 1, loc] %}
+  | posInt "A" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], parseInt(d[0]), 1, loc] %}
+  | posInt "d" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -parseInt(d[0]), 1, loc] %}
 
 npyIntv ->
   # neutral intervals
-    "n"i pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], 0, "n", loc] %}
+    "n"i degV0 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], 0, "n", loc] %}
   # semi-augmented and semi-diminished intervals
-  | "sA" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], 1, 2, loc] %}
-  | "sd" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -1, 2, loc] %}
-  | posInt "/2-A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 2, loc] %}
-  | posInt "/2-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -d[0], 2, loc] %}
+  | "sA" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[1], 1, 2, loc] %}
+  | "sd" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -1, 2, loc] %}
+  | posInt "/2-A" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], parseInt(d[0]), 2, loc] %}
+  | posInt "/2-d" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -parseInt(d[0]), 2, loc] %}
 
 snpyIntv ->
   # semi-neutral intervals
-    "sM" pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,4), "sM", loc] %}
-  | "sm" pyDeg {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,4), "sm", loc] %}
-  | posInt "/4-A" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], d[0], 4, loc] %}
-  | posInt "/4-d" pyDeg {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -d[0], 4, loc] %}
+    "sM" degV0 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,4), "sM", loc] %}
+  | "sm" degV0 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,4), "sm", loc] %}
+  | posInt "/4-A" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], parseInt(d[0]), 4, loc] %}
+  | posInt "/4-d" degV0 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -parseInt(d[0]), 4, loc] %}
 
-pyDeg ->
-    posInt      {% d => parseInt(d[0]) %}
-  | "-" posInt  {% d => - parseInt(d[1]) %}
+# verbose Pythagorean intervals
+
+pyIntvVbD ->
+    pyIntvVb       {% id %}
+  | desc pyIntvVb  {% d => ["recip", d[1]] %}
+
+npyIntvVbD ->
+    npyIntvVb       {% id %}
+  | desc npyIntvVb  {% d => ["recip", d[1]] %}
+
+snpyIntvVbD ->
+    snpyIntvVb       {% id %}
+  | desc snpyIntvVb  {% d => ["recip", d[1]] %}
+
+pyIntvVb ->
+  # perfect intervals
+    pyPrf degV1 {% (d,loc,_) => ["!perfPyIntv", d[1], loc] %}
+  # major and minor intervals
+  | pyMaj degV1 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(1,2), "M", loc] %}
+  | pyMin degV1 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], Fraction(-1,2), "m", loc] %}
+  # augmented and diminished intervals
+  | pyAug degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[1], 1, 1, loc] %}
+  | pyDim degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[1], -1, 1, loc] %}
+  | posInt "-" pyAug degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[3], parseInt(d[0]), 1, loc] %}
+  | posInt "-" pyDim degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[3], -parseInt(d[0]), 1, loc] %}
+
+npyIntvVb ->
+  # neutral intervals
+    pyNeut degV1 {% (d,loc,_) => ["!nonPerfPyIntv", d[1], 0, "n", loc] %}
+  # semi-augmented and semi-diminished intervals
+  | pySemi pyAug degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], 1, 2, loc] %}
+  | pySemi pyDim degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -1, 2, loc] %}
+  | posInt "/2-" pyAug degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[3], parseInt(d[0]), 2, loc] %}
+  | posInt "/2-" pyDim degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[3], -parseInt(d[0]), 2, loc] %}
+
+snpyIntvVb ->
+  # semi-neutral intervals
+    pySemi pyMaj degV1 {% (d,loc,_) => ["!nonPerfPyIntv", d[2], Fraction(1,4), "sM", loc] %}
+  | pySemi pyMin degV1 {% (d,loc,_) => ["!nonPerfPyIntv", d[2], Fraction(-1,4), "sm", loc] %}
+  | posInt "/4-" pyAug degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], parseInt(d[0]), 4, loc] %}
+  | posInt "/4-" pyDim degV1 {% (d,loc,_) => ["!augOrDimPyIntv", d[2], -parseInt(d[0]), 4, loc] %}
+
+pyPrf -> "p"i "erfect"
+pyMaj -> "m"i "aj" "or":?
+pyMin -> "m"i "in" "or":?
+pyAug -> "a"i "ug" "mented":?
+pyDim -> "d"i "im" "inished":?
+pyNeut -> "n"i "eutral"
+pySemi -> "s"i "emi-"
 
 # --------------------------
 # Pythagorean note symbols
 # @returns {(Interval|Array)}
+
+anyPyNote ->
+    pyNote   {% id %}
+  | npyNote  {% id %}
 
 genPyNote[NOTE,ACCS] ->
     $NOTE $ACCS int:?
@@ -496,7 +570,7 @@ fjsAcc -> fjsAccExpr {% (d,loc,_) => ["!ensureNo2Or3", d[0], loc] %}
 fjsAccExpr ->
     posInt                            {% d => Interval(d[0]) %}
   | "sqrt(" fjsAccExpr ")"            {% d => d[1].sqrt() %}
-  | "root" posInt "(" fjsAccExpr ")"  {% d => d[3].root(d[1]) %}
+  | "root" posInt "(" fjsAccExpr ")"  {% d => d[3].root(parseInt(d[1])) %}
   | "(" fjsAccExpr "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
 
 # --------------------------------------------------
@@ -504,39 +578,76 @@ fjsAccExpr ->
 # @returns {(Interval|Array)}
 
 upsDnsIntv ->
-    upsDns pyIntv    {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
-  | upsDns npyIntv   {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
-  | upsDns snpyIntv  {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
+    upsDnsIntvAbD  {% id %}
+  | upsDnsIntvVbD  {% id %}
+
+upsDnsIntvAbD ->
+    upsDnsIntvAb       {% id %}
+  | desc upsDnsIntvAb  {% d => ["-", 0, d[1]] %}
+
+upsDnsIntvAb ->
+    upsDns pyIntv     {% (d,loc,_) => ["!updnsSymb", d[0], d[1], loc] %}
+  | upsDns npyIntv    {% (d,loc,_) => ["!updnsSymb", d[0], d[1], loc] %}
+  | upsDns snpyIntv   {% (d,loc,_) => ["!updnsSymb", d[0], d[1], loc] %}
   # alternate notation for up/down perfect intervals
-  | upsDns posInt
-    {% (d,loc,reject) => (pyRedDeg(d[1]) == 4 || pyRedDeg(d[1]) == 5) && d[0] != 0
-                         ? ["+", d[0], ["!edoPy", parseInt(d[1]), loc]] : reject %}
+  | upsDnsNz degV0    {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
-  | upsDns "~" posInt
-    {% (d,loc,reject) => pyRedDeg(d[2]) == 1 ? reject :
-                         pyRedDeg(d[2]) == 4 ? ["+", d[0], ["!edoPy", pyInterval(d[2],1,2), loc]] :
-                         pyRedDeg(d[2]) == 5 ? ["+", d[0], ["!edoPy", pyInterval(d[2],-1,2), loc]] :
-                                               ["+", d[0], ["!edoPy", pyInterval(d[2],0), loc]] %}
+  | upsDns "~" degV0  {% (d,loc,) => ["!updnsNeutSymb", d[0], d[2], loc] %}
+
+upsDnsIntvVbD ->
+    upsDnsIntvVb       {% id %}
+  | desc upsDnsIntvVb  {% d => ["-", 0, d[1]] %}
+
+upsDnsIntvVb ->
+    upsDnsVb _ pyIntvVb     {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
+  | upsDnsVb _ npyIntvVb    {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
+  | upsDnsVb _ snpyIntvVb   {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
+  # alternate notation for up/down perfect intervals
+  | upsDnsVb degV1          {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
+  # alternate notation for neutal intervals, semi-augmented fourths, and
+  # semi-diminished fifths
+  | upsDnsVb _ "mid" degV1  {% (d,loc,) => ["!updnsNeutSymb", d[0], d[3], loc] %}
 
 upsDnsNote ->
-    upsDns pyNote      {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
-  | upsDns npyNote     {% (d,loc,_) => ["+", d[0], ["!edoPy", d[1], loc]] %}
+    upsDns pyNote   {% (d,loc,_) => ["!updnsNote", d[0], d[1], loc] %}
+  | upsDns npyNote  {% (d,loc,_) => ["!updnsNote", d[0], d[1], loc] %}
 
 upsDns ->
     null   {% d => 0 %}
   | "^":+  {% d => d[0].length %}
   | "v":+  {% d => -d[0].length %}
 
+upsDnsNz ->
+    "^":+  {% d => d[0].length %}
+  | "v":+  {% d => -d[0].length %}
+
+upsDnsVb ->
+    null            {% d => 0 %}
+  | "up"            {% d => 1 %}
+  | "down"          {% d => -1 %}
+  | "double-up"     {% d => 2 %}
+  | "double-down"   {% d => -2 %}
+  | posInt "-up"    {% d => parseInt(d[0]) %}
+  | posInt "-down"  {% d => -parseInt(d[0]) %}
+
 # --------------------------------------------------
 # Color notation interval and note symbols
 # @returns {(Interval|Array)}
 
+anyClrIntv ->
+    aclrIntv  {% id %}
+  | clrIntv   {% id %}
+
+anyClrNote ->
+    aclrNote  {% id %}
+  | clrNote   {% id %}
+
 # abbreviated color notation intervals and notes
 aclrIntv ->
-    aclrCos aclrM aclrP aclrDeg
+    aclrCos aclrM aclrP degV0
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
-  | clrDesc aclrCos aclrM aclrP aclrDeg
+  | desc aclrCos aclrM aclrP degV0
     {% (d,loc,_) => ["recip", ["!clrIntv", d[1], d[2], d[3], d[4], loc]] %}
 aclrNote ->
     aclrP pyNote
@@ -577,18 +688,13 @@ aclrPP ->
   | posInt "o":+  {% (d,loc,_) => ["!aclrPP", parseInt(d[0]), d[1].length, loc] %}
   | posInt "u":+  {% (d,loc,_) => ["!aclrPP", parseInt(d[0]), -d[1].length, loc] %}
 
-# color notation numeral degrees
-aclrDeg ->
-    posInt      {% d => parseInt(d[0]) %}
-  | "-" posInt  {% d => - parseInt(d[1]) %}
-
 # color notation intervals and notes
 # N.B. we are much more permissive with hyphens than the grammar in:
 # https://en.xen.wiki/w/Color_notation/Temperament_Names
 clrIntv ->
-    clrCos clrM clrP clrDeg
+    clrCos clrM clrP degV1
     {% (d,loc,_) => ["!clrIntv", d[0], d[1], d[2], d[3], loc] %}
-  | clrDesc clrCos clrM clrP clrDeg
+  | desc clrCos clrM clrP degV1
     {% (d,loc,_) => ["recip", ["!clrIntv", d[1], d[2], d[3], d[4], loc]] %}
 clrNote ->
     clrP _ pyNote
@@ -643,25 +749,6 @@ clrPP ->
   | clrGenPP "o"                       {% d => d[0] %}
   | clrGenPP "u"                       {% d => ["recip", d[0]] %}
 
-# color notation non-abbreviated degrees
-clrDeg ->
-    __ "negative" __ clrPosDeg  {% d => ["*", -1, d[3]] %}
-  | _ "-" _ clrOrdinalDeg       {% d => ["*", -1, d[3]] %}
-  | __ clrWordDeg               {% d => d[1] %}
-  | _ clrOrdinalDeg             {% d => d[1] %}
-  | _ posInt                    {% d => parseInt(d[1]) %}
-  | _ "-" _ posInt              {% d => - parseInt(d[3]) %}
-clrPosDeg ->
-    clrWordDeg                  {% id %}
-  | clrOrdinalDeg               {% id %}
-clrWordDeg ->
-    "unison"                    {% d => 1 %}
-  | "octave"                    {% d => 8 %}
-clrOrdinalDeg ->
-    "1sn"                       {% d => 1 %}
-  | "8ve"                       {% d => 8 %}
-  | ordinal                     {% d => parseInt(d[0]) %}
-
 # color notation multi prefixes
 clrMPs ->
     clrMP:+       {% (d,loc,_) => ["!clrMPs", d[0], loc] %}
@@ -691,11 +778,37 @@ clrOnes ->
   | "s"   {% d => 7 %}
   | "n"   {% d => 9 %}
 
-clrDesc -> "desc." __ | "descending" __
-
 # ------------------------------------------------------
 # Terminals
 # ------------------------------------------------------
+
+# ------------------------------------------------------
+# Degrees for Pythagorean, color, ups-and-downs intvs
+# type: integer
+
+degV0 ->
+    posInt      {% d => parseInt(d[0]) %}
+  | "-" posInt  {% d => - parseInt(d[1]) %}
+
+degV1 ->
+    __ "negative" __ degV1Pos  {% d => -d[3] %}
+  | _ "-" _ degOrdinal         {% d => -d[3] %}
+  | __ degWord                 {% d => d[1] %}
+  | _ degOrdinal               {% d => d[1] %}
+  | _ posInt                   {% d => parseInt(d[1]) %}
+  | _ "-" _ posInt             {% d => - parseInt(d[3]) %}
+degV1Pos ->
+    degWord                    {% id %}
+  | degOrdinal                 {% id %}
+degWord ->
+    "unison"                   {% d => 1 %}
+  | "octave"                   {% d => 8 %}
+degOrdinal ->
+    "1sn"                      {% d => 1 %}
+  | "8ve"                      {% d => 8 %}
+  | ordinal                    {% d => parseInt(d[0]) %}
+
+desc -> "desc." __ | "descending" __
 
 # ------------------------------------------------------
 # Fractional expressions (positive, negative, or zero)

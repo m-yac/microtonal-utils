@@ -5,6 +5,7 @@ const Fraction = require('fraction.js');
 const Interval = require('../../lib/interval.js');
 const {pyInterval, pyDegree, pyOffset, pySymb} = require('../../lib/pythagorean.js');
 const {colorSymb} = require('../../lib/color.js');
+const {updnsSymb} = require('../../lib/edo.js');
 const {parseCvt} = require('../../lib/parser.js');
 
 const {nzPosFrac, intvFromNthRoot, degree, offset} = require('../arbitrary.js')
@@ -70,6 +71,26 @@ describe("Color notation intervals and the parser", function () {
     }
     console.log("Input w/out primes > 67: " + i.toNthRootString());
     return i.equals(parseCvt(colorSymb(i, {verbosity:1})).intv);
+  });
+
+});
+
+describe("Ups-and-downs intervals and the parser", function () {
+
+  jscSlowProperty2("[n,edo] == parseCvt(updnsSymb(edo,n)[0]+'\\\\'+edo).edoSteps", jsc.integer(-300,300), jsc.integer(2, 300), function (n,edo) {
+    for (const s of updnsSymb(edo,n)) {
+      const [n0,edo0] = parseCvt(s + "\\" + edo).edoSteps;
+      if (n0 != n || edo0 != edo) { return false; }
+    }
+    return true;
+  });
+
+  jscSlowProperty2("[n,edo] == parseCvt(updnsSymb(edo,n,{verbosity:1})[0]+'\\\\'+edo).edoSteps", jsc.integer(-300,300), jsc.integer(2, 300), function (n,edo) {
+    for (const s of updnsSymb(edo,n, {verbosity:1})) {
+      const [n0,edo0] = parseCvt(s + "\\" + edo).edoSteps;
+      if (n0 != n || edo0 != edo) { return false; }
+    }
+    return true;
   });
 
 });
