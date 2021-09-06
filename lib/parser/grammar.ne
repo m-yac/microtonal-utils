@@ -600,14 +600,14 @@ upsDnsIntvVbD ->
   | desc upsDnsIntvVb  {% d => ["-", 0, d[1]] %}
 
 upsDnsIntvVb ->
-    upsDnsVb _ pyIntvVb     {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
-  | upsDnsVb _ npyIntvVb    {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
-  | upsDnsVb _ snpyIntvVb   {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
+    upsDnsVb upDnsVbSep pyIntvVb     {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
+  | upsDnsVb upDnsVbSep npyIntvVb    {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
+  | upsDnsVb upDnsVbSep snpyIntvVb   {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
   # alternate notation for up/down perfect intervals
-  | upsDnsVb degV1          {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
+  | upsDnsVb degV1                   {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
-  | upsDnsVb _ "mid" degV1  {% (d,loc,) => ["!updnsNeutSymb", d[0], d[3], loc] %}
+  | upsDnsVb upDnsVbSep "mid" degV1  {% (d,loc,) => ["!updnsNeutSymb", d[0], d[3], loc] %}
 
 upsDnsNote ->
     upsDns pyNote   {% (d,loc,_) => ["!updnsNote", d[0], d[1], loc] %}
@@ -630,6 +630,8 @@ upsDnsVb ->
   | "double-down"   {% d => -2 %}
   | posInt "-up"    {% d => parseInt(d[0]) %}
   | posInt "-down"  {% d => -parseInt(d[0]) %}
+
+upDnsVbSep -> _ | _ "-" _
 
 # --------------------------------------------------
 # Color notation interval and note symbols
@@ -702,26 +704,26 @@ clrNote ->
 
 # color notation "co"s
 clrCos ->
-    null                      {% d => 0 %}
-  | "co" "-":? clrCos         {% d => ["+", d[2], 1] %}
-  | clrMPs "co" "-":? clrCos  {% d => ["+", d[3], d[0]] %}
+    null                          {% d => 0 %}
+  | "c"i "o" "-":? clrCos         {% d => ["+", d[3], 1] %}
+  | clrMPs "c"i "o" "-":? clrCos  {% d => ["+", d[4], d[0]] %}
 
 # color notation magnitudes
 clrM ->
-    null                    {% d => 0 %}
-  | "la" "-":? clrM         {% d => ["+", d[2], 1] %}
-  | clrMPs "la" "-":? clrM  {% d => ["+", d[3], d[0]] %}
-  | "sa" "-":? clrM         {% d => ["-", d[2], 1] %}
-  | clrMPs "sa" "-":? clrM  {% d => ["-", d[3], d[0]] %}
+    null                        {% d => 0 %}
+  | "l"i "a" "-":? clrM         {% d => ["+", d[3], 1] %}
+  | clrMPs "l"i "a" "-":? clrM  {% d => ["+", d[4], d[0]] %}
+  | "s"i "a" "-":? clrM         {% d => ["-", d[3], 1] %}
+  | clrMPs "s"i "a" "-":? clrM  {% d => ["-", d[4], d[0]] %}
 
 # color prefixes
 clrP ->
-    "wa"    {% d => [] %}
-  | "ilo"   {% d => [Interval(11)] %}
-  | "iso"   {% d => [Interval(17)] %}
-  | "ino"   {% d => [Interval(19)] %}
-  | "inu"   {% d => [Interval(1,19)] %}
-  | clrPPs  {% id %}
+    "w"i "a"   {% d => [] %}
+  | "i"i "lo"  {% d => [Interval(11)] %}
+  | "i"i "so"  {% d => [Interval(17)] %}
+  | "i"i "no"  {% d => [Interval(19)] %}
+  | "i"i "nu"  {% d => [Interval(1,19)] %}
+  | clrPPs     {% id %}
 
 # color prime prefixes
 clrPPs ->
@@ -740,12 +742,12 @@ clrPPsMid2 ->
 clrPPsMid3 ->
     clrMPs clrPPsMid1 "-" "a":?        {% d => d[1].map(i => ["pow", i, d[0]]) %}
 clrPP ->
-    "yo"                               {% d => Interval(5) %}
-  | "gu"                               {% d => Interval(1,5) %}
-  | "zo"                               {% d => Interval(7) %}
-  | "ru"                               {% d => Interval(1,7) %}
-  | "lo"                               {% d => Interval(11) %}
-  | "lu"                               {% d => Interval(1,11) %}
+    "y"i "o"                           {% d => Interval(5) %}
+  | "g"i "u"                           {% d => Interval(1,5) %}
+  | "z"i "o"                           {% d => Interval(7) %}
+  | "r"i "u"                           {% d => Interval(1,7) %}
+  | "l"i "o"                           {% d => Interval(11) %}
+  | "l"i "u"                           {% d => Interval(1,11) %}
   | clrGenPP "o"                       {% d => d[0] %}
   | clrGenPP "u"                       {% d => ["recip", d[0]] %}
 
@@ -753,12 +755,12 @@ clrPP ->
 clrMPs ->
     clrMP:+       {% (d,loc,_) => ["!clrMPs", d[0], loc] %}
 clrMP ->
-    "bi"          {% d => 2 %}
-  | "tri"         {% d => 3 %}
-  | "quad"        {% d => 4 %}
-  | "quin"        {% d => 5 %}
-  | "sep"         {% d => 7 %}
-  | "le"          {% d => 11 %}
+    "b"i "i"      {% d => 2 %}
+  | "t"i "ri"     {% d => 3 %}
+  | "q"i "uad"    {% d => 4 %}
+  | "q"i "uin"    {% d => 5 %}
+  | "s"i "ep"     {% d => 7 %}
+  | "l"i "e"      {% d => 11 %}
   | clrGenPP "e"  {% d => ["valueOf", d[0]] %}
 
 # color notation general prime prefixes (13 <= p <= 67)
@@ -766,17 +768,17 @@ clrGenPP ->
     clrTens clrOnes  {% (d,loc,_) => ["!clrGenPP", d[0] + d[1], loc] %}
 
 clrTens ->
-    null   {% d => 10 %}
-  | "twe"  {% d => 20 %}
-  | "thi"  {% d => 30 %}
-  | "fo"   {% d => 40 %}
-  | "fi"   {% d => 50 %}
-  | "si"   {% d => 60 %}
+    null       {% d => 10 %}
+  | "t"i "we"  {% d => 20 %}
+  | "t"i "hi"  {% d => 30 %}
+  | "f"i "o"   {% d => 40 %}
+  | "f"i "i"   {% d => 50 %}
+  | "s"i "i"   {% d => 60 %}
 clrOnes ->
-    "w"   {% d => 1 %}
-  | "th"  {% d => 3 %}
-  | "s"   {% d => 7 %}
-  | "n"   {% d => 9 %}
+    "w"i      {% d => 1 %}
+  | "t"i "h"  {% d => 3 %}
+  | "s"i      {% d => 7 %}
+  | "n"i      {% d => 9 %}
 
 # ------------------------------------------------------
 # Terminals
