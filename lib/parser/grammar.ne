@@ -326,18 +326,12 @@ noteSymbol ->
   | clrNote                        {% d => [d[0], "color (verbose)"] %}
 
 monzo ->
-    [\[\|] monzoElts [\]>⟩]           {% d => Interval(d[1]) %}
+    [\[\|] _ monzoElts [\]>⟩]   {% d => Interval(d[2]) %}
 monzoElts ->
-    _                                 {% d => [] %}
-  | _ frcExpr2 _                      {% d => [d[1]] %}
-  | _ monzoEltsCommas _               {% d => d[1] %}
-  | _ monzoEltsSpaces _               {% d => d[1] %}
-monzoEltsCommas ->
-    frcExpr2 _ "," _ frcExpr2         {% d => [d[0], d[4]] %}
-  | frcExpr2 _ "," _ monzoEltsCommas  {% d => [d[0]].concat(d[4]) %}
-monzoEltsSpaces ->
-    frcExpr2 __ frcExpr2              {% d => [d[0], d[2]] %}
-  | frcExpr2 __ monzoEltsSpaces       {% d => [d[0]].concat(d[2]) %}
+    null                        {% d => [] %}
+  | frcExpr2                    {% d => [d[0]] %}
+  | frcExpr2 _ "," _ monzoElts  {% d => [d[0]].concat(d[4]) %}
+  | frcExpr2 __ monzoElts       {% d => [d[0]].concat(d[2]) %}
 
 # ------------------------------
 # Pythagorean interval symbols
