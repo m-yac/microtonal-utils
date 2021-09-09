@@ -173,22 +173,25 @@ $ npm run test:all
 
 
   Intervals and the parser
-    ✓ toNthRootString: i == parseCvt(i.toNthRootString()).intv (281ms)
-    ✓ fr1.mul(fr2) == parseCvt(`${fr1} * ${fr2}`).ratio (385ms)
+    ✓ toNthRootString: i == parseCvt(i.toNthRootString()).intv (297ms)
+    ✓ fr1.mul(fr2) == parseCvt(`${fr1} * ${fr2}`).ratio (370ms)
 
   Pythagorean intervals and the parser
-    ✓ pyi == parseCvt(pySymb(pyi)).intv (425ms)
+    ✓ pyi == parseCvt(pySymb(pyi)).intv (498ms)
 
   Color notation intervals and the parser
-    ✓ fr == parseCvt(colorSymb(fr)).ratio (1062ms)
-    ✓ fr == parseCvt(colorSymb(fr, {useExps:1})).ratio (1052ms)
-    ✓ fr == parseCvt(colorSymb(fr, {verbosity:1})).ratio (827ms)
+    ✓ fr == parseCvt(colorSymb(fr)).ratio (1203ms)
+    ✓ fr == parseCvt(colorSymb(fr, {useExps:1})).ratio (1198ms)
+    ✓ fr == parseCvt(colorSymb(fr, {verbosity:1})).ratio (913ms)
+
+  EDO-step intervals and the parser
+    ✓ [n,edo] == parseCvt(n + '\\' + edo).edoSteps (776ms)
 
   Ups-and-downs intervals and the parser
-    ✓ [n,edo] == parseCvt(updnsSymb(edo,n)[0]+'\\'+edo).edoSteps (811ms)
-    ✓ [n,edo] == parseCvt(updnsSymb(edo,n,{verbosity:1})[0]+'\\'+edo).edoSteps (700ms)
+    ✓ [n,edo] == parseCvt(updnsSymb(edo,n)[0]+'\\'+edo).edoSteps (774ms)
+    ✓ [n,edo] == parseCvt(updnsSymb(edo,n,{verbosity:1})[0]+'\\'+edo).edoSteps (676ms)
 
 
-  8 passing (6s)
+  9 passing (7s)
 
 ```
