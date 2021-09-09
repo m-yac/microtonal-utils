@@ -75,6 +75,16 @@ describe("Color notation intervals and the parser", function () {
 
 });
 
+
+describe("EDO-step intervals and the parser", function () {
+
+  jscSlowProperty2("[n,edo] == parseCvt(n + '\\\\' + edo).edoSteps", jsc.integer(-300,300), jsc.integer(2, 300), function (n,edo) {
+    const [n0,edo0] = parseCvt(n + "\\" + edo).edoSteps;
+    return n0 == n && edo0 == edo;
+  });
+
+});
+
 describe("Ups-and-downs intervals and the parser", function () {
 
   jscSlowProperty2("[n,edo] == parseCvt(updnsSymb(edo,n)[0]+'\\\\'+edo).edoSteps", jsc.integer(-300,300), jsc.integer(2, 300), function (n,edo) {

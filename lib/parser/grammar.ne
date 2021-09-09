@@ -598,7 +598,7 @@ upsDnsIntvVb ->
   | upsDnsVb upDnsVbSep npyIntvVb    {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
   | upsDnsVb upDnsVbSep snpyIntvVb   {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
   # alternate notation for up/down perfect intervals
-  | upsDnsVb degV1                   {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
+  | upsDnsVbNz degV1                 {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
   | upsDnsVb upDnsVbSep "mid" degV1  {% (d,loc,) => ["!updnsNeutSymb", d[0], d[3], loc] %}
@@ -608,17 +608,17 @@ upsDnsNote ->
   | upsDns npyNote  {% (d,loc,_) => ["!updnsNote", d[0], d[1], loc] %}
 
 upsDns ->
-    null   {% d => 0 %}
-  | "^":+  {% d => d[0].length %}
-  | "v":+  {% d => -d[0].length %}
-
+    null      {% d => 0 %}
+  | upsDnsNz  {% id %}
 upsDnsNz ->
-    "^":+  {% d => d[0].length %}
-  | "v":+  {% d => -d[0].length %}
+    "^":+     {% d => d[0].length %}
+  | "v":+     {% d => -d[0].length %}
 
 upsDnsVb ->
     null            {% d => 0 %}
-  | "up"            {% d => 1 %}
+  | upsDnsVbNz      {% id %}
+upsDnsVbNz ->
+    "up"            {% d => 1 %}
   | "down"          {% d => -1 %}
   | "double-up"     {% d => 2 %}
   | "double-down"   {% d => -2 %}
