@@ -587,7 +587,7 @@ upsDnsIntvAb ->
   | upsDnsNz degV0    {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
-  | upsDns "~" degV0  {% (d,loc,) => ["!updnsNeutSymb", d[0], d[2], loc] %}
+  | upsDns "~" degV0  {% (d,loc,_) => ["!updnsNeutSymb", d[0], d[2], loc] %}
 
 upsDnsIntvVbD ->
     upsDnsIntvVb       {% id %}
@@ -597,11 +597,12 @@ upsDnsIntvVb ->
     upsDnsVb upDnsVbSep pyIntvVb     {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
   | upsDnsVb upDnsVbSep npyIntvVb    {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
   | upsDnsVb upDnsVbSep snpyIntvVb   {% (d,loc,_) => ["!updnsSymb", d[0], d[2], loc] %}
-  # alternate notation for up/down perfect intervals
+  # alternate notation for perfect intervals
   | upsDnsVbNz degV1                 {% (d,loc,_) => ["!updnsPerfSymb", d[0], d[1], loc] %}
+  | degV1Uniq                        {% (d,loc,_) => ["!updnsPerfSymb", 0, d[0], loc] %}
   # alternate notation for neutal intervals, semi-augmented fourths, and
   # semi-diminished fifths
-  | upsDnsVb upDnsVbSep "mid" degV1  {% (d,loc,) => ["!updnsNeutSymb", d[0], d[3], loc] %}
+  | upsDnsVb upDnsVbSep "mid" degV1  {% (d,loc,_) => ["!updnsNeutSymb", d[0], d[3], loc] %}
 
 upsDnsNote ->
     upsDns pyNote   {% (d,loc,_) => ["!updnsNote", d[0], d[1], loc] %}
@@ -803,6 +804,10 @@ degOrdinal ->
     "1sn"                      {% d => 1 %}
   | "8ve"                      {% d => 8 %}
   | ordinal                    {% d => parseInt(d[0]) %}
+
+degV1Uniq ->
+    "negative" __ degV1Pos     {% d => -d[2] %}
+  | degV1Pos                   {% id %}
 
 desc -> "desc." __ | "descending" __
 
