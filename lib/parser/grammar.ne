@@ -67,6 +67,9 @@ top2 ->
   | noteSExpr   {% d => ({type: ["note", "symbol"], expr: d[0][0], symbolType: d[0][1]}) %}
   | noteMExpr1  {% d => ({type: ["note", "multiplicative"], expr: d[0]}) %}
   | noteAExpr1  {% d => ({type: ["note", "additive"], expr: d[0]}) %}
+  | edoName     {% d => ({type: ["EDO", "name"], expr: d[0]}) %}
+
+edoName -> posInt _ ("-" _):? "EDO"i  {% d => parseInt(d[0]) %}
 
 eqPyNote -> pyNote {% (d,loc,_) => function(ref) {
     let d0 = evalExpr(d[0], defaultRefNote).val;
