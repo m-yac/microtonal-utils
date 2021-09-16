@@ -1,4 +1,5 @@
 // import everything from `lib/` as well as `Fraction` from fraction.js
+const {sign1, mod, fractionalPart, cachedLog2, unBigFraction, maxKey, keys, primes} = require('./lib/utils.js');
 const Fraction = require('fraction.js');
 const Interval = require('./lib/interval.js');
 const {pyInterval, pyA1, isPythagorean, pyGenerator, pyOctaves, pyDegree, pyZDegree, pyOffset, pyRedDeg, isPerfectDeg, pyQuality, pyDegreeString, pySymb, baseNoteIntvToA, octaveOfIntvToA4, pyNote} = require('./lib/pythagorean.js');
