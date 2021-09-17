@@ -626,12 +626,14 @@ upsDns ->
     null      {% d => 0 %}
   | upsDnsNz  {% id %}
 upsDnsNz ->
-    "^":+          {% d => d[0].length %}
-  | "v":+          {% d => -d[0].length %}
-  | "(^)^" posInt  {% d => parseInt(d[1]) %}
-  | "(v)^" posInt  {% d => -parseInt(d[1]) %}
-  | "^" posIntSup  {% d => d[1] %}
-  | "v" posIntSup  {% d => -d[1] %}
+    "^":+               {% d => d[0].length %}
+  | "v":+               {% d => -d[0].length %}
+  | "(^)^" [1-9]        {% d => parseInt(d[1]) %}
+  | "(v)^" [1-9]        {% d => -parseInt(d[1]) %}
+  | "(^)^(" posInt ")"  {% d => parseInt(d[1]) %}
+  | "(v)^(" posInt ")"  {% d => -parseInt(d[1]) %}
+  | "^" posIntSup       {% d => d[1] %}
+  | "v" posIntSup       {% d => -d[1] %}
 
 upsDnsVb ->
     null            {% d => 0 %}
