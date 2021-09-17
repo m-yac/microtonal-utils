@@ -626,6 +626,8 @@ upsDnsVbNz ->
   | "down"          {% d => -1 %}
   | "double-up"     {% d => 2 %}
   | "double-down"   {% d => -2 %}
+  | "triple-up"     {% d => 3 %}
+  | "triple-down"   {% d => -3 %}
   | posInt "-up"    {% d => parseInt(d[0]) %}
   | posInt "-down"  {% d => -parseInt(d[0]) %}
 
