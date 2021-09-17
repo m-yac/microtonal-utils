@@ -125,6 +125,7 @@ intvMExpr1 ->
   | intvMExpr2                                         {% id %}
 intvMExpr2 ->
     intvMExpr3 _ "^" _ frcExpr3                        {% d => ["pow", d[0], d[4]] %}
+  | "(" _ intvMExpr0 _ ")" _ posIntSup                 {% d => ["pow", d[2], parseInt(d[6])] %}
   | "sqrt" _ "(" _ intvMExpr0 _ ")"                    {% d => ["sqrt", d[4]] %}
   | "root" posInt _ "(" _ intvMExpr0 _ ")"             {% d => ["root", d[5], parseInt(d[1])] %}
   | "med" _ "(" _ intvMExpr0 _ "," _ intvMExpr0 _ ")"  {% (d,loc,_) => ["!med", d[4], d[8], loc] %}
@@ -134,6 +135,7 @@ intvMExpr2 ->
   | intvMExpr3                                         {% id %}
 intvMExpr3 ->
     posInt                                             {% d => Interval(d[0]) %}
+  | posInt _ posIntSup                                 {% d => Interval(Math.pow(parseInt(d[0]), parseInt(d[2]))) %}
   | int           _ "\\" _ posInt                      {% d => ["!inEDO", parseInt(d[0]), parseInt(d[4])] %}
   | intvMEDOExpr3 _ "\\" _ posInt                      {% d => ["!inEDO", d[0], parseInt(d[4])] %}
   | "(" _ intvMExpr0 _ ")"                             {% d => d[2] %}
@@ -208,6 +210,7 @@ intvMEDOExpr1 ->
   | intvMEDOExpr2                        {% id %}
 intvMEDOExpr2 ->
     intvMEDOExpr3 _ "^" _ intExpr1       {% d => ["*", d[0], d[4]] %}
+  | "(" _ intvMEDOExpr1 _ ")" _ posIntSup  {% d => ["*", d[2], parseInt(d[6])] %}
   | intvMEDOExpr3                        {% id %}
 intvMEDOExpr3 ->
     upsDnsIntv                           {% id %}
@@ -482,7 +485,9 @@ npyNoteAccs ->
 
 fjsAccs[REC] ->
     $REC "^" fjsAccList  {% d => spec => ["mul", d[0][0](spec), d[2](spec)] %}
+  | $REC fjsSupAcc       {% d => spec => ["mul", d[0][0](spec), d[1](spec)] %}
   | $REC "_" fjsAccList  {% d => spec => ["div", d[0][0](spec), d[2](spec)] %}
+  | $REC fjsSubAcc       {% d => spec => ["div", d[0][0](spec), d[1](spec)] %}
 
 # FJS interval and note symbols
 fjsIntv -> fjsNonNeutIntv  {% d => d[0](fjsSpec) %}
@@ -570,6 +575,12 @@ fjsAccExpr ->
   | "root" posInt "(" fjsAccExpr ")"  {% d => d[3].root(parseInt(d[1])) %}
   | "(" fjsAccExpr "^" frcExpr3 ")"   {% d => d[1].pow(d[3]) %}
 
+fjsSupAcc ->
+  posIntSup  {% (d,loc,_) => spec => ["!fjsFactor", ["!ensureNo2Or3", Interval(d[0]), loc], spec] %}
+
+fjsSubAcc ->
+  posIntSub  {% (d,loc,_) => spec => ["!fjsFactor", ["!ensureNo2Or3", Interval(d[0]), loc], spec] %}
+
 # --------------------------------------------------
 # Ups-and-downs notation interval and note symbols
 # @returns {(Interval|Array)}
@@ -615,8 +626,12 @@ upsDns ->
     null      {% d => 0 %}
   | upsDnsNz  {% id %}
 upsDnsNz ->
-    "^":+     {% d => d[0].length %}
-  | "v":+     {% d => -d[0].length %}
+    "^":+          {% d => d[0].length %}
+  | "v":+          {% d => -d[0].length %}
+  | "(^)^" posInt  {% d => parseInt(d[1]) %}
+  | "(v)^" posInt  {% d => -parseInt(d[1]) %}
+  | "^" posIntSup  {% d => d[1] %}
+  | "v" posIntSup  {% d => -d[1] %}
 
 upsDnsVb ->
     null            {% d => 0 %}
@@ -661,6 +676,7 @@ aclrCos ->
   | "c":+             {% d => d[0].length %}
   | "c^" [1-9]        {% d => parseInt(d[1]) %}
   | "c^(" posInt ")"  {% d => parseInt(d[1]) %}
+  | "c" posIntSup     {% d => parseInt(d[1]) %}
 
 # abbreviated color notation magnitudes
 aclrM ->
@@ -668,9 +684,11 @@ aclrM ->
   | "L":+             {% d => d[0].length %}
   | "L^" [1-9]        {% d => parseInt(d[1]) %}
   | "L^(" posInt ")"  {% d => parseInt(d[1]) %}
+  | "L" posIntSup     {% d => parseInt(d[1]) %}
   | "s":+             {% d => -d[0].length %}
   | "s^" [1-9]        {% d => -parseInt(d[1]) %}
   | "s^(" posInt ")"  {% d => -parseInt(d[1]) %}
+  | "s" posIntSup     {% d => -parseInt(d[1]) %}
 
 # abbreviated color prefixes
 aclrP ->
@@ -680,6 +698,7 @@ aclrPP1 ->
     aclrPP                  {% d => [d[0]] %}
   | aclrPP "^" [1-9]        {% d => Array(parseInt(d[2])).fill(d[0]) %}
   | aclrPP "^(" posInt ")"  {% d => Array(parseInt(d[2])).fill(d[0]) %}
+  | aclrPP posIntSup        {% d => Array(parseInt(d[1])).fill(d[0]) %}
 
 # abbreviated color prime prefixes
 aclrPP ->
@@ -895,6 +914,38 @@ locDecExpr3 -> decExpr3 {% (d,loc,_) => [d[0],loc] %}
 # type: String
 
 posInt -> [1-9] [0-9]:* {% d => d[0] + d[1].join("") %}
+
+posIntSup -> sup19 sup09:* {% d => d[0] + d[1].join("") %}
+
+sup09 ->
+    "⁰"    {% d => "0" %}
+  | sup19  {% id %}
+sup19 ->
+    "¹"    {% d => "1" %}
+  | "²"    {% d => "2" %}
+  | "³"    {% d => "3" %}
+  | "⁴"    {% d => "4" %}
+  | "⁵"    {% d => "5" %}
+  | "⁶"    {% d => "6" %}
+  | "⁷"    {% d => "7" %}
+  | "⁸"    {% d => "8" %}
+  | "⁹"    {% d => "9" %}
+
+posIntSub -> sub19 sub09:* {% d => d[0] + d[1].join("") %}
+
+sub09 ->
+    "₀"    {% d => "0" %}
+  | sub19  {% id %}
+sub19 ->
+    "₁"    {% d => "1" %}
+  | "₂"    {% d => "2" %}
+  | "₃"    {% d => "3" %}
+  | "₄"    {% d => "4" %}
+  | "₅"    {% d => "5" %}
+  | "₆"    {% d => "6" %}
+  | "₇"    {% d => "7" %}
+  | "₈"    {% d => "8" %}
+  | "₉"    {% d => "9" %}
 
 nonNegInt -> "0" {% _ => "0" %} | posInt {% id %}
 
