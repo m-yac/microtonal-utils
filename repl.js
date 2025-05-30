@@ -2,7 +2,7 @@
 const {sign1, mod, fractionalPart, cachedLog2, unBigFraction, maxKey, keys, primes} = require('./lib/utils.js');
 const Fraction = require('fraction.js');
 const Interval = require('./lib/interval.js');
-const {pyInterval, pyA1, isPythagorean, pyGenerator, pyOctaves, pyDegree, pyZDegree, pyOffset, pyRedDeg, isPerfectDeg, pyQuality, pyDegreeString, pySymb, baseNoteIntvToA, octaveOfIntvToA4, pyNote} = require('./lib/pythagorean.js');
+const {pyInterval, pyA1, isPythagorean, pyGenerator, pyOctaves, pyDegree, pyZDegree, pyOffset, pyRedDeg, isPerfectDeg, pyQuality, pyDegreeString, pySymb, baseNoteIntvToA, pyNote} = require('./lib/pythagorean.js');
 const {FJSLike, fjsRoT, fjsFifthSeq, fjsSpec, nfjsRoT, nfjsFifthSeq, nfjsSpec, fjsRegions, fjsFifthShift, fjsComma, fjsFactor, fjsAccidentals, fjsSymb, fjsNote} = require('./lib/fjs.js');
 const {edoApprox, edoPrimeApprox, edoApproxConsistentWithErr, edoApproxConsistent, edoIntvIsConsistent, edoPy, edoPyInv, edoPyComma, edoHasNeutrals, edoHasSemiNeutrals, updnsSymbCache, fmtUpdnsSymb, updnsSymb, updnsFromSymb, updnsNoteCache, updnsNote} = require('./lib/edo.js');
 const {colorPrimeZDegree, colorZDegree, colorDegree, colorMagnitude, colorPrimePrefix, colorMultiPrefix, colorFactorPrefix, colorPrefix, colorSymb, colorFromSymb, colorNote, colorFromNote, colorTemperament} = require('./lib/color.js');

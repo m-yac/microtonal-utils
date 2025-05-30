@@ -3,16 +3,19 @@ const _ = require('lodash');
 const jsc = require("jsverify");
 const Fraction = require('fraction.js');
 const Interval = require('../../lib/interval.js');
-const {pyInterval, pyDegree, pyOffset, pySymb} = require('../../lib/pythagorean.js');
+const {pyInterval, pyDegree, pyOffset, pySymb, pyNote} = require('../../lib/pythagorean.js');
 const {colorSymb} = require('../../lib/color.js');
 const {updnsSymb} = require('../../lib/edo.js');
 const {parseCvt} = require('../../lib/parser.js');
 
-const {nzPosFrac, intvFromNthRoot, degree, offset} = require('../arbitrary.js')
+const {nzPosFrac, intvFromNthRoot, degree, offset, pyInt} = require('../arbitrary.js')
 
 const nonSemiNeutPyIntv =
   jsc.pair(degree, offset).smap(([d,o]) => pyInterval(d,o/2),
                                 pyi => [pyDegree(pyi), pyOffset(pyi)]);
+const nonNeutPyIntv =
+  jsc.pair(pyInt, pyInt).smap(([e2,e3]) => Interval(2).pow(e2).mul(Interval(3).pow(e3)),
+                              pyi => [pyi.expOf(2).s * pyi.expOf(2).n, pyi.expOf(3).s * pyi.expOf(3).n]);
 
 // How many tests to run in this file
 const VSLOW_TESTS_TO_RUN = 20;
@@ -48,6 +51,10 @@ describe("Pythagorean intervals and the parser", function () {
 
   jscSlowProperty1("pyi == parseCvt(pySymb(pyi)).intv", nonSemiNeutPyIntv, function (pyi) {
     return pyi.equals(parseCvt(pySymb(pyi)).intv);
+  });
+
+  jscSlowProperty1("pyi == parseCvt(pyNote(pyi)).intvToRef", nonNeutPyIntv, function (pyi) {
+    return pyi.equals(parseCvt(pyNote(pyi)).intvToRef);
   });
 
 });

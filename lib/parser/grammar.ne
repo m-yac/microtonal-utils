@@ -468,7 +468,7 @@ pyNoteAccs ->
   | ("♯" | "#"):+                {% d => pyInterval(1, d[0].length) %}
   | ("𝄪" | "X"):+ ("♯" | "#"):*  {% d => pyInterval(1, 2*d[0].length + d[1].length) %}
   | ("♭" | "b"):+                {% d => pyInterval(-1, d[0].length) %}
-  | ("♭" | "b"):* "𝄫":+          {% d => pyInterval(-1, 2*d[0].length + d[1].length) %}
+  | "𝄫":+ ("♭" | "b"):*          {% d => pyInterval(-1, 2*d[0].length + d[1].length) %}
 
 npyNote ->
     genPyNote[[A-G], npyNoteAccs]   {% id %}
